@@ -65,27 +65,33 @@ body {
 .brand-sub { display: none; }
 
 /* WORKOUT TIMER (session) */
-.session-timer {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--muted2);
-  letter-spacing: .08em;
-  text-align: right;
+.brand-timer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
 }
-.session-timer .st-val {
-  font-size: 13px;
+.st-play {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--line2);
+  background: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
   color: var(--text);
-  display: block;
-  letter-spacing: -.02em;
-  margin-top: 1px;
+  transition: background .15s, border-color .15s;
+  flex-shrink: 0;
+  opacity: .5;
 }
-.session-timer .st-label {
-  font-size: 7.5px;
+.st-play.running { border-color: var(--text); background: var(--text); color: var(--bg); opacity: 1; }
+.st-val {
+  font-family: var(--mono);
+  font-size: 13px;
   letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text);
+  opacity: .5;
 }
+.brand-timer.running .st-val { opacity: 1; }
 
 /* PAGE NAV */
 .page-nav {
@@ -615,11 +621,8 @@ body.light {
       <div class="brand-name">
         <button class="inf-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
           <svg width="44" height="22" viewBox="0 0 44 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- left circle -->
             <circle cx="11" cy="11" r="9.5" stroke="currentColor" stroke-width="1.4"/>
-            <!-- right circle -->
             <circle cx="33" cy="11" r="9.5" stroke="currentColor" stroke-width="1.4"/>
-            <!-- moving knob -->
             <circle class="inf-knob" cx="11" cy="11" r="5.5" fill="currentColor"/>
           </svg>
         </button>
@@ -627,17 +630,16 @@ body.light {
       </div>
       <div class="brand-sub">Training Log</div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <div id="session-timer-wrap" class="session-timer" onclick="toggleSessionTimer()" title="Workout timer">
-        <div class="st-label">Workout</div>
-        <div class="st-val" id="st-val">—</div>
-      </div>
-      <div class="streak-pill">
-        <div class="streak-dots" id="streak-dots"></div>
-        <span class="streak-num" id="streak-num"></span>
-      </div>
+    <div class="brand-timer" onclick="toggleSessionTimer()">
+      <button class="st-play" id="st-play">
+        <svg id="st-icon" width="10" height="10" viewBox="0 0 12 12" fill="currentColor">
+          <polygon points="2,1 11,6 2,11"/>
+        </svg>
+      </button>
+      <span class="st-val" id="st-val">00:00</span>
     </div>
   </div>
+
   <div class="page-nav">
     <div class="pn active" onclick="setPage('workout')">Workout</div>
     <div class="pn" onclick="setPage('history')">History</div>
@@ -771,11 +773,13 @@ function startSessionTimer() {
   sessionStart = Date.now();
   sessionTick = setInterval(updateSessionUI, 1000);
   updateSessionUI();
+  updatePlayBtn();
 }
 function stopSessionTimer() {
   sessionActive = false;
   clearInterval(sessionTick); sessionTick = null;
-  document.getElementById('st-val').textContent = '—';
+  document.getElementById('st-val').textContent = '00:00';
+  updatePlayBtn();
 }
 function toggleSessionTimer() {
   if (sessionActive) stopSessionTimer();
@@ -784,7 +788,22 @@ function toggleSessionTimer() {
 function updateSessionUI() {
   const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
   const m = Math.floor(elapsed / 60), s = elapsed % 60;
-  document.getElementById('st-val').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+  document.getElementById('st-val').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+function updatePlayBtn() {
+  const btn = document.getElementById('st-play');
+  const icon = document.getElementById('st-icon');
+  const timer = btn?.closest('.brand-timer');
+  if (!btn || !icon) return;
+  if (sessionActive) {
+    btn.classList.add('running');
+    if (timer) timer.classList.add('running');
+    icon.innerHTML = '<rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/>';
+  } else {
+    btn.classList.remove('running');
+    if (timer) timer.classList.remove('running');
+    icon.innerHTML = '<polygon points="2,1 11,6 2,11"/>';
+  }
 }
 
 // ── REST TIMER (inline, per exercise) ──
