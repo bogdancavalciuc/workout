@@ -163,6 +163,7 @@ body {
   letter-spacing: .05em;
 }
 .dt.active .dt-edit { display: block; }
+body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .dt-add {
   flex: 0 0 32px !important;
   padding: 8px 4px !important;
@@ -854,7 +855,7 @@ function updatePlayBtn() {
 }
 
 // ── REST TIMER (inline, per exercise) ──
-let restDur = 90, restRemain = 0, restTick = null, restExKey = null, restSetIdx = null;
+let restDur = 120, restRemain = 0, restTick = null, restExKey = null, restSetIdx = null;
 
 function fmtRestDur(s) {
   const m = Math.floor(s / 60), sec = s % 60;
@@ -864,7 +865,7 @@ function fmtRestDur(s) {
 function setRestDur(s, popId) {
   restDur = s;
   if (restTick) { restRemain = s; updateRestUI(); }
-  const durMap = {60:'1m', 90:'1:30', 120:'2m', 180:'3m'};
+  const durMap = {60:'1m', 120:'2m'};
   document.querySelectorAll('.rp-opt').forEach(b => {
     b.classList.toggle('sel', b.textContent.trim() === durMap[s]);
   });
@@ -1132,9 +1133,7 @@ function renderTable() {
               <div class="rest-popover-label">Rest duration</div>
               <div class="rest-popover-opts">
                 <button class="rp-opt${restDur===60?' sel':''}" onclick="setRestDur(60,'rp-${di}-${ei}')">1m</button>
-                <button class="rp-opt${restDur===90?' sel':''}" onclick="setRestDur(90,'rp-${di}-${ei}')">1:30</button>
                 <button class="rp-opt${restDur===120?' sel':''}" onclick="setRestDur(120,'rp-${di}-${ei}')">2m</button>
-                <button class="rp-opt${restDur===180?' sel':''}" onclick="setRestDur(180,'rp-${di}-${ei}')">3m</button>
               </div>
             </div>
             <div class="set-check-wrap${isThisResting && done ? ' resting' : ''}" id="scw-${di}-${ei}-${si}">
