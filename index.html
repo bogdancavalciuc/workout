@@ -36,6 +36,7 @@ body {
   max-width: 480px;
   margin: 0 auto;
   padding-bottom: 130px;
+  text-transform: uppercase;
 }
 
 /* ── SCROLLBAR ── */
@@ -220,14 +221,14 @@ body {
 .ex-name-row {
   display: flex;
   align-items: center;
-  padding: 14px 16px;
-  gap: 12px;
+  padding: 14px 16px 14px 10px;
+  gap: 10px;
   cursor: pointer;
   user-select: none;
   transition: background .12s;
 }
 .ex-name-row:active { background: var(--surf2); }
-.ei { font-family: var(--mono); font-size: 7.5px; color: var(--muted); flex-shrink: 0; width: 16px; }
+
 .ex-main { flex: 1; min-width: 0; }
 .en {
   font-size: 15px;
@@ -247,8 +248,7 @@ body {
 .set-progress { font-family: var(--mono); font-size: 10px; min-width: 26px; text-align: right; transition: color .2s; }
 .chevron { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; color: var(--muted); transition: transform .25s cubic-bezier(.4,0,.2,1); font-size: 8px; }
 .chevron.open { transform: rotate(180deg); }
-.ex-icon { width: 30px; height: 30px; flex-shrink: 0; opacity: .6; display: flex; align-items: center; justify-content: center; }
-.ex-name-row.done-all .ex-icon { opacity: .15; }
+
 .ex-edit-btn { font-family: var(--mono); font-size: 14px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 4px 5px; border-radius: 4px; line-height: 1; flex-shrink: 0; opacity: .6; letter-spacing: .1em; }
 .ex-edit-btn:active { background: var(--line); opacity: 1; }
 
@@ -493,20 +493,23 @@ body {
 /* ── DRAG & DROP ── */
 .ex-block.dragging { opacity: .4; }
 .ex-block.drag-over { border-top: 2px solid var(--text); }
-.drag-handle {
+.drag-num {
   cursor: grab;
-  padding: 4px 3px;
-  color: var(--muted);
-  font-size: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  align-items: center;
-  opacity: .4;
   flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--line2);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 7px;
+  color: var(--muted);
+  user-select: none;
+  transition: border-color .15s, color .15s;
 }
-.drag-handle:active { cursor: grabbing; }
-.drag-handle span { display: block; width: 12px; height: 1px; background: currentColor; border-radius: 1px; }
+.drag-num:active { cursor: grabbing; border-color: var(--muted2); color: var(--text); }
 
 /* ── ANIMATIONS ── */
 @keyframes pop {
@@ -907,8 +910,7 @@ function renderTable() {
     } else {
       html += `
         <div class="ex-name-row${exDone ? ' done-all' : ''}" onclick="toggleExpand(${di},${ei})">
-          <div class="drag-handle" onclick="event.stopPropagation()"><span></span><span></span><span></span></div>
-          <div class="ex-icon">${getIcon(ex.name)}</div>
+          <div class="drag-num" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
           <div class="ex-main">
             <div class="en">${escHtml(ex.name)}</div>
             ${last && !exDone ? `<div class="ex-last">prev: ${last}</div>` : ''}
@@ -927,10 +929,7 @@ function renderTable() {
         const done = sArr[si] || false;
         html += `<div class="set-row${done ? ' set-done' : ''}">
           <span class="set-num">${si+1}</span>
-          <div class="ex-main" style="min-width:0">
-            <span class="set-info${done ? ' done' : ''}">${ex.reps} reps</span>
-            ${prevEx ? `<div class="set-prev">prev: ${prevEx.reps} reps · ${escHtml(prevEx.weight)}</div>` : ''}
-          </div>
+          <span class="set-info${done ? ' done' : ''}">${ex.reps} reps</span>
           <span class="set-wt${done ? ' done' : ''}">${escHtml(ex.weight)}</span>
           <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}"
             onclick="toggleSet(event,${di},${ei},${si})"
