@@ -247,6 +247,8 @@ body {
 .set-progress { font-family: var(--mono); font-size: 10px; min-width: 26px; text-align: right; transition: color .2s; }
 .chevron { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; color: var(--muted); transition: transform .25s cubic-bezier(.4,0,.2,1); font-size: 8px; }
 .chevron.open { transform: rotate(180deg); }
+.ex-icon { width: 30px; height: 30px; flex-shrink: 0; opacity: .6; display: flex; align-items: center; justify-content: center; }
+.ex-name-row.done-all .ex-icon { opacity: .15; }
 .ex-edit-btn { font-family: var(--mono); font-size: 14px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 4px 5px; border-radius: 4px; line-height: 1; flex-shrink: 0; opacity: .6; letter-spacing: .1em; }
 .ex-edit-btn:active { background: var(--line); opacity: 1; }
 
@@ -270,6 +272,7 @@ body {
 .set-info.done { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(240,237,232,.2); }
 .set-wt { font-family: var(--mono); font-size: 10px; color: var(--muted2); transition: opacity .2s; }
 .set-wt.done { opacity: .25; }
+.set-prev { font-family: var(--mono); font-size: 8px; color: var(--muted); opacity: .5; margin-top: 2px; }
 .set-check {
   width: 28px; height: 28px;
   border-radius: 50%;
@@ -798,6 +801,16 @@ function lastFor(di, name) {
   return null;
 }
 
+function lastExData(di, name) {
+  for (const h of history) {
+    if (h.day === CFG[di].label) {
+      const ex = (h.exercises||[]).find(e => e.name === name);
+      if (ex) return { reps: ex.reps, weight: ex.weight };
+    }
+  }
+  return null;
+}
+
 function calcVol(di) {
   return data[di].reduce((sum, ex) => {
     const kg = parseFloat(ex.weight);
@@ -895,7 +908,7 @@ function renderTable() {
       html += `
         <div class="ex-name-row${exDone ? ' done-all' : ''}" onclick="toggleExpand(${di},${ei})">
           <div class="drag-handle" onclick="event.stopPropagation()"><span></span><span></span><span></span></div>
-          <div class="ei">${String(ei+1).padStart(2,'0')}</div>
+          <div class="ex-icon">${getIcon(ex.name)}</div>
           <div class="ex-main">
             <div class="en">${escHtml(ex.name)}</div>
             ${last && !exDone ? `<div class="ex-last">prev: ${last}</div>` : ''}
@@ -909,11 +922,15 @@ function renderTable() {
         <div class="sets-wrap${isExp ? ' open' : ''}">
           <div class="sets-inner"><div class="sets-pad">`;
 
+      const prevEx = lastExData(di, ex.name);
       for (let si = 0; si < ex.sets; si++) {
         const done = sArr[si] || false;
         html += `<div class="set-row${done ? ' set-done' : ''}">
           <span class="set-num">${si+1}</span>
-          <span class="set-info${done ? ' done' : ''}">${ex.reps} reps</span>
+          <div class="ex-main" style="min-width:0">
+            <span class="set-info${done ? ' done' : ''}">${ex.reps} reps</span>
+            ${prevEx ? `<div class="set-prev">prev: ${prevEx.reps} reps · ${escHtml(prevEx.weight)}</div>` : ''}
+          </div>
           <span class="set-wt${done ? ' done' : ''}">${escHtml(ex.weight)}</span>
           <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}"
             onclick="toggleSet(event,${di},${ei},${si})"
@@ -969,7 +986,152 @@ function renderTable() {
 
 function isEd_active(di) { return editingEx && editingEx.di === di; }
 
-// ── DRAG & DROP ──
+
+// ── EXERCISE ICONS ──
+const EX_ICONS = {
+
+  'Incline Bench Press': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="3" y1="20" x2="18" y2="13"/><line x1="3" y1="20" x2="3" y2="23"/><line x1="18" y1="13" x2="20" y2="15"/><line x1="20" y1="15" x2="20" y2="23"/>
+    <circle cx="20" cy="9" r="1.8"/>
+    <path d="M19 11 Q17 13 16 14"/><path d="M19 11 Q21 12 22 13"/>
+    <line x1="8" y1="7" x2="22" y2="7"/>
+    <rect x="6" y="5.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
+    <rect x="22" y="5.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
+    <line x1="16" y1="14" x2="13" y2="8"/><line x1="22" y1="13" x2="21" y2="8"/>
+  </svg>`,
+
+  'Machine Chest Fly': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="10" y1="17" x2="16" y2="17"/><line x1="10" y1="17" x2="10" y2="22"/><line x1="16" y1="17" x2="16" y2="22"/><line x1="13" y1="12" x2="13" y2="17"/>
+    <circle cx="13" cy="10" r="1.8"/>
+    <path d="M12 12 Q7 12 5 10"/><path d="M14 12 Q19 12 21 10"/>
+    <circle cx="5" cy="10" r="1.2" fill="currentColor" opacity=".5" stroke="none"/>
+    <circle cx="21" cy="10" r="1.2" fill="currentColor" opacity=".5" stroke="none"/>
+    <line x1="5" y1="10" x2="3" y2="5"/><line x1="21" y1="10" x2="23" y2="5"/><line x1="2" y1="4" x2="24" y2="4"/>
+  </svg>`,
+
+  'Barbell Overhead Press': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="5" y1="6" x2="21" y2="6"/>
+    <rect x="3" y="4.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
+    <rect x="20.5" y="4.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
+    <circle cx="13" cy="11" r="1.8"/>
+    <line x1="13" y1="13" x2="13" y2="19"/>
+    <line x1="13" y1="14" x2="8" y2="8"/><line x1="13" y1="14" x2="18" y2="8"/>
+    <line x1="13" y1="19" x2="10" y2="24"/><line x1="13" y1="19" x2="16" y2="24"/>
+  </svg>`,
+
+  'DB Lateral Raises': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="13" cy="7" r="1.8"/>
+    <line x1="13" y1="9" x2="13" y2="16"/>
+    <line x1="13" y1="11" x2="5" y2="9"/><line x1="13" y1="11" x2="21" y2="9"/>
+    <rect x="2.5" y="8" width="3" height="1.8" rx="0.5" fill="currentColor" opacity=".5" stroke="none"/>
+    <rect x="20.5" y="8" width="3" height="1.8" rx="0.5" fill="currentColor" opacity=".5" stroke="none"/>
+    <line x1="13" y1="16" x2="10" y2="22"/><line x1="13" y1="16" x2="16" y2="22"/>
+  </svg>`,
+
+  'Triceps Push Down': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="13" y1="3" x2="13" y2="7"/><line x1="10" y1="7" x2="16" y2="7"/>
+    <circle cx="13" cy="10" r="1.8"/>
+    <line x1="13" y1="12" x2="13" y2="18"/>
+    <line x1="13" y1="13" x2="9" y2="13"/><line x1="13" y1="13" x2="17" y2="13"/>
+    <line x1="9" y1="13" x2="9" y2="19"/><line x1="17" y1="13" x2="17" y2="19"/>
+    <line x1="9" y1="19" x2="17" y2="19"/>
+    <line x1="13" y1="18" x2="11" y2="24"/><line x1="13" y1="18" x2="15" y2="24"/>
+  </svg>`,
+
+  'Supinated Lat Pulldown': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="4" y1="4" x2="22" y2="4"/>
+    <rect x="2" y="3" width="2.5" height="2.5" rx="0.5" fill="currentColor" opacity=".4" stroke="none"/>
+    <rect x="21.5" y="3" width="2.5" height="2.5" rx="0.5" fill="currentColor" opacity=".4" stroke="none"/>
+    <line x1="7" y1="4" x2="10" y2="9"/><line x1="19" y1="4" x2="16" y2="9"/>
+    <circle cx="13" cy="10" r="1.8"/>
+    <line x1="13" y1="12" x2="13" y2="19"/>
+    <line x1="13" y1="13" x2="10" y2="9"/><line x1="13" y1="13" x2="16" y2="9"/>
+    <line x1="13" y1="19" x2="8" y2="20"/><line x1="13" y1="19" x2="18" y2="20"/>
+    <line x1="8" y1="20" x2="8" y2="24"/><line x1="18" y1="20" x2="18" y2="24"/>
+  </svg>`,
+
+  'Pronated Cable Row': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="1" y="10" width="4" height="8" rx="1" fill="currentColor" opacity=".15" stroke="currentColor"/>
+    <line x1="5" y1="14" x2="10" y2="14"/>
+    <circle cx="16" cy="9" r="1.8"/>
+    <path d="M16 11 Q15 14 14 15"/>
+    <line x1="14" y1="15" x2="20" y2="15"/><line x1="14" y1="15" x2="13" y2="20"/><line x1="20" y1="15" x2="20" y2="20"/>
+    <line x1="15" y1="13" x2="10" y2="14"/>
+    <line x1="13" y1="20" x2="10" y2="22"/><line x1="20" y1="20" x2="22" y2="22"/>
+  </svg>`,
+
+  'Biceps Curls': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="13" cy="6" r="1.8"/>
+    <line x1="13" y1="8" x2="13" y2="15"/>
+    <line x1="13" y1="10" x2="18" y2="10"/>
+    <path d="M18 10 Q21 10 20 7"/>
+    <rect x="19" y="5.5" width="3.5" height="1.8" rx="0.5" fill="currentColor" opacity=".5" stroke="none"/>
+    <line x1="13" y1="10" x2="8" y2="14"/>
+    <rect x="5" y="13" width="3.5" height="1.8" rx="0.5" fill="currentColor" opacity=".5" stroke="none"/>
+    <line x1="13" y1="15" x2="10" y2="22"/><line x1="13" y1="15" x2="16" y2="22"/>
+  </svg>`,
+
+  'Rope Trap Shrug': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="13" y1="23" x2="13" y2="19"/><line x1="10" y1="21" x2="16" y2="21"/>
+    <circle cx="13" cy="7" r="1.8"/>
+    <path d="M9 10 Q7 8 8 11"/><path d="M17 10 Q19 8 18 11"/>
+    <line x1="13" y1="9" x2="13" y2="16"/>
+    <line x1="13" y1="12" x2="9" y2="16"/><line x1="13" y1="12" x2="17" y2="16"/>
+    <line x1="9" y1="16" x2="10" y2="19"/><line x1="17" y1="16" x2="16" y2="19"/>
+    <line x1="13" y1="16" x2="11" y2="22"/><line x1="13" y1="16" x2="15" y2="22"/>
+  </svg>`,
+
+  'Hyperextensions': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="3" y1="18" x2="23" y2="18"/><line x1="3" y1="18" x2="3" y2="22"/><line x1="23" y1="18" x2="23" y2="22"/>
+    <rect x="8" y="16" width="5" height="3" rx="1" fill="currentColor" opacity=".25" stroke="currentColor"/>
+    <circle cx="20" cy="12" r="1.8"/>
+    <path d="M19 14 Q15 14 10 16"/>
+    <line x1="18" y1="13" x2="16" y2="15"/>
+    <line x1="10" y1="16" x2="8" y2="18"/><line x1="11" y1="16" x2="10" y2="18"/>
+  </svg>`,
+
+  'Barbell Back Squat': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="5" y1="9" x2="21" y2="9"/>
+    <rect x="3" y="7.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
+    <rect x="20.5" y="7.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
+    <circle cx="13" cy="7" r="1.8"/>
+    <path d="M13 9 Q12 13 10 15"/>
+    <line x1="13" y1="10" x2="8" y2="10"/><line x1="13" y1="10" x2="18" y2="10"/>
+    <path d="M10 15 Q8 18 9 21"/><path d="M10 15 Q13 17 15 15"/><path d="M15 15 Q17 18 16 21"/>
+    <line x1="9" y1="21" x2="7" y2="22"/><line x1="16" y1="21" x2="18" y2="22"/>
+  </svg>`,
+
+  'Deadlift': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="4" y1="20" x2="22" y2="20"/>
+    <rect x="2" y="18.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
+    <rect x="21.5" y="18.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
+    <circle cx="17" cy="7" r="1.8"/>
+    <path d="M17 9 Q16 13 14 16"/>
+    <line x1="16" y1="11" x2="13" y2="20"/><line x1="14" y1="16" x2="15" y2="20"/>
+    <line x1="14" y1="16" x2="11" y2="20"/>
+    <line x1="11" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="16" y2="22"/>
+  </svg>`,
+
+  'Standing Calf Raise': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="13" cy="5" r="1.8"/>
+    <line x1="13" y1="7" x2="13" y2="14"/>
+    <line x1="13" y1="9" x2="10" y2="13"/><line x1="13" y1="9" x2="16" y2="13"/>
+    <line x1="13" y1="14" x2="10" y2="19"/><line x1="13" y1="14" x2="16" y2="19"/>
+    <path d="M10 19 Q9 21 10 23"/><path d="M16 19 Q17 21 16 23"/>
+    <line x1="10" y1="23" x2="8" y2="23"/><line x1="16" y1="23" x2="18" y2="23"/>
+    <line x1="6" y1="24" x2="20" y2="24"/>
+  </svg>`,
+};
+
+function getIcon(name) {
+  return EX_ICONS[name] || `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+    <circle cx="13" cy="7" r="2"/>
+    <line x1="13" y1="9" x2="13" y2="17"/>
+    <line x1="10" y1="22" x2="13" y2="17"/>
+    <line x1="16" y1="22" x2="13" y2="17"/>
+    <line x1="9" y1="12" x2="17" y2="12"/>
+  </svg>`;
+}
 let dragSrc = null;
 function dragStart(e, di, ei) {
   dragSrc = { di, ei };
