@@ -858,18 +858,17 @@ function updatePlayBtn() {
 let restDur = 120, restRemain = 0, restTick = null, restExKey = null, restSetIdx = null;
 
 function fmtRestDur(s) {
-  const m = Math.floor(s / 60), sec = s % 60;
-  return sec === 0 ? m + 'm' : m + ':' + String(sec).padStart(2,'0');
+  return s + 's';
 }
 
 function setRestDur(s, popId) {
   restDur = s;
   if (restTick) { restRemain = s; updateRestUI(); }
-  const durMap = {60:'1m', 120:'2m'};
+  const durMap = {60:'60s', 120:'120s'};
   document.querySelectorAll('.rp-opt').forEach(b => {
     b.classList.toggle('sel', b.textContent.trim() === durMap[s]);
   });
-  document.querySelectorAll('.rest-dur-btn').forEach(b => b.textContent = '⏱ ' + fmtRestDur(s));
+  document.querySelectorAll('.rest-dur-btn').forEach(b => b.textContent = '···');
   if (popId) closeRestPopover(popId);
 }
 
@@ -922,7 +921,7 @@ function stopRest(silent) {
     if (arc) arc.style.strokeDashoffset = 87.96;
     if (cnt) cnt.textContent = '';
   }
-  document.querySelectorAll('.rest-dur-btn').forEach(b => b.textContent = '⏱ ' + fmtRestDur(restDur));
+  document.querySelectorAll('.rest-dur-btn').forEach(b => b.textContent = '···');
   restExKey = null;
   restSetIdx = null;
 }
@@ -934,7 +933,7 @@ function updateRestUI() {
   const offset = CIRC * (1 - pct);
   const m = Math.floor(Math.max(0, restRemain) / 60);
   const s = Math.max(0, restRemain) % 60;
-  const timeStr = m + ':' + String(s).padStart(2, '0');
+  const timeStr = String(Math.max(0, restRemain));
   const [di, ei] = restExKey.split('-').map(Number);
   const si = restSetIdx;
   const wrap = document.getElementById(`scw-${di}-${ei}-${si}`);
@@ -1107,7 +1106,7 @@ function renderTable() {
           <div class="drag-num" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
           <div class="ex-main">
             <div class="en">${escHtml(ex.name)}</div>
-            ${last && !exDone ? `<div class="ex-last">prev: ${last}</div>` : ''}
+            ${last && !exDone && isExp ? `<div class="ex-last">prev: ${last}</div>` : ''}
           </div>
           <div class="ex-right">
             <div class="chevron${isExp ? ' open' : ''}">▾</div>
@@ -1128,12 +1127,12 @@ function renderTable() {
           <span class="set-info${done ? ' done' : ''}">${ex.reps} reps</span>
           <span class="set-wt${done ? ' done' : ''}">${escHtml(ex.weight)}</span>
           <div class="set-row-right">
-            <button class="rest-dur-btn" onclick="toggleRestPopover(event,'rp-${di}-${ei}')">⏱ ${fmtRestDur(restDur)}</button>
+            <button class="rest-dur-btn" onclick="toggleRestPopover(event,'rp-${di}-${ei}')">···</button>
             <div class="rest-popover" id="rp-${di}-${ei}">
               <div class="rest-popover-label">Rest duration</div>
               <div class="rest-popover-opts">
-                <button class="rp-opt${restDur===60?' sel':''}" onclick="setRestDur(60,'rp-${di}-${ei}')">1m</button>
-                <button class="rp-opt${restDur===120?' sel':''}" onclick="setRestDur(120,'rp-${di}-${ei}')">2m</button>
+                <button class="rp-opt${restDur===60?' sel':''}" onclick="setRestDur(60,'rp-${di}-${ei}')">60s</button>
+                <button class="rp-opt${restDur===120?' sel':''}" onclick="setRestDur(120,'rp-${di}-${ei}')">120s</button>
               </div>
             </div>
             <div class="set-check-wrap${isThisResting && done ? ' resting' : ''}" id="scw-${di}-${ei}-${si}">
@@ -1144,8 +1143,7 @@ function renderTable() {
               </svg>
               <div class="set-rest-count" id="cnt-${di}-${ei}-${si}"></div>
               <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}"
-                onclick="toggleSet(event,${di},${ei},${si})"
-                style="${done ? 'background:var(--text);border-color:var(--text)' : ''}">
+                onclick="toggleSet(event,${di},${ei},${si})">
                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                   <path d="M1 3.8L3.8 7L9 1" stroke="var(--bg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
