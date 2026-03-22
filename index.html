@@ -111,48 +111,59 @@ body {
 .pn.active { color: var(--text); border-bottom-color: var(--text); }
 
 /* ── DAY TABS ── */
-.day-tabs { display: flex; gap: 6px; margin-bottom: 18px; }
+.day-tabs { display: flex; gap: 5px; margin-bottom: 18px; }
 .dt {
   flex: 1;
   background: var(--surf);
   border: 1px solid var(--line);
-  border-radius: var(--r2);
-  padding: 12px 6px 10px;
+  border-radius: 6px;
+  padding: 8px 4px 7px;
   text-align: center;
   cursor: pointer;
   transition: all .25s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .dt.active {
   background: var(--text);
   border-color: var(--text);
 }
-.dt-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  margin: 0 auto 6px;
-  background: var(--line2);
-  transition: background .25s;
-}
-.dt.active .dt-dot { background: var(--bg); }
-.dt.done .dt-dot { background: var(--text); }
+.dt-dot { display: none; }
+.dt-vol { display: none; }
 .dt-label {
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: .14em;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: .02em;
   display: block;
-  color: var(--muted2);
+  color: var(--text);
   text-transform: uppercase;
 }
 .dt.active .dt-label { color: var(--bg); }
-.dt-vol {
+.dt-edit {
+  display: none;
   font-family: var(--mono);
-  font-size: 7.5px;
-  margin-top: 3px;
-  display: block;
-  color: var(--muted);
+  font-size: 14px;
+  background: none;
+  border: none;
+  color: rgba(10,10,10,.6);
+  cursor: pointer;
+  padding: 0;
+  margin-top: 2px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: .05em;
 }
-.dt.active .dt-vol { color: rgba(10,10,10,.55); }
+.dt.active .dt-edit { display: block; }
+.dt-add {
+  flex: 0 0 32px !important;
+  padding: 8px 4px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* ── INLINE REST TIMER ── */
 .ex-rest {
@@ -246,11 +257,12 @@ body {
 .ex-name-row.done-all .ex-last { display: none; }
 .ex-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .set-progress { font-family: var(--mono); font-size: 10px; min-width: 26px; text-align: right; transition: color .2s; }
-.chevron { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; color: var(--muted); transition: transform .25s cubic-bezier(.4,0,.2,1); font-size: 8px; }
+.chevron { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; color: var(--muted2); transition: transform .25s cubic-bezier(.4,0,.2,1); font-size: 12px; }
 .chevron.open { transform: rotate(180deg); }
 
-.ex-edit-btn { font-family: var(--mono); font-size: 14px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 4px 5px; border-radius: 4px; line-height: 1; flex-shrink: 0; opacity: .6; letter-spacing: .1em; }
+.ex-edit-btn { background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; gap: 3px; opacity: .8; }
 .ex-edit-btn:active { background: var(--line); opacity: 1; }
+.ex-edit-btn span { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--text); }
 
 /* Sets panel */
 .sets-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .25s cubic-bezier(.4,0,.2,1); }
@@ -308,6 +320,25 @@ body {
   transition: border-color .15s;
 }
 .ie-input:focus { border-color: var(--muted2); }
+.kg-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.kg-wrap .ie-input,
+.kg-wrap .field-input-inner {
+  padding-right: 28px;
+  width: 100%;
+}
+.kg-suffix {
+  position: absolute;
+  right: 8px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  pointer-events: none;
+  letter-spacing: .06em;
+}
 .edit-btns { display: flex; gap: 8px; }
 .eb { flex: 1; font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em; padding: 11px; border-radius: var(--r); border: none; cursor: pointer; text-transform: uppercase; transition: opacity .15s; }
 .eb:active { opacity: .7; }
@@ -532,7 +563,37 @@ body {
 }
 .pop { animation: pop .3s cubic-bezier(.34,1.56,.64,1); }
 
-/* ── STREAK ── */
+/* ── INF TOGGLE ── */
+.inf-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-right: 6px;
+  transition: opacity .2s;
+  opacity: .85;
+}
+.inf-toggle:active { opacity: .5; }
+.inf-knob {
+  transition: cx .4s cubic-bezier(.4,0,.2,1);
+}
+body.light .inf-knob { cx: 33px; }
+
+/* ── LIGHT MODE ── */
+body.light {
+  --bg: #F5F3EF;
+  --surf: #EDEAE5;
+  --surf2: #E4E1DC;
+  --line: #D8D4CE;
+  --line2: #C8C4BE;
+  --text: #1A1816;
+  --muted: #999490;
+  --muted2: #777370;
+}
 .streak-pill {
   display: flex; align-items: center; gap: 6px;
   background: var(--surf);
@@ -551,7 +612,19 @@ body {
 <div class="top">
   <div class="brand">
     <div class="brand-left">
-      <div class="brand-name">∞</div>
+      <div class="brand-name">
+        <button class="inf-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <svg width="44" height="22" viewBox="0 0 44 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- left circle -->
+            <circle cx="11" cy="11" r="9.5" stroke="currentColor" stroke-width="1.4"/>
+            <!-- right circle -->
+            <circle cx="33" cy="11" r="9.5" stroke="currentColor" stroke-width="1.4"/>
+            <!-- moving knob -->
+            <circle class="inf-knob" cx="11" cy="11" r="5.5" fill="currentColor"/>
+          </svg>
+        </button>
+        <span style="font-size:13px;letter-spacing:.18em;opacity:.5">CONSISTENCY</span>
+      </div>
       <div class="brand-sub">Training Log</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
@@ -625,18 +698,39 @@ body {
     <div class="r3">
       <div class="field"><label>Sets</label><input id="fs" type="number" min="1" max="20" placeholder="3" inputmode="numeric"></div>
       <div class="field"><label>Reps</label><input id="fr" type="number" min="1" max="100" placeholder="12" inputmode="numeric"></div>
-      <div class="field"><label>Weight</label><input id="fw2" type="text" placeholder="20KG" spellcheck="false"></div>
+      <div class="field"><label>Weight</label><div class="kg-wrap"><input id="fw2" type="number" inputmode="decimal" placeholder="0" spellcheck="false" style="font-family:var(--mono);font-size:15px;background:var(--surf2);border:1px solid var(--line);border-radius:var(--r);padding:13px 30px 13px 15px;color:var(--text);outline:none;width:100%;-webkit-appearance:none;transition:border-color .15s;"><span class="kg-suffix">KG</span></div></div>
     </div>
     <button class="bsv" id="bsv" onclick="saveEx()">Save</button>
   </div>
 </div>
 
+<!-- DAY EDIT SHEET -->
+<div class="ov" id="ov-day" onclick="if(event.target===this)closeDaySheet()">
+  <div class="sh">
+    <div class="shh"></div>
+    <div class="shl" id="day-sheet-title">Edit Day</div>
+    <div class="field"><label>Day name</label><input id="day-name-input" type="text" placeholder="e.g. Shoulders" autocomplete="off" spellcheck="false"></div>
+    <button class="bsv" id="day-save-btn" onclick="saveDay()">Save</button>
+    <button id="day-del-btn" onclick="deleteDay()" style="width:100%;margin-top:10px;padding:13px;background:none;border:1px solid var(--line);border-radius:var(--r);font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:#C06060;cursor:pointer;text-transform:uppercase;">Delete Day</button>
+  </div>
+</div>
+
 <script>
-const CFG = [
-  { label: 'Chest', color: '#F0EDE8' },
-  { label: 'Back',  color: '#F0EDE8' },
-  { label: 'Legs',  color: '#F0EDE8' }
+// ── THEME ──
+const savedTheme = localStorage.getItem('kis8_theme') || 'dark';
+if (savedTheme === 'light') document.body.classList.add('light');
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('kis8_theme', isLight ? 'light' : 'dark');
+}
+
+const DEF_CFG = [
+  { label: 'Chest' },
+  { label: 'Back'  },
+  { label: 'Legs'  }
 ];
+let CFG = JSON.parse(localStorage.getItem('kis8_cfg')||'null') || DEF_CFG.map(c=>({...c, color:'#F0EDE8'}));
 const DEF = [
   [
     {id:1,name:'Incline Bench Press',sets:3,reps:12,weight:'25KG'},
@@ -760,6 +854,7 @@ function persist() {
   localStorage.setItem('kis8_data', JSON.stringify(data));
   localStorage.setItem('kis8_sets', JSON.stringify(setsDone));
   localStorage.setItem('kis8_hist', JSON.stringify(history));
+  localStorage.setItem('kis8_cfg',  JSON.stringify(CFG));
 }
 
 function isExDone(di, ei) {
@@ -854,10 +949,20 @@ function renderTabs() {
     el.innerHTML = `
       <div class="dt-dot"></div>
       <span class="dt-label">${cfg.label}</span>
-      ${vol > 0 ? `<span class="dt-vol">${fmtVol(vol)}</span>` : ''}`;
-    el.onclick = () => { saveInlineEdit(); activeDay = di; editingEx = null; deleteConfirm = null; expanded.clear(); render(); };
+      ${vol > 0 ? `<span class="dt-vol">${fmtVol(vol)}</span>` : ''}
+      <button class="dt-edit" onclick="openDayEdit(event,${di})">···</button>`;
+    el.onclick = (e) => {
+      if (e.target.closest('.dt-edit')) return;
+      saveInlineEdit(); activeDay = di; editingEx = null; deleteConfirm = null; expanded.clear(); render();
+    };
     c.appendChild(el);
   });
+  // Add day button
+  const add = document.createElement('div');
+  add.className = 'dt dt-add';
+  add.innerHTML = `<span style="font-size:16px;line-height:1;color:var(--muted)">+</span>`;
+  add.onclick = () => openDayAdd();
+  c.appendChild(add);
 }
 
 // ── TABLE ──
@@ -900,7 +1005,7 @@ function renderTable() {
           <div class="edit-grid">
             <div><label>Sets</label><input class="ie-input" id="ie-sets" type="number" min="1" max="20" value="${ex.sets}" inputmode="numeric"></div>
             <div><label>Reps</label><input class="ie-input" id="ie-reps" type="number" min="1" max="100" value="${ex.reps}" inputmode="numeric"></div>
-            <div><label>Weight</label><input class="ie-input" id="ie-weight" value="${escHtml(ex.weight)}" spellcheck="false"></div>
+            <div><label>Weight</label><div class="kg-wrap"><input class="ie-input" id="ie-weight" type="number" inputmode="decimal" value="${parseFloat(ex.weight)||''}" spellcheck="false"><span class="kg-suffix">KG</span></div></div>
           </div>
           <div class="edit-btns">
             <button class="eb eb-save" onclick="saveInlineEdit()">Save</button>
@@ -916,9 +1021,8 @@ function renderTable() {
             ${last && !exDone ? `<div class="ex-last">prev: ${last}</div>` : ''}
           </div>
           <div class="ex-right">
-            <span class="set-progress" style="color:${progressColor}">${progressTxt}</span>
             <div class="chevron${isExp ? ' open' : ''}">▾</div>
-            <button class="ex-edit-btn" onclick="startEdit(${di},${ei},event)">···</button>
+            <button class="ex-edit-btn" onclick="startEdit(${di},${ei},event)"><span></span><span></span><span></span></button>
           </div>
         </div>
         <div class="sets-wrap${isExp ? ' open' : ''}">
@@ -935,7 +1039,7 @@ function renderTable() {
             onclick="toggleSet(event,${di},${ei},${si})"
             style="${done ? 'background:var(--text);border-color:var(--text)' : ''}">
             <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-              <path d="M1 3.8L3.8 7L9 1" stroke="#0A0A0A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M1 3.8L3.8 7L9 1" stroke="var(--bg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
         </div>`;
@@ -1207,7 +1311,7 @@ function saveInlineEdit() {
   const { di, ei } = editingEx;
   const s = parseInt(document.getElementById('ie-sets')?.value) || data[di][ei].sets;
   const r = parseInt(document.getElementById('ie-reps')?.value) || data[di][ei].reps;
-  const w = document.getElementById('ie-weight')?.value.trim().toUpperCase() || data[di][ei].weight;
+  const w = (document.getElementById('ie-weight')?.value.trim() || parseFloat(data[di][ei].weight)) + 'KG';
   data[di][ei] = { ...data[di][ei], sets:s, reps:r, weight:w };
   syncSets(); persist();
   editingEx = null; render();
@@ -1368,7 +1472,7 @@ function saveEx() {
   if (!name) { document.getElementById('fn').focus(); return; }
   const sets = parseInt(document.getElementById('fs').value) || 3;
   const reps = parseInt(document.getElementById('fr').value) || 12;
-  const weight = document.getElementById('fw2').value.trim().toUpperCase() || 'BW';
+  const weight = document.getElementById('fw2').value.trim() ? document.getElementById('fw2').value.trim() + 'KG' : 'BW';
   const { di } = ctx;
   const id = data[di].length ? Math.max(...data[di].map(e => e.id)) + 1 : 1;
   data[di].push({ id, name, sets, reps, weight });
@@ -1378,6 +1482,48 @@ function saveEx() {
 }
 function maybeClose(e) { if (e.target === document.getElementById('ov')) document.getElementById('ov').classList.remove('open'); }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── DAY MANAGEMENT ──
+let dayCtx = null; // { mode: 'edit'|'add', di }
+
+function openDayEdit(e, di) {
+  e.stopPropagation();
+  dayCtx = { mode: 'edit', di };
+  document.getElementById('day-sheet-title').textContent = 'Edit Day';
+  document.getElementById('day-name-input').value = CFG[di].label;
+  document.getElementById('day-del-btn').style.display = data.length > 1 ? '' : 'none';
+  document.getElementById('ov-day').classList.add('open');
+  setTimeout(() => document.getElementById('day-name-input').focus(), 300);
+}
+
+function openDayAdd() {
+  dayCtx = { mode: 'add' };
+  document.getElementById('day-sheet-title').textContent = 'Add Day';
+  document.getElementById('day-name-input').value = '';
+  document.getElementById('day-del-btn').style.display = 'none';
+  document.getElementById('ov-day').classList.add('open');
+  setTimeout(() => document.getElementById('day-name-input').focus(), 300);
+}
+
+function closeDaySheet() {
+  document.getElementById('ov-day').classList.remove('open');
+  dayCtx = null;
+}
+
+function saveDay() {
+  const name = document.getElementById('day-name-input').value.trim();
+  if (!name) { document.getElementById('day-name-input').focus(); return; }
+  if (dayCtx.mode === 'edit') {
+    CFG[dayCtx.di].label = name;
+  } else {
+    CFG.push({ label: name, color: '#F0EDE8' });
+    data.push([]);
+    setsDone.push([]);
+    activeDay = CFG.length - 1;
+  }
+  closeDaySheet();
+  persist(); render();
+}
 
 function render() { updateFooter(); renderTabs(); renderTable(); renderStreak(); }
 
