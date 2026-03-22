@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0A0A0A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="CONSISTENCY">
+<meta name="apple-mobile-web-app-title" content="KIS">
 <title>∞</title>
 <link rel="manifest" href="#" id="manifest-placeholder">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -171,60 +171,6 @@ body {
   justify-content: center;
 }
 
-/* ── INLINE REST TIMER ── */
-.ex-rest {
-  display: none;
-  overflow: hidden;
-  border-top: 1px solid var(--line);
-}
-.ex-rest.show { display: block; animation: slideDown .2s cubic-bezier(.4,0,.2,1); }
-.ex-rest-inner {
-  padding: 10px 16px 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.ex-rest-time {
-  font-family: var(--mono);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -.04em;
-  color: var(--text);
-  flex-shrink: 0;
-  min-width: 48px;
-}
-.ex-rest-right { flex: 1; display: flex; flex-direction: column; gap: 7px; }
-.ex-rest-track { height: 1px; background: var(--line2); border-radius: 1px; overflow: hidden; }
-.ex-rest-fill { height: 100%; background: var(--text); border-radius: 1px; transition: width 1s linear; }
-.ex-rest-presets { display: flex; gap: 5px; }
-.ex-rest-pre {
-  font-family: var(--mono);
-  font-size: 8px;
-  background: none;
-  border: 1px solid var(--line2);
-  border-radius: 3px;
-  padding: 4px 9px;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all .15s;
-  letter-spacing: .04em;
-}
-.ex-rest-pre.sel { border-color: var(--muted2); color: var(--text); }
-.ex-rest-skip {
-  font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: .1em;
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  text-transform: uppercase;
-  padding: 4px 2px;
-  flex-shrink: 0;
-  transition: color .15s;
-}
-.ex-rest-skip:active { color: var(--text); }
-
 /* ── EXERCISE LIST ── */
 .tbl-wrap {
   background: var(--surf);
@@ -280,7 +226,7 @@ body {
   grid-template-columns: 18px 1fr auto auto;
   align-items: center;
   gap: 12px;
-  padding: 7px 8px;
+  padding: 5px 8px;
   border-radius: 6px;
   transition: background .2s;
 }
@@ -291,6 +237,55 @@ body {
 .set-wt { font-family: var(--mono); font-size: 10px; color: var(--muted2); transition: opacity .2s; }
 .set-wt.done { opacity: .25; }
 .set-prev { font-family: var(--mono); font-size: 8px; color: var(--muted); opacity: .5; margin-top: 2px; }
+.set-check-wrap {
+  position: relative;
+  width: 36px; height: 36px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.set-check-arc {
+  position: absolute;
+  top: 0; left: 0;
+  width: 36px; height: 36px;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.set-arc-bg {
+  fill: none;
+  stroke: var(--line2);
+  stroke-width: 3;
+  opacity: 0;
+  transition: opacity .3s;
+}
+.set-arc-fill {
+  fill: none;
+  stroke: #C94040;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 87.96; /* 2π×14 */
+  stroke-dashoffset: 87.96;
+  transition: stroke-dashoffset 1s linear;
+}
+.set-check-wrap.resting .set-arc-bg { opacity: 1; }
+/* Countdown label shown inside circle during rest */
+.set-rest-count {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 7px;
+  font-weight: 700;
+  color: #C94040;
+  letter-spacing: -.02em;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s;
+  z-index: 2;
+}
+.set-check-wrap.resting .set-rest-count { opacity: 1; }
+.set-check-wrap.resting .set-check { opacity: 0; }
 .set-check {
   width: 28px; height: 28px;
   border-radius: 50%;
@@ -300,10 +295,73 @@ body {
   display: flex; align-items: center; justify-content: center;
   transition: border-color .2s, background .2s, transform .2s;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 .set-check.checked { border-color: var(--text); background: var(--text); }
 .set-check svg { opacity: 0; transition: opacity .15s; }
 .set-check.checked svg { opacity: 1; }
+
+/* Rest duration edit */
+.rest-dur-btn {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: .06em;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color .15s, background .15s;
+  white-space: nowrap;
+}
+.rest-dur-btn:active { color: var(--text); background: var(--line); }
+.rest-popover {
+  display: none;
+  position: absolute;
+  right: 0; top: calc(100% + 6px);
+  background: var(--surf2);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  padding: 8px;
+  gap: 5px;
+  flex-direction: column;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  min-width: 100px;
+}
+.rest-popover.open { display: flex; }
+.rest-popover-label {
+  font-family: var(--mono);
+  font-size: 7px;
+  color: var(--muted);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 0 2px 4px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 2px;
+}
+.rest-popover-opts { display: flex; gap: 4px; flex-wrap: wrap; }
+.rp-opt {
+  font-family: var(--mono);
+  font-size: 8px;
+  background: none;
+  border: 1px solid var(--line2);
+  border-radius: 3px;
+  padding: 5px 8px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .04em;
+}
+.rp-opt.sel { border-color: var(--text); color: var(--text); }
+.set-row-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
 
 
 
@@ -524,7 +582,7 @@ body {
 }
 .bsv:active { opacity: .82; }
 
-.hint { font-family: var(--mono); font-size: 8px; color: var(--muted); letter-spacing: .06em; text-align: center; padding: 8px 0 2px; opacity: .35; }
+.hint { font-family: var(--mono); font-size: 8px; color: var(--muted); letter-spacing: .06em; text-align: center; padding: 8px 0 2px; opacity: .55; }
 .hidden { display: none !important; }
 
 /* ── DRAG & DROP ── */
@@ -600,17 +658,6 @@ body.light {
   --muted: #999490;
   --muted2: #777370;
 }
-.streak-pill {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--surf);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 6px 11px 6px 9px;
-}
-.streak-dots { display: flex; gap: 3px; align-items: center; }
-.s-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--line2); transition: background .3s; }
-.s-dot.on { background: var(--text); }
-.streak-num { font-family: var(--mono); font-size: 9px; color: var(--muted); white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -631,13 +678,13 @@ body.light {
       <div class="brand-sub">Training Log</div>
     </div>
     <div class="brand-timer" onclick="toggleSessionTimer()">
-      <button class="st-play" id="st-play">
-        <svg id="st-icon" width="10" height="10" viewBox="0 0 12 12" fill="currentColor">
-          <polygon points="2,1 11,6 2,11"/>
-        </svg>
-      </button>
-      <span class="st-val" id="st-val">00:00</span>
-    </div>
+        <button class="st-play" id="st-play">
+          <svg id="st-icon" width="10" height="10" viewBox="0 0 12 12" fill="currentColor">
+            <polygon points="2,1 11,6 2,11"/>
+          </svg>
+        </button>
+        <span class="st-val" id="st-val">00:00</span>
+      </div>
   </div>
 
   <div class="page-nav">
@@ -807,20 +854,50 @@ function updatePlayBtn() {
 }
 
 // ── REST TIMER (inline, per exercise) ──
-let restDur = 90, restRemain = 0, restTick = null, restExKey = null;
+let restDur = 90, restRemain = 0, restTick = null, restExKey = null, restSetIdx = null;
 
-function setRestDur(s) {
-  restDur = s;
-  document.querySelectorAll('.ex-rest-pre').forEach(b => {
-    const map = {'1m':60,'1:30':90,'2m':120,'3m':180};
-    b.classList.toggle('sel', map[b.dataset.val] === s);
-  });
-  if (restTick) { restRemain = s; updateRestUI(); }
+function fmtRestDur(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return sec === 0 ? m + 'm' : m + ':' + String(sec).padStart(2,'0');
 }
 
-function startRest(di, ei) {
+function setRestDur(s, popId) {
+  restDur = s;
+  if (restTick) { restRemain = s; updateRestUI(); }
+  const durMap = {60:'1m', 90:'1:30', 120:'2m', 180:'3m'};
+  document.querySelectorAll('.rp-opt').forEach(b => {
+    b.classList.toggle('sel', b.textContent.trim() === durMap[s]);
+  });
+  document.querySelectorAll('.rest-dur-btn').forEach(b => b.textContent = '⏱ ' + fmtRestDur(s));
+  if (popId) closeRestPopover(popId);
+}
+
+function toggleRestPopover(e, id) {
+  e.stopPropagation();
+  const pop = document.getElementById(id);
+  if (!pop) return;
+  const isOpen = pop.classList.contains('open');
+  document.querySelectorAll('.rest-popover.open').forEach(p => p.classList.remove('open'));
+  if (!isOpen) pop.classList.add('open');
+}
+function closeRestPopover(id) {
+  const pop = document.getElementById(id);
+  if (pop) pop.classList.remove('open');
+}
+document.addEventListener('click', e => {
+  // Close rest popovers
+  document.querySelectorAll('.rest-popover.open').forEach(p => p.classList.remove('open'));
+  // Save inline edit if clicked outside table
+  if (editingEx) {
+    const tbl = document.getElementById('tbl');
+    if (tbl && !tbl.contains(e.target)) saveInlineEdit();
+  }
+});
+
+function startRest(di, ei, si) {
   stopRest(true);
   restExKey = `${di}-${ei}`;
+  restSetIdx = si;
   restRemain = restDur;
   updateRestUI();
   restTick = setInterval(() => {
@@ -835,23 +912,36 @@ function startRest(di, ei) {
 
 function stopRest(silent) {
   clearInterval(restTick); restTick = null;
-  if (!silent) {
-    const el = restExKey ? document.getElementById(`rest-${restExKey}`) : null;
-    if (el) el.classList.remove('show');
-    restExKey = null;
+  if (restExKey) {
+    const si = restSetIdx;
+    const wrap = document.getElementById(`scw-${restExKey}-${si}`);
+    const arc = document.getElementById(`arc-${restExKey}-${si}`);
+    const cnt = document.getElementById(`cnt-${restExKey}-${si}`);
+    if (wrap) wrap.classList.remove('resting');
+    if (arc) arc.style.strokeDashoffset = 87.96;
+    if (cnt) cnt.textContent = '';
   }
+  document.querySelectorAll('.rest-dur-btn').forEach(b => b.textContent = '⏱ ' + fmtRestDur(restDur));
+  restExKey = null;
+  restSetIdx = null;
 }
 
 function updateRestUI() {
-  const el = restExKey ? document.getElementById(`rest-${restExKey}`) : null;
-  if (!el) return;
-  el.classList.add('show');
+  if (!restExKey) return;
+  const CIRC = 87.96;
+  const pct = Math.max(0, restRemain) / restDur;
+  const offset = CIRC * (1 - pct);
   const m = Math.floor(Math.max(0, restRemain) / 60);
   const s = Math.max(0, restRemain) % 60;
-  const timeEl = el.querySelector('.ex-rest-time');
-  const fillEl = el.querySelector('.ex-rest-fill');
-  if (timeEl) timeEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
-  if (fillEl) fillEl.style.width = (Math.max(0, restRemain) / restDur * 100) + '%';
+  const timeStr = m + ':' + String(s).padStart(2, '0');
+  const [di, ei] = restExKey.split('-').map(Number);
+  const si = restSetIdx;
+  const wrap = document.getElementById(`scw-${di}-${ei}-${si}`);
+  const arc = document.getElementById(`arc-${di}-${ei}-${si}`);
+  const cnt = document.getElementById(`cnt-${di}-${ei}-${si}`);
+  if (wrap) wrap.classList.add('resting');
+  if (arc) arc.style.strokeDashoffset = offset;
+  if (cnt) cnt.textContent = timeStr;
 }
 
 // ── DATA ──
@@ -885,27 +975,6 @@ function isAllDone(di) {
 
 function dayKey(d) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-function calcStreak() {
-  const days = new Set(history.map(h => h.dk).filter(Boolean));
-  let streak = 0, d = new Date();
-  for (let i = 0; i < 365; i++) {
-    if (days.has(dayKey(d))) streak++;
-    else if (i > 0) break;
-    d.setDate(d.getDate() - 1);
-  }
-  return streak;
-}
-function renderStreak() {
-  const days = new Set(history.map(h => h.dk).filter(Boolean));
-  let dots = '';
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    dots += `<div class="s-dot${days.has(dayKey(d)) ? ' on' : ''}"></div>`;
-  }
-  document.getElementById('streak-dots').innerHTML = dots;
-  const s = calcStreak();
-  document.getElementById('streak-num').textContent = s > 0 ? s + ' ▲' : '';
 }
 
 function lastFor(di, name) {
@@ -1050,41 +1119,44 @@ function renderTable() {
       const prevEx = lastExData(di, ex.name);
       for (let si = 0; si < ex.sets; si++) {
         const done = sArr[si] || false;
+        const isThisResting = restExKey === `${di}-${ei}` && restTick !== null && restSetIdx === si;
+        const CIRC = 87.96;
+        const arcOffset = isThisResting ? (CIRC * (1 - Math.max(0, restRemain) / restDur)) : CIRC;
         html += `<div class="set-row${done ? ' set-done' : ''}">
           <span class="set-num">${si+1}</span>
           <span class="set-info${done ? ' done' : ''}">${ex.reps} reps</span>
           <span class="set-wt${done ? ' done' : ''}">${escHtml(ex.weight)}</span>
-          <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}"
-            onclick="toggleSet(event,${di},${ei},${si})"
-            style="${done ? 'background:var(--text);border-color:var(--text)' : ''}">
-            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-              <path d="M1 3.8L3.8 7L9 1" stroke="var(--bg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <div class="set-row-right">
+            <button class="rest-dur-btn" onclick="toggleRestPopover(event,'rp-${di}-${ei}')">⏱ ${fmtRestDur(restDur)}</button>
+            <div class="rest-popover" id="rp-${di}-${ei}">
+              <div class="rest-popover-label">Rest duration</div>
+              <div class="rest-popover-opts">
+                <button class="rp-opt${restDur===60?' sel':''}" onclick="setRestDur(60,'rp-${di}-${ei}')">1m</button>
+                <button class="rp-opt${restDur===90?' sel':''}" onclick="setRestDur(90,'rp-${di}-${ei}')">1:30</button>
+                <button class="rp-opt${restDur===120?' sel':''}" onclick="setRestDur(120,'rp-${di}-${ei}')">2m</button>
+                <button class="rp-opt${restDur===180?' sel':''}" onclick="setRestDur(180,'rp-${di}-${ei}')">3m</button>
+              </div>
+            </div>
+            <div class="set-check-wrap${isThisResting && done ? ' resting' : ''}" id="scw-${di}-${ei}-${si}">
+              <svg class="set-check-arc" viewBox="0 0 36 36">
+                <circle class="set-arc-bg" cx="18" cy="18" r="14"/>
+                <circle class="set-arc-fill" id="arc-${di}-${ei}-${si}" cx="18" cy="18" r="14"
+                  style="stroke-dashoffset:${arcOffset}"/>
+              </svg>
+              <div class="set-rest-count" id="cnt-${di}-${ei}-${si}"></div>
+              <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}"
+                onclick="toggleSet(event,${di},${ei},${si})"
+                style="${done ? 'background:var(--text);border-color:var(--text)' : ''}">
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 3.8L3.8 7L9 1" stroke="var(--bg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>`;
       }
 
       html += `</div></div></div>`;
-      // Inline rest timer
-      const isResting = restExKey === `${di}-${ei}`;
-      const rm = Math.floor(Math.max(0, restRemain) / 60);
-      const rs = Math.max(0, restRemain) % 60;
-      const rPct = restDur > 0 ? (Math.max(0, restRemain) / restDur * 100) : 100;
-      html += `<div class="ex-rest${isResting ? ' show' : ''}" id="rest-${di}-${ei}">
-        <div class="ex-rest-inner">
-          <div class="ex-rest-time">${isResting ? (rm+':'+(rs<10?'0':'')+rs) : '1:30'}</div>
-          <div class="ex-rest-right">
-            <div class="ex-rest-track"><div class="ex-rest-fill" style="width:${isResting?rPct:100}%"></div></div>
-            <div class="ex-rest-presets">
-              <button class="ex-rest-pre${restDur===60?' sel':''}" data-val="1m" onclick="setRestDur(60)">1m</button>
-              <button class="ex-rest-pre${restDur===90?' sel':''}" data-val="1:30" onclick="setRestDur(90)">1:30</button>
-              <button class="ex-rest-pre${restDur===120?' sel':''}" data-val="2m" onclick="setRestDur(120)">2m</button>
-              <button class="ex-rest-pre${restDur===180?' sel':''}" data-val="3m" onclick="setRestDur(180)">3m</button>
-            </div>
-          </div>
-          <button class="ex-rest-skip" onclick="stopRest()">Skip</button>
-        </div>
-      </div>`;
     }
 
     html += `</div>`;
@@ -1306,13 +1378,18 @@ function toggleSet(e, di, ei, si) {
   setsDone[di][ei][si] = !wasChecked;
   if (!wasChecked) {
     expanded.add(`${di}-${ei}`);
-    startRest(di, ei);
+    startRest(di, ei, si);
     if (!sessionActive) startSessionTimer();
   } else {
-    stopRest();
+    // Only stop rest if it's this exact set that's resting
+    if (restExKey === `${di}-${ei}` && restSetIdx === si) stopRest();
   }
   if (isAllDone(di)) saveToHistory(di);
   persist(); render();
+  // Re-apply resting state after render (render rebuilds DOM)
+  if (!wasChecked && restExKey === `${di}-${ei}` && restSetIdx === si) {
+    updateRestUI();
+  }
   requestAnimationFrame(() => {
     const btn = document.getElementById(`sc-${di}-${ei}-${si}`);
     if (btn && !wasChecked) { btn.classList.add('pop'); setTimeout(() => btn.classList.remove('pop'), 300); }
@@ -1330,7 +1407,8 @@ function saveInlineEdit() {
   const { di, ei } = editingEx;
   const s = parseInt(document.getElementById('ie-sets')?.value) || data[di][ei].sets;
   const r = parseInt(document.getElementById('ie-reps')?.value) || data[di][ei].reps;
-  const w = (document.getElementById('ie-weight')?.value.trim() || parseFloat(data[di][ei].weight)) + 'KG';
+  const rawW = document.getElementById('ie-weight')?.value.trim();
+  const w = rawW && !isNaN(parseFloat(rawW)) ? parseFloat(rawW) + 'KG' : (data[di][ei].weight || 'BW');
   data[di][ei] = { ...data[di][ei], sets:s, reps:r, weight:w };
   syncSets(); persist();
   editingEx = null; render();
@@ -1338,6 +1416,7 @@ function saveInlineEdit() {
 function askDelete(di, ei) { saveInlineEdit(); editingEx = null; deleteConfirm = { di, ei }; renderTable(); }
 function cancelDelete() { deleteConfirm = null; renderTable(); }
 function confirmDelete(di, ei) {
+  if (restExKey === `${di}-${ei}`) stopRest();
   data[di].splice(ei, 1); setsDone[di].splice(ei, 1);
   expanded.delete(`${di}-${ei}`);
   deleteConfirm = null; persist(); render();
@@ -1378,6 +1457,13 @@ function renderHistory() {
         </div>
       </div>
       <div class="hist-exs">
+        <div class="hist-row" style="opacity:.35;border-bottom:1px solid var(--line)">
+          <span class="hc"></span>
+          <span class="hc" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.1em">EXERCISE</span>
+          <span class="hc r" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.06em">SETS</span>
+          <span class="hc r" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.06em">REPS</span>
+          <span class="hc r" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.06em">WEIGHT</span>
+        </div>
         ${(h.exercises||[]).map((ex,i) => `
           <div class="hist-row">
             <span class="hc">${String(i+1).padStart(2,'0')}</span>
@@ -1491,10 +1577,13 @@ function saveEx() {
   if (!name) { document.getElementById('fn').focus(); return; }
   const sets = parseInt(document.getElementById('fs').value) || 3;
   const reps = parseInt(document.getElementById('fr').value) || 12;
-  const weight = document.getElementById('fw2').value.trim() ? document.getElementById('fw2').value.trim() + 'KG' : 'BW';
+  const rawW = document.getElementById('fw2').value.trim();
+  const weight = rawW && !isNaN(parseFloat(rawW)) ? parseFloat(rawW) + 'KG' : 'BW';
   const { di } = ctx;
   const id = data[di].length ? Math.max(...data[di].map(e => e.id)) + 1 : 1;
   data[di].push({ id, name, sets, reps, weight });
+  const newEi = data[di].length - 1;
+  expanded.add(`${di}-${newEi}`);
   syncSets();
   document.getElementById('ov').classList.remove('open');
   persist(); render();
@@ -1544,14 +1633,21 @@ function saveDay() {
   persist(); render();
 }
 
-function render() { updateFooter(); renderTabs(); renderTable(); renderStreak(); }
+function deleteDay() {
+  if (!dayCtx || dayCtx.mode !== 'edit') return;
+  const di = dayCtx.di;
+  if (data.length <= 1) return; // nu permite ștergerea ultimei zile
+  data.splice(di, 1);
+  setsDone.splice(di, 1);
+  CFG.splice(di, 1);
+  if (activeDay >= data.length) activeDay = data.length - 1;
+  closeDaySheet();
+  persist(); render();
+}
+
+function render() { updateFooter(); renderTabs(); renderTable(); }
 
 document.getElementById('fab').onclick = () => doAdd(activeDay);
-document.addEventListener('click', e => {
-  if (!editingEx) return;
-  const tbl = document.getElementById('tbl');
-  if (tbl && !tbl.contains(e.target)) saveInlineEdit();
-});
 
 render();
 
