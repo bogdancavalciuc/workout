@@ -224,9 +224,9 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .sets-pad { padding: 2px 16px 12px; }
 .set-row {
   display: grid;
-  grid-template-columns: 18px 1fr 1fr auto;
+  grid-template-columns: 18px 1fr auto auto;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   padding: 5px 8px;
   border-radius: 6px;
   transition: background .2s;
@@ -237,48 +237,6 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .set-info.done { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(240,237,232,.2); }
 .set-wt { font-family: var(--mono); font-size: 10px; color: var(--muted2); transition: opacity .2s; }
 .set-wt.done { opacity: .25; }
-/* Inline per-set editing */
-.set-field-wrap { display: flex; align-items: center; gap: 2px; cursor: text; }
-.set-field {
-  font-family: var(--mono);
-  font-size: 11px;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text);
-  width: 28px;
-  text-align: center;
-  padding: 2px 0;
-  -webkit-appearance: none;
-  cursor: text;
-  border-bottom: 1px solid transparent;
-  transition: border-color .15s, background .15s;
-}
-.set-field:focus {
-  border-bottom-color: var(--muted2);
-  background: rgba(240,237,232,.05);
-  border-radius: 2px 2px 0 0;
-}
-.set-field.done { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(240,237,232,.2); }
-.set-field-unit { font-family: var(--mono); font-size: 9px; color: var(--muted); pointer-events: none; }
-.set-field-sep { font-family: var(--mono); font-size: 9px; color: var(--muted); opacity: .4; margin: 0 2px; }
-.set-wt-field {
-  font-family: var(--mono);
-  font-size: 10px;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--muted2);
-  width: 32px;
-  text-align: center;
-  padding: 2px 0;
-  -webkit-appearance: none;
-  cursor: text;
-  border-bottom: 1px solid transparent;
-  transition: border-color .15s, background .15s;
-}
-.set-wt-field:focus { border-bottom-color: var(--muted2); background: rgba(240,237,232,.05); border-radius: 2px 2px 0 0; }
-.set-wt-field.done { opacity: .25; }
 .set-prev { font-family: var(--mono); font-size: 8px; color: var(--muted); opacity: .5; margin-top: 2px; }
 .set-check-wrap {
   position: relative;
@@ -994,25 +952,11 @@ function syncSets() {
     day.forEach((ex, ei) => {
       if (!setsDone[di][ei] || setsDone[di][ei].length !== ex.sets) {
         const prev = setsDone[di][ei] || [];
-        setsDone[di][ei] = Array.from({length: ex.sets}, (_,i) => {
-          const p = prev[i];
-          if (p && typeof p === 'object') return p;
-          return { done: (typeof p === 'boolean' ? p : false), reps: ex.reps, weight: parseFloat(ex.weight) || 0 };
-        });
-      } else {
-        setsDone[di][ei] = setsDone[di][ei].map(s => {
-          if (typeof s === 'boolean') return { done: s, reps: ex.reps, weight: parseFloat(ex.weight) || 0 };
-          return s;
-        });
+        setsDone[di][ei] = Array.from({length: ex.sets}, (_,i) => prev[i] || false);
       }
     });
   });
 }
-function isDone(di,ei,si){ const s=setsDone[di]?.[ei]?.[si]; return s?s.done:false; }
-function setDone(di,ei,si,val){ setsDone[di][ei][si].done=val; }
-function getSetReps(di,ei,si){ const s=setsDone[di]?.[ei]?.[si]; return s?s.reps:data[di][ei].reps; }
-function getSetWeight(di,ei,si){ const s=setsDone[di]?.[ei]?.[si]; return s!==undefined?s.weight:(parseFloat(data[di][ei].weight)||0); }
-function updateSetField(di,ei,si,field,val){ if(!setsDone[di]?.[ei]?.[si]) return; setsDone[di][ei][si][field]=val; persist(); }
 syncSets();
 
 function persist() {
@@ -1023,8 +967,7 @@ function persist() {
 }
 
 function isExDone(di, ei) {
-  const arr = setsDone[di]?.[ei] || [];
-  return arr.length > 0 && arr.every(s => (typeof s === 'object' ? s.done : s));
+  return (setsDone[di]?.[ei] || []).every(Boolean) && (setsDone[di]?.[ei]?.length || 0) > 0;
 }
 function isAllDone(di) {
   return data[di].length > 0 && data[di].every((_, ei) => isExDone(di, ei));
@@ -1124,7 +1067,7 @@ function renderTable() {
     const isDel = deleteConfirm && deleteConfirm.di === di && deleteConfirm.ei === ei;
     const sArr = setsDone[di]?.[ei] || [];
     const isExp = expanded.has(`${di}-${ei}`);
-    const doneCount = sArr.filter(s => typeof s === 'object' ? s.done : s).length;
+    const doneCount = sArr.filter(Boolean).length;
     const inProg = doneCount > 0 && !exDone;
     const progressTxt = exDone ? '✓' : doneCount > 0 ? `${doneCount}/${ex.sets}` : `${ex.sets}×`;
     const progressColor = exDone ? 'var(--text)' : inProg ? 'var(--muted2)' : 'var(--muted)';
@@ -1175,32 +1118,14 @@ function renderTable() {
 
       const prevEx = lastExData(di, ex.name);
       for (let si = 0; si < ex.sets; si++) {
-        const done = isDone(di, ei, si);
-        const setReps = getSetReps(di, ei, si);
-        const setWt = getSetWeight(di, ei, si);
-        const setWtStr = setWt > 0 ? setWt : '';
+        const done = sArr[si] || false;
         const isThisResting = restExKey === `${di}-${ei}` && restTick !== null && restSetIdx === si;
         const CIRC = 87.96;
         const arcOffset = isThisResting ? (CIRC * (1 - Math.max(0, restRemain) / restDur)) : CIRC;
         html += `<div class="set-row${done ? ' set-done' : ''}">
           <span class="set-num">${si+1}</span>
-          <div class="set-field-wrap" onclick="event.stopPropagation()">
-            <input class="set-field${done?' done':''}" type="number" inputmode="numeric" min="1" max="100"
-              value="${setReps}"
-              onchange="updateSetField(${di},${ei},${si},'reps',parseInt(this.value)||${setReps})"
-              onclick="this.select()"
-              title="Reps">
-            <span class="set-field-unit" style="font-size:8px;opacity:.5">r</span>
-          </div>
-          <div class="set-field-wrap" onclick="event.stopPropagation()">
-            <input class="set-wt-field${done?' done':''}" type="number" inputmode="decimal" min="0"
-              value="${setWtStr}"
-              placeholder="${parseFloat(ex.weight)||''}"
-              onchange="updateSetField(${di},${ei},${si},'weight',parseFloat(this.value)||0)"
-              onclick="this.select()"
-              title="Weight (kg)">
-            <span class="set-field-unit" style="opacity:.4">kg</span>
-          </div>
+          <span class="set-info${done ? ' done' : ''}">${ex.reps} reps</span>
+          <span class="set-wt${done ? ' done' : ''}">${escHtml(ex.weight)}</span>
           <div class="set-row-right">
             <button class="rest-dur-btn" onclick="toggleRestPopover(event,'rp-${di}-${ei}')">···</button>
             <div class="rest-popover" id="rp-${di}-${ei}">
@@ -1446,17 +1371,19 @@ function toggleExpand(di, ei) {
 function toggleSet(e, di, ei, si) {
   e.stopPropagation();
   if (editingEx) saveInlineEdit();
-  const wasChecked = isDone(di, ei, si);
-  setDone(di, ei, si, !wasChecked);
+  const wasChecked = setsDone[di][ei][si];
+  setsDone[di][ei][si] = !wasChecked;
   if (!wasChecked) {
     expanded.add(`${di}-${ei}`);
     startRest(di, ei, si);
     if (!sessionActive) startSessionTimer();
   } else {
+    // Only stop rest if it's this exact set that's resting
     if (restExKey === `${di}-${ei}` && restSetIdx === si) stopRest();
   }
   if (isAllDone(di)) saveToHistory(di);
   persist(); render();
+  // Re-apply resting state after render (render rebuilds DOM)
   if (!wasChecked && restExKey === `${di}-${ei}` && restSetIdx === si) {
     updateRestUI();
   }
@@ -1502,13 +1429,7 @@ function saveToHistory(di) {
   persist();
 }
 function resetSession() {
-  setsDone[activeDay] = data[activeDay].map(ex =>
-    Array.from({length: ex.sets}, (_, si) => ({
-      done: false,
-      reps: (setsDone[activeDay]?.[data[activeDay].indexOf(ex)]?.[si]?.reps) || ex.reps,
-      weight: (setsDone[activeDay]?.[data[activeDay].indexOf(ex)]?.[si]?.weight) || (parseFloat(ex.weight) || 0)
-    }))
-  );
+  setsDone[activeDay] = data[activeDay].map(e => Array(e.sets).fill(false));
   expanded.clear(); stopRest(); persist(); render();
 }
 
