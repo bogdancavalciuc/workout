@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0A0A0A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="CONSISTENCYS">
+<meta name="apple-mobile-web-app-title" content="KIS">
 <title>∞</title>
 <link rel="manifest" href="#" id="manifest-placeholder">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -224,9 +224,9 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .sets-pad { padding: 2px 16px 12px; }
 .set-row {
   display: grid;
-  grid-template-columns: 18px 1fr auto auto;
+  grid-template-columns: 18px 52px 64px auto;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 5px 8px;
   border-radius: 6px;
   transition: background .2s;
@@ -363,6 +363,25 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
   gap: 6px;
   position: relative;
 }
+
+/* Per-set inline inputs */
+.set-input {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  background: var(--surf2);
+  border: 1px solid var(--line2);
+  border-radius: 3px;
+  outline: none;
+  padding: 4px 5px;
+  width: 44px;
+  text-align: center;
+  -webkit-appearance: none;
+  transition: border-color .15s, background .15s;
+}
+.set-input:focus { border-color: var(--muted2); background: var(--surf); }
+.set-input.done { opacity: .3; pointer-events: none; }
+.set-input-wt { width: 56px; }
 
 
 
@@ -864,7 +883,7 @@ function fmtRestDur(s) {
 function setRestDur(s, popId) {
   restDur = s;
   if (restTick) { restRemain = s; updateRestUI(); }
-  const durMap = {30:'30s', 60:'60s', 90:'90s', 120:'2m', 180:'3m'};
+  const durMap = {60:'60s', 120:'120s'};
   document.querySelectorAll('.rp-opt').forEach(b => {
     b.classList.toggle('sel', b.textContent.trim() === durMap[s]);
   });
@@ -946,18 +965,16 @@ function updateRestUI() {
 
 // ── DATA ──
 function syncSets() {
-  if (!Array.isArray(setsDone)) setsDone = [];
-  while (setsDone.length < data.length) setsDone.push([]);
+  if (!setsDone) setsDone = [];
   data.forEach((day, di) => {
-    if (!Array.isArray(setsDone[di])) setsDone[di] = [];
+    if (!setsDone[di]) setsDone[di] = [];
     day.forEach((ex, ei) => {
-      const prev = Array.isArray(setsDone[di][ei]) ? setsDone[di][ei] : [];
-      if (prev.length !== ex.sets) {
-        setsDone[di][ei] = Array.from({length: ex.sets}, (_,i) => !!prev[i]);
+      if (!setsDone[di][ei] || setsDone[di][ei].length !== ex.sets) {
+        const prev = setsDone[di][ei] || [];
+        setsDone[di][ei] = Array.from({length: ex.sets}, (_,i) => prev[i] || false);
       }
+      if (ex.setOvr && ex.setOvr.length > ex.sets) ex.setOvr = ex.setOvr.slice(0, ex.sets);
     });
-    // trim stale entries if exercises were removed
-    if (setsDone[di].length > day.length) setsDone[di].length = day.length;
   });
 }
 syncSets();
@@ -1093,10 +1110,6 @@ function renderTable() {
           <div class="ex-main"><div class="en">${escHtml(ex.name)}</div></div>
         </div>
         <div class="edit-panel">
-          <div style="margin-bottom:10px">
-            <label style="font-family:var(--mono);font-size:7.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;display:block;margin-bottom:5px">Exercise name</label>
-            <input class="ie-input" id="ie-name" type="text" value="${escHtml(ex.name)}" autocomplete="off" spellcheck="false" style="text-align:left;padding:9px 10px;font-family:var(--font);font-size:14px;font-weight:300;letter-spacing:.01em;width:100%">
-          </div>
           <div class="edit-grid">
             <div><label>Sets</label><input class="ie-input" id="ie-sets" type="number" min="1" max="20" value="${ex.sets}" inputmode="numeric"></div>
             <div><label>Reps</label><input class="ie-input" id="ie-reps" type="number" min="1" max="100" value="${ex.reps}" inputmode="numeric"></div>
@@ -1116,7 +1129,6 @@ function renderTable() {
             ${last && !exDone && isExp ? `<div class="ex-last">prev: ${last}</div>` : ''}
           </div>
           <div class="ex-right">
-            <span class="set-progress" style="color:${progressColor}">${progressTxt}</span>
             <div class="chevron${isExp ? ' open' : ''}">▾</div>
             <button class="ex-edit-btn" onclick="startEdit(${di},${ei},event)"><span></span><span></span><span></span></button>
           </div>
@@ -1132,18 +1144,23 @@ function renderTable() {
         const arcOffset = isThisResting ? (CIRC * (1 - Math.max(0, restRemain) / restDur)) : CIRC;
         html += `<div class="set-row${done ? ' set-done' : ''}">
           <span class="set-num">${si+1}</span>
-          <span class="set-info${done ? ' done' : ''}">${ex.reps} reps</span>
-          <span class="set-wt${done ? ' done' : ''}">${escHtml(ex.weight)}</span>
+          <input type="number" inputmode="numeric" min="1" max="999"
+            class="set-input${done ? ' done' : ''}"
+            value="${getSetReps(ex, si)}"
+            onclick="event.stopPropagation()"
+            onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)">
+          <input type="text" inputmode="decimal"
+            class="set-input set-input-wt${done ? ' done' : ''}"
+            value="${escHtml(getSetWeight(ex, si))}"
+            onclick="event.stopPropagation()"
+            onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)">
           <div class="set-row-right">
             <button class="rest-dur-btn" onclick="toggleRestPopover(event,'rp-${di}-${ei}')">···</button>
             <div class="rest-popover" id="rp-${di}-${ei}">
               <div class="rest-popover-label">Rest duration</div>
               <div class="rest-popover-opts">
-                <button class="rp-opt${restDur===30?' sel':''}" onclick="setRestDur(30,'rp-${di}-${ei}')">30s</button>
                 <button class="rp-opt${restDur===60?' sel':''}" onclick="setRestDur(60,'rp-${di}-${ei}')">60s</button>
-                <button class="rp-opt${restDur===90?' sel':''}" onclick="setRestDur(90,'rp-${di}-${ei}')">90s</button>
-                <button class="rp-opt${restDur===120?' sel':''}" onclick="setRestDur(120,'rp-${di}-${ei}')">2m</button>
-                <button class="rp-opt${restDur===180?' sel':''}" onclick="setRestDur(180,'rp-${di}-${ei}')">3m</button>
+                <button class="rp-opt${restDur===120?' sel':''}" onclick="setRestDur(120,'rp-${di}-${ei}')">120s</button>
               </div>
             </div>
             <div class="set-check-wrap${isThisResting && done ? ' resting' : ''}" id="scw-${di}-${ei}-${si}">
@@ -1174,9 +1191,9 @@ function renderTable() {
   document.getElementById('tbl').innerHTML = html;
 
   if (isEd_active(di)) {
-    const inp = document.getElementById('ie-name');
+    const inp = document.getElementById('ie-sets');
     if (inp) { inp.focus(); inp.select(); }
-    ['ie-name','ie-sets','ie-reps','ie-weight'].forEach(id => {
+    ['ie-sets','ie-reps','ie-weight'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener('keydown', e => { if (e.key === 'Enter') saveInlineEdit(); });
@@ -1389,42 +1406,39 @@ function toggleSet(e, di, ei, si) {
     startRest(di, ei, si);
     if (!sessionActive) startSessionTimer();
   } else {
+    // Only stop rest if it's this exact set that's resting
     if (restExKey === `${di}-${ei}` && restSetIdx === si) stopRest();
   }
-  const allDone = isAllDone(di);
-  if (allDone) saveToHistory(di);
+  if (isAllDone(di)) saveToHistory(di);
+  persist(); render();
+  // Re-apply resting state after render (render rebuilds DOM)
+  if (!wasChecked && restExKey === `${di}-${ei}` && restSetIdx === si) {
+    updateRestUI();
+  }
+  requestAnimationFrame(() => {
+    const btn = document.getElementById(`sc-${di}-${ei}-${si}`);
+    if (btn && !wasChecked) { btn.classList.add('pop'); setTimeout(() => btn.classList.remove('pop'), 300); }
+  });
+}
+
+function getSetReps(ex, si) {
+  return (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].reps != null) ? ex.setOvr[si].reps : ex.reps;
+}
+function getSetWeight(ex, si) {
+  return (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].weight != null) ? ex.setOvr[si].weight : ex.weight;
+}
+function saveSetOvr(di, ei, si, field, val) {
+  const ex = data[di][ei];
+  if (!ex.setOvr) ex.setOvr = [];
+  if (!ex.setOvr[si]) ex.setOvr[si] = {};
+  if (field === 'reps') {
+    const v = parseInt(val);
+    ex.setOvr[si].reps = (!isNaN(v) && v > 0) ? v : ex.reps;
+  } else {
+    const t = val.trim().toUpperCase();
+    ex.setOvr[si].weight = t || ex.weight;
+  }
   persist();
-  // Partial DOM update: just toggle the set check button state without full re-render
-  const btn = document.getElementById(`sc-${di}-${ei}-${si}`);
-  if (btn) {
-    const nowDone = setsDone[di][ei][si];
-    btn.classList.toggle('checked', nowDone);
-    const row = btn.closest('.set-row');
-    if (row) {
-      row.classList.toggle('set-done', nowDone);
-      const info = row.querySelector('.set-info');
-      const wt = row.querySelector('.set-wt');
-      if (info) info.classList.toggle('done', nowDone);
-      if (wt) wt.classList.toggle('done', nowDone);
-    }
-    if (!wasChecked) { btn.classList.add('pop'); setTimeout(() => btn.classList.remove('pop'), 300); }
-  }
-  // Update header row done state
-  const nameRow = document.querySelector(`#exb-${di}-${ei} .ex-name-row`);
-  if (nameRow) nameRow.classList.toggle('done-all', isExDone(di, ei));
-  // Update set progress badge
-  const prog = document.querySelector(`#exb-${di}-${ei} .set-progress`);
-  if (prog) {
-    const sArr = setsDone[di]?.[ei] || [];
-    const doneCount = sArr.filter(Boolean).length;
-    const exDone = isExDone(di, ei);
-    prog.textContent = exDone ? '✓' : doneCount > 0 ? `${doneCount}/${data[di][ei].sets}` : `${data[di][ei].sets}×`;
-    prog.style.color = exDone ? 'var(--text)' : doneCount > 0 ? 'var(--muted2)' : 'var(--muted)';
-  }
-  // If session complete banner needed, do full render
-  if (allDone || wasChecked) { render(); return; }
-  updateFooter();
-  if (!wasChecked && restExKey === `${di}-${ei}` && restSetIdx === si) updateRestUI();
 }
 
 function startEdit(di, ei, e) {
@@ -1436,13 +1450,11 @@ function startEdit(di, ei, e) {
 function saveInlineEdit() {
   if (!editingEx) return;
   const { di, ei } = editingEx;
-  const rawName = document.getElementById('ie-name')?.value.trim();
-  const n = rawName || data[di][ei].name;
   const s = parseInt(document.getElementById('ie-sets')?.value) || data[di][ei].sets;
   const r = parseInt(document.getElementById('ie-reps')?.value) || data[di][ei].reps;
   const rawW = document.getElementById('ie-weight')?.value.trim();
   const w = rawW && !isNaN(parseFloat(rawW)) ? parseFloat(rawW) + 'KG' : (data[di][ei].weight || 'BW');
-  data[di][ei] = { ...data[di][ei], name:n, sets:s, reps:r, weight:w };
+  data[di][ei] = { ...data[di][ei], sets:s, reps:r, weight:w };
   syncSets(); persist();
   editingEx = null; render();
 }
