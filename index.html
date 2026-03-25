@@ -213,9 +213,9 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .chevron { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; color: var(--muted2); transition: transform .25s cubic-bezier(.4,0,.2,1); font-size: 12px; }
 .chevron.open { transform: rotate(180deg); }
 
-.ex-edit-btn { background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; gap: 3px; opacity: .8; }
+.ex-edit-btn { background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; opacity: .45; transition: opacity .15s; }
 .ex-edit-btn:active { background: var(--line); opacity: 1; }
-.ex-edit-btn span { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--text); }
+.ex-edit-btn svg { display: block; }
 
 /* Sets panel */
 .sets-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .25s cubic-bezier(.4,0,.2,1); }
@@ -678,6 +678,50 @@ body.light {
   --muted: #999490;
   --muted2: #777370;
 }
+
+/* ── SET CONTROLS ── */
+.set-controls {
+  display: flex;
+  gap: 8px;
+  padding: 8px 8px 4px;
+  justify-content: flex-end;
+}
+.set-ctrl-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surf2);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  color: var(--muted2);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.set-ctrl-btn:active { background: var(--line); color: var(--text); }
+.set-ctrl-btn:disabled { opacity: .25; cursor: default; }
+.set-ctrl-add { color: var(--text); border-color: var(--line2); }
+
+/* ── PREV HINT ── */
+.set-input-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.set-prev-hint {
+  font-family: var(--mono);
+  font-size: 7px;
+  color: var(--muted);
+  opacity: .5;
+  letter-spacing: .04em;
+  margin-top: 2px;
+  text-align: center;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
@@ -1107,17 +1151,11 @@ function renderTable() {
       html += `
         <div class="ex-name-row" style="cursor:default;border-left:2px solid var(--text);padding-left:14px">
           <div class="ei">${String(ei+1).padStart(2,'0')}</div>
-          <div class="ex-main"><div class="en">${escHtml(ex.name)}</div></div>
-        </div>
-        <div class="edit-panel">
-          <div class="edit-grid">
-            <div><label>Sets</label><input class="ie-input" id="ie-sets" type="number" min="1" max="20" value="${ex.sets}" inputmode="numeric"></div>
-            <div><label>Reps</label><input class="ie-input" id="ie-reps" type="number" min="1" max="100" value="${ex.reps}" inputmode="numeric"></div>
-            <div><label>Weight</label><div class="kg-wrap"><input class="ie-input" id="ie-weight" type="number" inputmode="decimal" value="${parseFloat(ex.weight)||''}" spellcheck="false"><span class="kg-suffix">KG</span></div></div>
+          <div class="ex-main">
+            <input class="ie-input ie-name" id="ie-name" type="text" value="${escHtml(ex.name)}" spellcheck="false" autocomplete="off" style="width:100%;font-family:var(--font);font-size:15px;background:none;border:none;border-bottom:1px solid var(--line2);color:var(--text);outline:none;padding:2px 0;letter-spacing:-.01em;text-transform:uppercase">
           </div>
-          <div class="edit-btns">
-            <button class="eb eb-save" onclick="saveInlineEdit()">Save</button>
-            <button class="eb eb-del" onclick="askDelete(${di},${ei})">Delete</button>
+          <div class="ex-right">
+            <button class="eb eb-save" onclick="saveInlineEdit()" style="font-size:9px;padding:5px 10px">Save</button>
           </div>
         </div>`;
     } else {
@@ -1130,7 +1168,7 @@ function renderTable() {
           </div>
           <div class="ex-right">
             <div class="chevron${isExp ? ' open' : ''}">▾</div>
-            <button class="ex-edit-btn" onclick="startEdit(${di},${ei},event)"><span></span><span></span><span></span></button>
+            <button class="ex-edit-btn" onclick="startEdit(${di},${ei},event)" title="Rename"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 2L12 4.5L5 11.5H2.5V9L9.5 2Z" stroke="var(--text)" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 3.5L10.5 6" stroke="var(--text)" stroke-width="1.2"/></svg></button>
           </div>
         </div>
         <div class="sets-wrap${isExp ? ' open' : ''}">
@@ -1142,18 +1180,29 @@ function renderTable() {
         const isThisResting = restExKey === `${di}-${ei}` && restTick !== null && restSetIdx === si;
         const CIRC = 87.96;
         const arcOffset = isThisResting ? (CIRC * (1 - Math.max(0, restRemain) / restDur)) : CIRC;
+        const prevSet = getPrevSet(di, ex.name, si);
+        const prevRepsHint = prevSet ? prevSet.reps : '';
+        const prevWtHint = prevSet ? escHtml(String(prevSet.weight)) : '';
         html += `<div class="set-row${done ? ' set-done' : ''}">
           <span class="set-num">${si+1}</span>
-          <input type="number" inputmode="numeric" min="1" max="999"
-            class="set-input${done ? ' done' : ''}"
-            value="${getSetReps(ex, si)}"
-            onclick="event.stopPropagation()"
-            onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)">
-          <input type="text" inputmode="decimal"
-            class="set-input set-input-wt${done ? ' done' : ''}"
-            value="${escHtml(getSetWeight(ex, si))}"
-            onclick="event.stopPropagation()"
-            onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)">
+          <div class="set-input-wrap">
+            <input type="number" inputmode="numeric" min="1" max="999"
+              class="set-input${done ? ' done' : ''}"
+              value="${getSetReps(ex, si)}"
+              ${prevRepsHint ? `data-prev="${prevRepsHint}"` : ''}
+              onclick="event.stopPropagation()"
+              onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)">
+            ${prevRepsHint ? `<span class="set-prev-hint">${prevRepsHint}</span>` : ''}
+          </div>
+          <div class="set-input-wrap">
+            <input type="text" inputmode="decimal"
+              class="set-input set-input-wt${done ? ' done' : ''}"
+              value="${escHtml(getSetWeight(ex, si))}"
+              ${prevWtHint ? `data-prev="${prevWtHint}"` : ''}
+              onclick="event.stopPropagation()"
+              onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)">
+            ${prevWtHint ? `<span class="set-prev-hint">${prevWtHint}</span>` : ''}
+          </div>
           <div class="set-row-right">
             <button class="rest-dur-btn" onclick="toggleRestPopover(event,'rp-${di}-${ei}')">···</button>
             <div class="rest-popover" id="rp-${di}-${ei}">
@@ -1181,6 +1230,18 @@ function renderTable() {
         </div>`;
       }
 
+      // Add/Remove set buttons
+      html += `<div class="set-controls">
+        <button class="set-ctrl-btn set-ctrl-rem" onclick="removeSet(event,${di},${ei})" ${ex.sets<=1?'disabled':''}>
+          <svg width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Set
+        </button>
+        <button class="set-ctrl-btn set-ctrl-add" onclick="addSet(event,${di},${ei})">
+          <svg width="12" height="12" viewBox="0 0 12 12"><line x1="6" y1="2" x2="6" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Set
+        </button>
+      </div>`;
+
       html += `</div></div></div>`;
     }
 
@@ -1191,15 +1252,13 @@ function renderTable() {
   document.getElementById('tbl').innerHTML = html;
 
   if (isEd_active(di)) {
-    const inp = document.getElementById('ie-sets');
+    const inp = document.getElementById('ie-name');
     if (inp) { inp.focus(); inp.select(); }
-    ['ie-sets','ie-reps','ie-weight'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('keydown', e => { if (e.key === 'Enter') saveInlineEdit(); });
-        el.addEventListener('click', e => e.stopPropagation());
-      }
-    });
+    const nameInp = document.getElementById('ie-name');
+    if (nameInp) {
+      nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') saveInlineEdit(); });
+      nameInp.addEventListener('click', e => e.stopPropagation());
+    }
   }
 }
 
@@ -1421,6 +1480,19 @@ function toggleSet(e, di, ei, si) {
   });
 }
 
+
+function getPrevSet(di, exName, si) {
+  for (const h of history) {
+    if (h.day === CFG[di].label) {
+      const ex = (h.exercises||[]).find(e => e.name === exName);
+      if (!ex) return null;
+      const reps = (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].reps != null) ? ex.setOvr[si].reps : ex.reps;
+      const weight = (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].weight != null) ? ex.setOvr[si].weight : ex.weight;
+      return { reps, weight };
+    }
+  }
+  return null;
+}
 function getSetReps(ex, si) {
   return (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].reps != null) ? ex.setOvr[si].reps : ex.reps;
 }
@@ -1450,12 +1522,10 @@ function startEdit(di, ei, e) {
 function saveInlineEdit() {
   if (!editingEx) return;
   const { di, ei } = editingEx;
-  const s = parseInt(document.getElementById('ie-sets')?.value) || data[di][ei].sets;
-  const r = parseInt(document.getElementById('ie-reps')?.value) || data[di][ei].reps;
-  const rawW = document.getElementById('ie-weight')?.value.trim();
-  const w = rawW && !isNaN(parseFloat(rawW)) ? parseFloat(rawW) + 'KG' : (data[di][ei].weight || 'BW');
-  data[di][ei] = { ...data[di][ei], sets:s, reps:r, weight:w };
-  syncSets(); persist();
+  const nameEl = document.getElementById('ie-name');
+  const newName = nameEl ? nameEl.value.trim() : '';
+  if (newName) data[di][ei].name = newName;
+  persist();
   editingEx = null; render();
 }
 function askDelete(di, ei) { saveInlineEdit(); editingEx = null; deleteConfirm = { di, ei }; renderTable(); }
@@ -1689,6 +1759,32 @@ function deleteDay() {
   closeDaySheet();
   persist(); render();
 }
+
+// ── ADD / REMOVE SETS ──
+function addSet(e, di, ei) {
+  e.stopPropagation();
+  const ex = data[di][ei];
+  ex.sets += 1;
+  // Copy last set's overrides to new set
+  const lastSi = ex.sets - 2;
+  if (!ex.setOvr) ex.setOvr = [];
+  const lastOvr = ex.setOvr[lastSi] || {};
+  ex.setOvr[ex.sets - 1] = { reps: lastOvr.reps ?? ex.reps, weight: lastOvr.weight ?? ex.weight };
+  syncSets();
+  persist(); renderTable();
+}
+
+function removeSet(e, di, ei) {
+  e.stopPropagation();
+  const ex = data[di][ei];
+  if (ex.sets <= 1) return;
+  ex.sets -= 1;
+  if (ex.setOvr) ex.setOvr = ex.setOvr.slice(0, ex.sets);
+  if (setsDone[di] && setsDone[di][ei]) setsDone[di][ei] = setsDone[di][ei].slice(0, ex.sets);
+  syncSets();
+  persist(); renderTable();
+}
+
 
 function render() { updateFooter(); renderTabs(); renderTable(); }
 
