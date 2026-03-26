@@ -221,18 +221,51 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .sets-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .25s cubic-bezier(.4,0,.2,1); }
 .sets-wrap.open { grid-template-rows: 1fr; }
 .sets-inner { overflow: hidden; }
-.sets-pad { padding: 2px 16px 12px; }
+.sets-pad { padding: 0; }
+/* Lyfta-style sets header */
+.sets-header {
+  display: grid;
+  grid-template-columns: 38px 1fr 72px 72px 52px;
+  align-items: center;
+  padding: 6px 12px 8px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 2px;
+}
+.sets-header span {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-align: center;
+}
+.sets-header span:first-child { text-align: center; }
+.sets-header span:nth-child(2) { text-align: left; }
+
 .set-row {
   display: grid;
-  grid-template-columns: 18px 52px 64px auto;
+  grid-template-columns: 38px 1fr 72px 72px 52px;
   align-items: center;
-  gap: 8px;
-  padding: 5px 8px;
-  border-radius: 6px;
+  gap: 0;
+  padding: 5px 12px;
+  border-radius: 0;
   transition: background .2s;
+  min-height: 52px;
+  border-bottom: 1px solid rgba(255,255,255,.03);
 }
-.set-row.set-done { background: rgba(240,237,232,.04); }
-.set-num { font-family: var(--mono); font-size: 8px; color: var(--muted); text-align: center; }
+.set-row.set-done { background: rgba(240,237,232,.035); }
+body.light .set-row.set-done { background: rgba(10,10,10,.04); }
+.set-row:last-of-type { border-bottom: none; }
+
+.set-num {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: #4A9EFF;
+  text-align: center;
+  letter-spacing: 0;
+}
+.set-num.done-num { color: var(--muted); }
 .set-info { font-family: var(--mono); font-size: 11px; color: var(--text); transition: all .2s; }
 .set-info.done { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(240,237,232,.2); }
 .set-wt { font-family: var(--mono); font-size: 10px; color: var(--muted2); transition: opacity .2s; }
@@ -240,15 +273,15 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .set-prev { font-family: var(--mono); font-size: 8px; color: var(--muted); opacity: .5; margin-top: 2px; }
 .set-check-wrap {
   position: relative;
-  width: 36px; height: 36px;
+  width: 52px; height: 52px;
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
 }
 .set-check {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--line2);
-  background: none;
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line2);
+  background: var(--surf2);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: border-color .2s, background .2s, transform .2s;
@@ -256,28 +289,29 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
   position: relative;
   z-index: 1;
 }
-.set-check.checked { border-color: var(--text); background: var(--text); }
+.set-check.checked { border-color: var(--muted2); background: var(--muted2); }
+body.light .set-check.checked { background: #555; border-color: #555; }
 .set-check svg { opacity: 0; transition: opacity .15s; }
 .set-check.checked svg { opacity: 1; }
 
 /* Per-set inline inputs */
 .set-input {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 15px;
   color: var(--text);
   background: var(--surf2);
   border: 1px solid var(--line2);
-  border-radius: 3px;
+  border-radius: 6px;
   outline: none;
-  padding: 4px 5px;
-  width: 44px;
+  padding: 8px 4px;
+  width: 62px;
   text-align: center;
   -webkit-appearance: none;
   transition: border-color .15s, background .15s;
 }
 .set-input:focus { border-color: var(--muted2); background: var(--surf); }
 .set-input.done { opacity: .3; pointer-events: none; }
-.set-input-wt { width: 56px; }
+.set-input-wt { width: 62px; }
 
 
 
@@ -577,30 +611,32 @@ body.light {
 
 /* ── SET CONTROLS ── */
 .set-controls {
-  display: flex;
-  gap: 8px;
-  padding: 8px 8px 4px;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
 }
 .set-ctrl-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: var(--surf2);
-  border: 1px solid var(--line2);
-  border-radius: 6px;
+  justify-content: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  border-radius: 0;
   color: var(--muted2);
   font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: .1em;
+  font-size: 8.5px;
+  letter-spacing: .12em;
   text-transform: uppercase;
-  padding: 6px 12px;
+  padding: 14px 12px;
   cursor: pointer;
-  transition: color .15s, border-color .15s, background .15s;
+  transition: color .15s, background .15s;
 }
-.set-ctrl-btn:active { background: var(--line); color: var(--text); }
-.set-ctrl-btn:disabled { opacity: .25; cursor: default; }
-.set-ctrl-add { color: var(--text); border-color: var(--line2); }
+.set-ctrl-btn:first-child { border-right: 1px solid var(--line); }
+.set-ctrl-btn:active { background: var(--surf2); color: var(--text); }
+.set-ctrl-btn:disabled { opacity: .2; cursor: default; }
+.set-ctrl-add { color: var(--text); }
 
 /* ── PREV HINT ── */
 .set-input-wrap {
@@ -988,40 +1024,46 @@ function renderTable() {
           <div class="sets-inner"><div class="sets-pad">`;
 
       const prevEx = lastExData(di, ex.name);
+
+      // Header row
+      html += `<div class="sets-header">
+        <span>Set</span>
+        <span>Previous</span>
+        <span>Kg</span>
+        <span>Reps</span>
+        <span></span>
+      </div>`;
+
       for (let si = 0; si < ex.sets; si++) {
         const done = sArr[si] || false;
         const prevSet = getPrevSet(di, ex.name, si);
         const prevRepsHint = prevSet ? prevSet.reps : '';
         const prevWtHint = prevSet ? escHtml(String(prevSet.weight)) : '';
+        const prevLabel = prevSet ? `${prevSet.weight} × ${prevSet.reps}` : '—';
         html += `<div class="set-row${done ? ' set-done' : ''}">
-          <span class="set-num">${si+1}</span>
-          <div class="set-input-wrap">
-            <input type="number" inputmode="numeric" min="1" max="999"
-              class="set-input${done ? ' done' : ''}"
-              value="${getSetReps(ex, si)}"
-              ${prevRepsHint ? `data-prev="${prevRepsHint}"` : ''}
-              onclick="event.stopPropagation()"
-              onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)">
-            ${prevRepsHint ? `<span class="set-prev-hint">${prevRepsHint}</span>` : ''}
-          </div>
+          <span class="set-num${done ? ' done-num' : ''}">${si+1}</span>
+          <span class="set-prev" style="font-size:10px;opacity:.55;font-family:var(--mono);text-align:center;display:block">${prevLabel}</span>
           <div class="set-input-wrap">
             <input type="text" inputmode="decimal"
               class="set-input set-input-wt${done ? ' done' : ''}"
               value="${escHtml(getSetWeight(ex, si))}"
-              ${prevWtHint ? `data-prev="${prevWtHint}"` : ''}
               onclick="event.stopPropagation()"
               onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)">
-            ${prevWtHint ? `<span class="set-prev-hint">${prevWtHint}</span>` : ''}
           </div>
-          <div class="set-row-right">
-            <div class="set-check-wrap" id="scw-${di}-${ei}-${si}">
-              <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}"
-                onclick="toggleSet(event,${di},${ei},${si})">
-                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path d="M1 3.8L3.8 7L9 1" stroke="var(--bg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            </div>
+          <div class="set-input-wrap">
+            <input type="number" inputmode="numeric" min="1" max="999"
+              class="set-input${done ? ' done' : ''}"
+              value="${getSetReps(ex, si)}"
+              onclick="event.stopPropagation()"
+              onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)">
+          </div>
+          <div class="set-check-wrap" id="scw-${di}-${ei}-${si}">
+            <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}"
+              onclick="toggleSet(event,${di},${ei},${si})">
+              <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                <path d="M1 4.8L4.5 8.5L11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
         </div>`;
       }
@@ -1029,12 +1071,12 @@ function renderTable() {
       // Add/Remove set buttons
       html += `<div class="set-controls">
         <button class="set-ctrl-btn set-ctrl-rem" onclick="removeSet(event,${di},${ei})" ${ex.sets<=1?'disabled':''}>
-          <svg width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Set
+          <svg width="13" height="13" viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Remove Set
         </button>
         <button class="set-ctrl-btn set-ctrl-add" onclick="addSet(event,${di},${ei})">
-          <svg width="12" height="12" viewBox="0 0 12 12"><line x1="6" y1="2" x2="6" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Set
+          <svg width="13" height="13" viewBox="0 0 12 12"><line x1="6" y1="2" x2="6" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Add Set
         </button>
       </div>`;
 
@@ -1045,6 +1087,7 @@ function renderTable() {
   });
 
   html += `<div class="ar" onclick="doAdd(${di})"><div class="ai">+</div><span>Add exercise</span></div>`;
+
   document.getElementById('tbl').innerHTML = html;
 
   if (isEd_active(di)) {
