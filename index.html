@@ -244,49 +244,6 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
 }
-.set-check-arc {
-  position: absolute;
-  top: 0; left: 0;
-  width: 36px; height: 36px;
-  transform: rotate(-90deg);
-  pointer-events: none;
-}
-.set-arc-bg {
-  fill: none;
-  stroke: var(--line2);
-  stroke-width: 3;
-  opacity: 0;
-  transition: opacity .3s;
-}
-.set-arc-fill {
-  fill: none;
-  stroke: #C94040;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-dasharray: 87.96; /* 2π×14 */
-  stroke-dashoffset: 87.96;
-  transition: stroke-dashoffset 1s linear;
-}
-.set-check-wrap.resting .set-arc-bg { opacity: 1; }
-/* Countdown label shown inside circle during rest */
-.set-rest-count {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--mono);
-  font-size: 7px;
-  font-weight: 700;
-  color: #C94040;
-  letter-spacing: -.02em;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .2s;
-  z-index: 2;
-}
-.set-check-wrap.resting .set-rest-count { opacity: 1; }
-.set-check-wrap.resting .set-check { opacity: 0; }
 .set-check {
   width: 28px; height: 28px;
   border-radius: 50%;
@@ -302,67 +259,6 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .set-check.checked { border-color: var(--text); background: var(--text); }
 .set-check svg { opacity: 0; transition: opacity .15s; }
 .set-check.checked svg { opacity: 1; }
-
-/* Rest duration edit */
-.rest-dur-btn {
-  font-family: var(--mono);
-  font-size: 7.5px;
-  letter-spacing: .06em;
-  color: var(--muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 3px;
-  transition: color .15s, background .15s;
-  white-space: nowrap;
-}
-.rest-dur-btn:active { color: var(--text); background: var(--line); }
-.rest-popover {
-  display: none;
-  position: absolute;
-  right: 0; top: calc(100% + 6px);
-  background: var(--surf2);
-  border: 1px solid var(--line2);
-  border-radius: 6px;
-  padding: 8px;
-  gap: 5px;
-  flex-direction: column;
-  z-index: 50;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
-  min-width: 100px;
-}
-.rest-popover.open { display: flex; }
-.rest-popover-label {
-  font-family: var(--mono);
-  font-size: 7px;
-  color: var(--muted);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  padding: 0 2px 4px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 2px;
-}
-.rest-popover-opts { display: flex; gap: 4px; flex-wrap: wrap; }
-.rp-opt {
-  font-family: var(--mono);
-  font-size: 8px;
-  background: none;
-  border: 1px solid var(--line2);
-  border-radius: 3px;
-  padding: 5px 8px;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all .15s;
-  letter-spacing: .04em;
-}
-.rp-opt.sel { border-color: var(--text); color: var(--text); }
-.set-row-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  position: relative;
-}
 
 /* Per-set inline inputs */
 .set-input {
@@ -917,95 +813,12 @@ function updatePlayBtn() {
   }
 }
 
-// ── REST TIMER (inline, per exercise) ──
-let restDur = 120, restRemain = 0, restTick = null, restExKey = null, restSetIdx = null;
-
-function fmtRestDur(s) {
-  return s + 's';
-}
-
-function setRestDur(s, popId) {
-  restDur = s;
-  if (restTick) { restRemain = s; updateRestUI(); }
-  const durMap = {60:'60s', 120:'120s'};
-  document.querySelectorAll('.rp-opt').forEach(b => {
-    b.classList.toggle('sel', b.textContent.trim() === durMap[s]);
-  });
-  document.querySelectorAll('.rest-dur-btn').forEach(b => b.textContent = '···');
-  if (popId) closeRestPopover(popId);
-}
-
-function toggleRestPopover(e, id) {
-  e.stopPropagation();
-  const pop = document.getElementById(id);
-  if (!pop) return;
-  const isOpen = pop.classList.contains('open');
-  document.querySelectorAll('.rest-popover.open').forEach(p => p.classList.remove('open'));
-  if (!isOpen) pop.classList.add('open');
-}
-function closeRestPopover(id) {
-  const pop = document.getElementById(id);
-  if (pop) pop.classList.remove('open');
-}
 document.addEventListener('click', e => {
-  // Close rest popovers
-  document.querySelectorAll('.rest-popover.open').forEach(p => p.classList.remove('open'));
-  // Save inline edit if clicked outside table
   if (editingEx) {
     const tbl = document.getElementById('tbl');
     if (tbl && !tbl.contains(e.target)) saveInlineEdit();
   }
 });
-
-function startRest(di, ei, si) {
-  stopRest(true);
-  restExKey = `${di}-${ei}`;
-  restSetIdx = si;
-  restRemain = restDur;
-  updateRestUI();
-  restTick = setInterval(() => {
-    restRemain--;
-    updateRestUI();
-    if (restRemain <= 0) {
-      stopRest();
-      try { navigator.vibrate && navigator.vibrate([120,60,120]); } catch(e) {}
-    }
-  }, 1000);
-}
-
-function stopRest(silent) {
-  clearInterval(restTick); restTick = null;
-  if (restExKey) {
-    const si = restSetIdx;
-    const wrap = document.getElementById(`scw-${restExKey}-${si}`);
-    const arc = document.getElementById(`arc-${restExKey}-${si}`);
-    const cnt = document.getElementById(`cnt-${restExKey}-${si}`);
-    if (wrap) wrap.classList.remove('resting');
-    if (arc) arc.style.strokeDashoffset = 87.96;
-    if (cnt) cnt.textContent = '';
-  }
-  document.querySelectorAll('.rest-dur-btn').forEach(b => b.textContent = '···');
-  restExKey = null;
-  restSetIdx = null;
-}
-
-function updateRestUI() {
-  if (!restExKey) return;
-  const CIRC = 87.96;
-  const pct = Math.max(0, restRemain) / restDur;
-  const offset = CIRC * (1 - pct);
-  const m = Math.floor(Math.max(0, restRemain) / 60);
-  const s = Math.max(0, restRemain) % 60;
-  const timeStr = String(Math.max(0, restRemain));
-  const [di, ei] = restExKey.split('-').map(Number);
-  const si = restSetIdx;
-  const wrap = document.getElementById(`scw-${di}-${ei}-${si}`);
-  const arc = document.getElementById(`arc-${di}-${ei}-${si}`);
-  const cnt = document.getElementById(`cnt-${di}-${ei}-${si}`);
-  if (wrap) wrap.classList.add('resting');
-  if (arc) arc.style.strokeDashoffset = offset;
-  if (cnt) cnt.textContent = timeStr;
-}
 
 // ── DATA ──
 function syncSets() {
@@ -1177,9 +990,6 @@ function renderTable() {
       const prevEx = lastExData(di, ex.name);
       for (let si = 0; si < ex.sets; si++) {
         const done = sArr[si] || false;
-        const isThisResting = restExKey === `${di}-${ei}` && restTick !== null && restSetIdx === si;
-        const CIRC = 87.96;
-        const arcOffset = isThisResting ? (CIRC * (1 - Math.max(0, restRemain) / restDur)) : CIRC;
         const prevSet = getPrevSet(di, ex.name, si);
         const prevRepsHint = prevSet ? prevSet.reps : '';
         const prevWtHint = prevSet ? escHtml(String(prevSet.weight)) : '';
@@ -1204,21 +1014,7 @@ function renderTable() {
             ${prevWtHint ? `<span class="set-prev-hint">${prevWtHint}</span>` : ''}
           </div>
           <div class="set-row-right">
-            <button class="rest-dur-btn" onclick="toggleRestPopover(event,'rp-${di}-${ei}')">···</button>
-            <div class="rest-popover" id="rp-${di}-${ei}">
-              <div class="rest-popover-label">Rest duration</div>
-              <div class="rest-popover-opts">
-                <button class="rp-opt${restDur===60?' sel':''}" onclick="setRestDur(60,'rp-${di}-${ei}')">60s</button>
-                <button class="rp-opt${restDur===120?' sel':''}" onclick="setRestDur(120,'rp-${di}-${ei}')">120s</button>
-              </div>
-            </div>
-            <div class="set-check-wrap${isThisResting && done ? ' resting' : ''}" id="scw-${di}-${ei}-${si}">
-              <svg class="set-check-arc" viewBox="0 0 36 36">
-                <circle class="set-arc-bg" cx="18" cy="18" r="14"/>
-                <circle class="set-arc-fill" id="arc-${di}-${ei}-${si}" cx="18" cy="18" r="14"
-                  style="stroke-dashoffset:${arcOffset}"/>
-              </svg>
-              <div class="set-rest-count" id="cnt-${di}-${ei}-${si}"></div>
+            <div class="set-check-wrap" id="scw-${di}-${ei}-${si}">
               <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}"
                 onclick="toggleSet(event,${di},${ei},${si})">
                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -1462,18 +1258,10 @@ function toggleSet(e, di, ei, si) {
   setsDone[di][ei][si] = !wasChecked;
   if (!wasChecked) {
     expanded.add(`${di}-${ei}`);
-    startRest(di, ei, si);
     if (!sessionActive) startSessionTimer();
-  } else {
-    // Only stop rest if it's this exact set that's resting
-    if (restExKey === `${di}-${ei}` && restSetIdx === si) stopRest();
   }
   if (isAllDone(di)) saveToHistory(di);
   persist(); render();
-  // Re-apply resting state after render (render rebuilds DOM)
-  if (!wasChecked && restExKey === `${di}-${ei}` && restSetIdx === si) {
-    updateRestUI();
-  }
   requestAnimationFrame(() => {
     const btn = document.getElementById(`sc-${di}-${ei}-${si}`);
     if (btn && !wasChecked) { btn.classList.add('pop'); setTimeout(() => btn.classList.remove('pop'), 300); }
@@ -1531,7 +1319,6 @@ function saveInlineEdit() {
 function askDelete(di, ei) { saveInlineEdit(); editingEx = null; deleteConfirm = { di, ei }; renderTable(); }
 function cancelDelete() { deleteConfirm = null; renderTable(); }
 function confirmDelete(di, ei) {
-  if (restExKey === `${di}-${ei}`) stopRest();
   data[di].splice(ei, 1); setsDone[di].splice(ei, 1);
   expanded.delete(`${di}-${ei}`);
   deleteConfirm = null; persist(); render();
@@ -1548,7 +1335,7 @@ function saveToHistory(di) {
 }
 function resetSession() {
   setsDone[activeDay] = data[activeDay].map(e => Array(e.sets).fill(false));
-  expanded.clear(); stopRest(); persist(); render();
+  expanded.clear(); persist(); render();
 }
 
 // ── HISTORY ──
