@@ -314,8 +314,6 @@ body.light .set-check.checked { background: #555; border-color: #555; }
 .set-input.done { opacity: .3; pointer-events: none; }
 .set-input-wt { width: 52px; }
 
-
-
 /* Edit panel */
 .edit-panel { padding: 6px 16px 14px; border-top: 1px solid var(--line); background: rgba(240,237,232,.02); }
 .edit-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
@@ -614,34 +612,67 @@ body.light {
 /* ── SET CONTROLS ── */
 .set-controls {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px 14px 14px;
   border-top: 1px solid var(--line);
-  margin-top: 4px;
+  background: var(--bg);
 }
 .set-ctrl-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  background: none;
-  border: none;
-  border-radius: 0;
-  color: var(--muted2);
+  border-radius: 8px;
   font-family: var(--mono);
-  font-size: 15px;
-  letter-spacing: .10em;
+  font-size: 9px;
+  letter-spacing: .12em;
   text-transform: uppercase;
-  padding: 14px 12px;
+  padding: 13px 10px;
   cursor: pointer;
-  transition: color .15s, background .15s;
+  transition: opacity .15s, background .15s;
+  white-space: nowrap;
+  font-weight: 700;
 }
-.set-ctrl-btn:first-child { border-right: 1px solid var(--line); }
-.set-ctrl-btn:nth-child(2) { border-right: 1px solid var(--line); }
-.set-ctrl-btn:active { background: var(--surf2); color: var(--text); }
-.set-ctrl-btn:disabled { opacity: .2; cursor: default; }
-.set-ctrl-add { color: var(--text); }
-.set-ctrl-del-ex { color: #C06060; }
+.set-ctrl-btn:active { opacity: .7; }
+.set-ctrl-btn:disabled { opacity: .22; cursor: default; }
+.set-ctrl-add {
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+}
+.set-ctrl-rem {
+  background: none;
+  border: 1.5px solid var(--line2);
+  color: var(--muted2);
+}
 .set-ctrl-btn svg { flex-shrink: 0; }
+.set-ctrl-btn .ctrl-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── DEL EXERCISE (langa FAB) ── */
+.del-ex-btn {
+  width: 100%;
+  padding: 14px;
+  background: none;
+  border: 1.5px solid rgba(180,60,60,.3);
+  border-radius: var(--r);
+  color: #C06060;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  display: none;
+  margin-top: 8px;
+}
+.del-ex-btn.visible { display: block; }
+.del-ex-btn:active { background: rgba(180,60,60,.08); border-color: rgba(180,60,60,.6); }
 
 /* ── PREV HINT ── */
 .set-input-wrap {
@@ -737,7 +768,10 @@ body.light {
   </div>
 </div>
 
-<div class="fw"><button class="fab" id="fab">+ Add exercise</button></div>
+<div class="fw">
+  <button class="fab" id="fab">+ Add exercise</button>
+  <button class="del-ex-btn" id="del-ex-btn" onclick="startDeleteActive()">🗑 Delete Exercise</button>
+</div>
 
 <!-- ADD SHEET -->
 <div class="ov" id="ov" onclick="maybeClose(event)">
@@ -1018,7 +1052,6 @@ function renderTable() {
           <div class="drag-num" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
           <div class="ex-main">
             <div class="en">${escHtml(ex.name)}</div>
-
           </div>
           <div class="ex-right">
             <div class="chevron${isExp ? ' open' : ''}">▾</div>
@@ -1042,8 +1075,6 @@ function renderTable() {
       for (let si = 0; si < ex.sets; si++) {
         const done = sArr[si] || false;
         const prevSet = getPrevSet(di, ex.name, si);
-        const prevRepsHint = prevSet ? prevSet.reps : '';
-        const prevWtHint = prevSet ? escHtml(String(prevSet.weight)) : '';
         const prevLabel = prevSet ? `${prevSet.weight} × ${prevSet.reps}` : '—';
         html += `<div class="set-row${done ? ' set-done' : ''}">
           <span class="set-num${done ? ' done-num' : ''}">${si+1}</span>
@@ -1073,17 +1104,24 @@ function renderTable() {
         </div>`;
       }
 
-      // Add/Remove set buttons
+      // ── SET CONTROLS ──
       html += `<div class="set-controls">
-        <button class="set-ctrl-btn set-ctrl-rem" onclick="removeSet(event,${di},${ei})" ${ex.sets<=1?'disabled':''}>
-          🗑 Set
-        </button>
-        <button class="set-ctrl-btn set-ctrl-del-ex" onclick="startDelete(event,${di},${ei})">
-          🗑 Exercise
-        </button>
         <button class="set-ctrl-btn set-ctrl-add" onclick="addSet(event,${di},${ei})">
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.4"/><line x1="7.5" y1="4.5" x2="7.5" y2="10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="4.5" y1="7.5" x2="10.5" y2="7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span class="ctrl-icon">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <line x1="6" y1="1.5" x2="6" y2="10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <line x1="1.5" y1="6" x2="10.5" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </span>
           Add Set
+        </button>
+        <button class="set-ctrl-btn set-ctrl-rem" onclick="removeSet(event,${di},${ei})" ${ex.sets<=1?'disabled':''}>
+          <span class="ctrl-icon">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <line x1="1.5" y1="6" x2="10.5" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </span>
+          Remove Set
         </button>
       </div>`;
 
@@ -1108,152 +1146,6 @@ function renderTable() {
 
 function isEd_active(di) { return editingEx && editingEx.di === di; }
 
-
-// ── EXERCISE ICONS ──
-const EX_ICONS = {
-
-  'Incline Bench Press': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="3" y1="20" x2="18" y2="13"/><line x1="3" y1="20" x2="3" y2="23"/><line x1="18" y1="13" x2="20" y2="15"/><line x1="20" y1="15" x2="20" y2="23"/>
-    <circle cx="20" cy="9" r="1.8"/>
-    <path d="M19 11 Q17 13 16 14"/><path d="M19 11 Q21 12 22 13"/>
-    <line x1="8" y1="7" x2="22" y2="7"/>
-    <rect x="6" y="5.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
-    <rect x="22" y="5.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
-    <line x1="16" y1="14" x2="13" y2="8"/><line x1="22" y1="13" x2="21" y2="8"/>
-  </svg>`,
-
-  'Machine Chest Fly': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="10" y1="17" x2="16" y2="17"/><line x1="10" y1="17" x2="10" y2="22"/><line x1="16" y1="17" x2="16" y2="22"/><line x1="13" y1="12" x2="13" y2="17"/>
-    <circle cx="13" cy="10" r="1.8"/>
-    <path d="M12 12 Q7 12 5 10"/><path d="M14 12 Q19 12 21 10"/>
-    <circle cx="5" cy="10" r="1.2" fill="currentColor" opacity=".5" stroke="none"/>
-    <circle cx="21" cy="10" r="1.2" fill="currentColor" opacity=".5" stroke="none"/>
-    <line x1="5" y1="10" x2="3" y2="5"/><line x1="21" y1="10" x2="23" y2="5"/><line x1="2" y1="4" x2="24" y2="4"/>
-  </svg>`,
-
-  'Barbell Overhead Press': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="5" y1="6" x2="21" y2="6"/>
-    <rect x="3" y="4.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
-    <rect x="20.5" y="4.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
-    <circle cx="13" cy="11" r="1.8"/>
-    <line x1="13" y1="13" x2="13" y2="19"/>
-    <line x1="13" y1="14" x2="8" y2="8"/><line x1="13" y1="14" x2="18" y2="8"/>
-    <line x1="13" y1="19" x2="10" y2="24"/><line x1="13" y1="19" x2="16" y2="24"/>
-  </svg>`,
-
-  'DB Lateral Raises': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="13" cy="7" r="1.8"/>
-    <line x1="13" y1="9" x2="13" y2="16"/>
-    <line x1="13" y1="11" x2="5" y2="9"/><line x1="13" y1="11" x2="21" y2="9"/>
-    <rect x="2.5" y="8" width="3" height="1.8" rx="0.5" fill="currentColor" opacity=".5" stroke="none"/>
-    <rect x="20.5" y="8" width="3" height="1.8" rx="0.5" fill="currentColor" opacity=".5" stroke="none"/>
-    <line x1="13" y1="16" x2="10" y2="22"/><line x1="13" y1="16" x2="16" y2="22"/>
-  </svg>`,
-
-  'Triceps Push Down': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="13" y1="3" x2="13" y2="7"/><line x1="10" y1="7" x2="16" y2="7"/>
-    <circle cx="13" cy="10" r="1.8"/>
-    <line x1="13" y1="12" x2="13" y2="18"/>
-    <line x1="13" y1="13" x2="9" y2="13"/><line x1="13" y1="13" x2="17" y2="13"/>
-    <line x1="9" y1="13" x2="9" y2="19"/><line x1="17" y1="13" x2="17" y2="19"/>
-    <line x1="9" y1="19" x2="17" y2="19"/>
-    <line x1="13" y1="18" x2="11" y2="24"/><line x1="13" y1="18" x2="15" y2="24"/>
-  </svg>`,
-
-  'Supinated Lat Pulldown': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="4" y1="4" x2="22" y2="4"/>
-    <rect x="2" y="3" width="2.5" height="2.5" rx="0.5" fill="currentColor" opacity=".4" stroke="none"/>
-    <rect x="21.5" y="3" width="2.5" height="2.5" rx="0.5" fill="currentColor" opacity=".4" stroke="none"/>
-    <line x1="7" y1="4" x2="10" y2="9"/><line x1="19" y1="4" x2="16" y2="9"/>
-    <circle cx="13" cy="10" r="1.8"/>
-    <line x1="13" y1="12" x2="13" y2="19"/>
-    <line x1="13" y1="13" x2="10" y2="9"/><line x1="13" y1="13" x2="16" y2="9"/>
-    <line x1="13" y1="19" x2="8" y2="20"/><line x1="13" y1="19" x2="18" y2="20"/>
-    <line x1="8" y1="20" x2="8" y2="24"/><line x1="18" y1="20" x2="18" y2="24"/>
-  </svg>`,
-
-  'Pronated Cable Row': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="1" y="10" width="4" height="8" rx="1" fill="currentColor" opacity=".15" stroke="currentColor"/>
-    <line x1="5" y1="14" x2="10" y2="14"/>
-    <circle cx="16" cy="9" r="1.8"/>
-    <path d="M16 11 Q15 14 14 15"/>
-    <line x1="14" y1="15" x2="20" y2="15"/><line x1="14" y1="15" x2="13" y2="20"/><line x1="20" y1="15" x2="20" y2="20"/>
-    <line x1="15" y1="13" x2="10" y2="14"/>
-    <line x1="13" y1="20" x2="10" y2="22"/><line x1="20" y1="20" x2="22" y2="22"/>
-  </svg>`,
-
-  'Biceps Curls': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="13" cy="6" r="1.8"/>
-    <line x1="13" y1="8" x2="13" y2="15"/>
-    <line x1="13" y1="10" x2="18" y2="10"/>
-    <path d="M18 10 Q21 10 20 7"/>
-    <rect x="19" y="5.5" width="3.5" height="1.8" rx="0.5" fill="currentColor" opacity=".5" stroke="none"/>
-    <line x1="13" y1="10" x2="8" y2="14"/>
-    <rect x="5" y="13" width="3.5" height="1.8" rx="0.5" fill="currentColor" opacity=".5" stroke="none"/>
-    <line x1="13" y1="15" x2="10" y2="22"/><line x1="13" y1="15" x2="16" y2="22"/>
-  </svg>`,
-
-  'Rope Trap Shrug': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="13" y1="23" x2="13" y2="19"/><line x1="10" y1="21" x2="16" y2="21"/>
-    <circle cx="13" cy="7" r="1.8"/>
-    <path d="M9 10 Q7 8 8 11"/><path d="M17 10 Q19 8 18 11"/>
-    <line x1="13" y1="9" x2="13" y2="16"/>
-    <line x1="13" y1="12" x2="9" y2="16"/><line x1="13" y1="12" x2="17" y2="16"/>
-    <line x1="9" y1="16" x2="10" y2="19"/><line x1="17" y1="16" x2="16" y2="19"/>
-    <line x1="13" y1="16" x2="11" y2="22"/><line x1="13" y1="16" x2="15" y2="22"/>
-  </svg>`,
-
-  'Hyperextensions': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="3" y1="18" x2="23" y2="18"/><line x1="3" y1="18" x2="3" y2="22"/><line x1="23" y1="18" x2="23" y2="22"/>
-    <rect x="8" y="16" width="5" height="3" rx="1" fill="currentColor" opacity=".25" stroke="currentColor"/>
-    <circle cx="20" cy="12" r="1.8"/>
-    <path d="M19 14 Q15 14 10 16"/>
-    <line x1="18" y1="13" x2="16" y2="15"/>
-    <line x1="10" y1="16" x2="8" y2="18"/><line x1="11" y1="16" x2="10" y2="18"/>
-  </svg>`,
-
-  'Barbell Back Squat': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="5" y1="9" x2="21" y2="9"/>
-    <rect x="3" y="7.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
-    <rect x="20.5" y="7.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
-    <circle cx="13" cy="7" r="1.8"/>
-    <path d="M13 9 Q12 13 10 15"/>
-    <line x1="13" y1="10" x2="8" y2="10"/><line x1="13" y1="10" x2="18" y2="10"/>
-    <path d="M10 15 Q8 18 9 21"/><path d="M10 15 Q13 17 15 15"/><path d="M15 15 Q17 18 16 21"/>
-    <line x1="9" y1="21" x2="7" y2="22"/><line x1="16" y1="21" x2="18" y2="22"/>
-  </svg>`,
-
-  'Deadlift': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="4" y1="20" x2="22" y2="20"/>
-    <rect x="2" y="18.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
-    <rect x="21.5" y="18.5" width="2.5" height="3" rx="0.6" fill="currentColor" opacity=".4" stroke="none"/>
-    <circle cx="17" cy="7" r="1.8"/>
-    <path d="M17 9 Q16 13 14 16"/>
-    <line x1="16" y1="11" x2="13" y2="20"/><line x1="14" y1="16" x2="15" y2="20"/>
-    <line x1="14" y1="16" x2="11" y2="20"/>
-    <line x1="11" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="16" y2="22"/>
-  </svg>`,
-
-  'Standing Calf Raise': `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="13" cy="5" r="1.8"/>
-    <line x1="13" y1="7" x2="13" y2="14"/>
-    <line x1="13" y1="9" x2="10" y2="13"/><line x1="13" y1="9" x2="16" y2="13"/>
-    <line x1="13" y1="14" x2="10" y2="19"/><line x1="13" y1="14" x2="16" y2="19"/>
-    <path d="M10 19 Q9 21 10 23"/><path d="M16 19 Q17 21 16 23"/>
-    <line x1="10" y1="23" x2="8" y2="23"/><line x1="16" y1="23" x2="18" y2="23"/>
-    <line x1="6" y1="24" x2="20" y2="24"/>
-  </svg>`,
-};
-
-function getIcon(name) {
-  return EX_ICONS[name] || `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
-    <circle cx="13" cy="7" r="2"/>
-    <line x1="13" y1="9" x2="13" y2="17"/>
-    <line x1="10" y1="22" x2="13" y2="17"/>
-    <line x1="16" y1="22" x2="13" y2="17"/>
-    <line x1="9" y1="12" x2="17" y2="12"/>
-  </svg>`;
-}
 let dragSrc = null;
 function dragStart(e, di, ei) {
   dragSrc = { di, ei };
@@ -1275,7 +1167,6 @@ function dragDrop(e, di, ei) {
   data[di].splice(dst, 0, ex);
   const [sd] = setsDone[di].splice(src, 1);
   setsDone[di].splice(dst, 0, sd);
-  // Re-key notes
   const newNotes = {...notes};
   data[di].forEach((ex2, i) => {
     const oldKey = `${di}-${src}-${ex2.id}`;
@@ -1297,6 +1188,7 @@ function toggleExpand(di, ei) {
   const key = `${di}-${ei}`;
   expanded.has(key) ? expanded.delete(key) : expanded.add(key);
   renderTable();
+  updateDelExBtn();
 }
 
 function toggleSet(e, di, ei, si) {
@@ -1315,7 +1207,6 @@ function toggleSet(e, di, ei, si) {
     if (btn && !wasChecked) { btn.classList.add('pop'); setTimeout(() => btn.classList.remove('pop'), 300); }
   });
 }
-
 
 function getPrevSet(di, exName, si) {
   for (const h of history) {
@@ -1431,10 +1322,8 @@ function deleteHistory(hi) { history.splice(hi, 1); persist(); renderHistory(); 
 function initProgress() {
   const sel = document.getElementById('prog-ex-select');
   const prev = sel.value;
-  // Collect all unique exercise names from history
   const nameSet = new Set();
   history.forEach(h => (h.exercises||[]).forEach(e => nameSet.add(e.name)));
-  // Also add current exercises
   data.forEach(day => day.forEach(e => nameSet.add(e.name)));
   const names = Array.from(nameSet).sort();
   sel.innerHTML = '<option value="">— choose an exercise —</option>' +
@@ -1448,7 +1337,6 @@ function renderProgress() {
   const c = document.getElementById('prog-content');
   if (!name) { c.innerHTML = '<div class="prog-empty">Select an exercise to view progress.</div>'; return; }
 
-  // Gather data points from history (oldest first)
   const pts = [];
   for (let i = history.length - 1; i >= 0; i--) {
     const h = history[i];
@@ -1542,7 +1430,7 @@ function maybeClose(e) { if (e.target === document.getElementById('ov')) documen
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── DAY MANAGEMENT ──
-let dayCtx = null; // { mode: 'edit'|'add', di }
+let dayCtx = null;
 
 function openDayEdit(e, di) {
   e.stopPropagation();
@@ -1586,7 +1474,7 @@ function saveDay() {
 function deleteDay() {
   if (!dayCtx || dayCtx.mode !== 'edit') return;
   const di = dayCtx.di;
-  if (data.length <= 1) return; // nu permite ștergerea ultimei zile
+  if (data.length <= 1) return;
   data.splice(di, 1);
   setsDone.splice(di, 1);
   CFG.splice(di, 1);
@@ -1600,13 +1488,12 @@ function addSet(e, di, ei) {
   e.stopPropagation();
   const ex = data[di][ei];
   ex.sets += 1;
-  // Copy last set's overrides to new set
   const lastSi = ex.sets - 2;
   if (!ex.setOvr) ex.setOvr = [];
   const lastOvr = ex.setOvr[lastSi] || {};
   ex.setOvr[ex.sets - 1] = { reps: lastOvr.reps ?? ex.reps, weight: lastOvr.weight ?? ex.weight };
   syncSets();
-  persist(); renderTable();
+  persist(); renderTable(); updateDelExBtn();
 }
 
 function removeSet(e, di, ei) {
@@ -1617,9 +1504,8 @@ function removeSet(e, di, ei) {
   if (ex.setOvr) ex.setOvr = ex.setOvr.slice(0, ex.sets);
   if (setsDone[di] && setsDone[di][ei]) setsDone[di][ei] = setsDone[di][ei].slice(0, ex.sets);
   syncSets();
-  persist(); renderTable();
+  persist(); renderTable(); updateDelExBtn();
 }
-
 
 function startDelete(e, di, ei) {
   e.stopPropagation();
@@ -1629,14 +1515,38 @@ function startDelete(e, di, ei) {
   renderTable();
 }
 
-function render() { updateFooter(); renderTabs(); renderTable(); }
+function startDeleteActive() {
+  const di = activeDay;
+  // Find the currently expanded exercise
+  for (const key of expanded) {
+    const [d, e] = key.split('-').map(Number);
+    if (d === di) {
+      deleteConfirm = { di: d, ei: e };
+      renderTable();
+      return;
+    }
+  }
+}
+
+function updateDelExBtn() {
+  const btn = document.getElementById('del-ex-btn');
+  if (!btn) return;
+  const di = activeDay;
+  let hasExpanded = false;
+  for (const key of expanded) {
+    const [d] = key.split('-').map(Number);
+    if (d === di) { hasExpanded = true; break; }
+  }
+  btn.classList.toggle('visible', hasExpanded);
+}
+
+function render() { updateFooter(); renderTabs(); renderTable(); updateDelExBtn(); }
 
 document.getElementById('fab').onclick = () => doAdd(activeDay);
 
 render();
 
 // ── PWA SETUP ──
-// Inline manifest injected as blob so the app works from a single HTML file
 const manifest = {
   name: "∞",
   short_name: "KIS",
@@ -1656,10 +1566,8 @@ function makeIcon(size) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const ctx2 = c.getContext('2d');
-  // Background
   ctx2.fillStyle = '#0A0A0A';
   ctx2.fillRect(0, 0, size, size);
-  // Letter K
   ctx2.fillStyle = '#F0EDE8';
   ctx2.font = `${size * 0.52}px 'Georgia', serif`;
   ctx2.textAlign = 'center';
@@ -1668,25 +1576,16 @@ function makeIcon(size) {
   return c.toDataURL('image/png');
 }
 
-// Inject manifest as blob URL
 const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
 const manifestURL = URL.createObjectURL(manifestBlob);
 document.getElementById('manifest-placeholder').href = manifestURL;
 
-// ── SERVICE WORKER (inline via blob) ──
 const swCode = `
 const CACHE = 'kis-v1';
-const ASSETS = ['/'];
-self.addEventListener('install', e => {
-  self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(clients.claim());
-});
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
 self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).catch(() => new Response('Offline')))
-  );
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => new Response('Offline'))));
 });
 `;
 if ('serviceWorker' in navigator) {
@@ -1695,7 +1594,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(swURL, { scope: '/' }).catch(() => {});
 }
 
-// ── INSTALL PROMPT ──
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
