@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0A0A0A">
+<meta name="theme-color" content="#0D110E">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="KIS">
@@ -12,15 +12,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0A0A0A;
-  --surf: #141414;
-  --surf2: #1C1C1C;
-  --line: #2A2A2A;
-  --line2: #333;
-  --text: #F0EDE8;
-  --muted: #666;
-  --muted2: #888;
-  --accent: #F0EDE8;
+  --bg: #0D110E;
+  --surf: #141A15;
+  --surf2: #1A211B;
+  --line: #223024;
+  --line2: #2C3E2E;
+  --text: #E8EDE0;
+  --muted: #5A7060;
+  --muted2: #7A9080;
+  --accent: #C8A96E;
   --r: 4px;
   --r2: 8px;
   --font: 'Cormorant Garamond', serif;
@@ -83,7 +83,7 @@ body {
   flex-shrink: 0;
   opacity: .5;
 }
-.st-play.running { border-color: var(--text); background: var(--text); color: var(--bg); opacity: 1; }
+.st-play.running { border-color: var(--accent); background: var(--accent); color: var(--bg); opacity: 1; }
 .st-val {
   font-family: var(--mono);
   font-size: 13px;
@@ -114,7 +114,7 @@ body {
   border-bottom: 1.5px solid transparent;
   margin-bottom: -1px;
 }
-.pn.active { color: var(--text); border-bottom-color: var(--text); }
+.pn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* ── DAY TABS ── */
 .day-tabs { display: flex; gap: 5px; margin-bottom: 18px; }
@@ -133,8 +133,8 @@ body {
   justify-content: center;
 }
 .dt.active {
-  background: var(--text);
-  border-color: var(--text);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 .dt-dot { display: none; }
 .dt-vol { display: none; }
@@ -210,7 +210,7 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .ex-name-row.done-all .en { text-decoration: line-through; text-decoration-color: var(--muted); opacity: .3; }
 .ex-name-row.done-all .ex-last { display: none; }
 .ex-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.set-progress { font-family: var(--mono); font-size: 10px; min-width: 26px; text-align: right; transition: color .2s; }
+.set-progress { font-family: var(--mono); font-size: 10px; min-width: 26px; text-align: right; transition: color .2s; color: var(--muted); }
 .chevron { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; color: var(--muted2); transition: transform .25s cubic-bezier(.4,0,.2,1); font-size: 12px; }
 .chevron.open { transform: rotate(180deg); }
 
@@ -262,7 +262,7 @@ body.light .set-row.set-done { background: rgba(10,10,10,.04); }
   font-family: var(--mono);
   font-size: 13px;
   font-weight: 700;
-  color: #4A9EFF;
+  color: var(--accent);
   text-align: center;
   letter-spacing: 0;
 }
@@ -290,8 +290,8 @@ body.light .set-row.set-done { background: rgba(10,10,10,.04); }
   position: relative;
   z-index: 1;
 }
-.set-check.checked { border-color: var(--muted2); background: var(--muted2); }
-body.light .set-check.checked { background: #555; border-color: #555; }
+.set-check.checked { border-color: var(--accent); background: var(--accent); }
+body.light .set-check.checked { background: var(--accent); border-color: var(--accent); }
 .set-check svg { opacity: 0; transition: opacity .15s; }
 .set-check.checked svg { opacity: 1; }
 
@@ -355,15 +355,15 @@ body.light .set-check.checked { background: #555; border-color: #555; }
 .edit-btns { display: flex; gap: 8px; }
 .eb { flex: 1; font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em; padding: 11px; border-radius: var(--r); border: none; cursor: pointer; text-transform: uppercase; transition: opacity .15s; }
 .eb:active { opacity: .7; }
-.eb-save { background: var(--text); color: var(--bg); }
+.eb-save { background: var(--accent); color: var(--bg); }
 .eb-del { background: none; border: 1px solid var(--line); color: var(--muted); }
 
 /* Delete confirm */
-.del-confirm { display: flex; align-items: center; gap: 10px; padding: 13px 16px; background: rgba(255,60,60,.05); border-bottom: 1px solid rgba(255,60,60,.1); }
-.del-txt { font-family: var(--mono); font-size: 10px; color: #C06060; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.del-confirm { display: flex; align-items: center; gap: 10px; padding: 13px 16px; background: rgba(200,169,110,.05); border-bottom: 1px solid rgba(200,169,110,.12); }
+.del-txt { font-family: var(--mono); font-size: 10px; color: var(--muted2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .del-btn { font-family: var(--mono); font-size: 8.5px; padding: 7px 13px; border-radius: var(--r); border: none; cursor: pointer; white-space: nowrap; letter-spacing: .06em; }
 .del-no { background: var(--surf2); color: var(--muted); }
-.del-yes { background: #C94040; color: white; }
+.del-yes { background: var(--accent); color: var(--bg); }
 
 /* Add row */
 .ar {
@@ -406,7 +406,7 @@ body.light .set-check.checked { background: #555; border-color: #555; }
 .hist-empty { text-align: center; padding: 70px 20px; color: var(--muted); font-size: 18px; font-family: var(--font);  line-height: 1.6; }
 .hist-item { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r2); overflow: hidden; margin-bottom: 10px; }
 .hist-head { padding: 14px 18px; display: flex; align-items: center; gap: 14px; }
-.hist-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: var(--text); }
+.hist-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: var(--accent); }
 .hist-info { flex: 1; }
 .hist-day { font-family: var(--font); font-size: 16px; font-weight: 300;  }
 .hist-date { font-family: var(--mono); font-size: 8px; color: var(--muted); margin-top: 2px; letter-spacing: .04em; }
@@ -448,7 +448,7 @@ body.light .set-check.checked { background: #555; border-color: #555; }
 .chart-canvas { width: 100%; height: 160px; position: relative; }
 .chart-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--line); border-radius: var(--r); overflow: hidden; margin-top: 16px; }
 .cs { background: var(--surf2); padding: 12px 14px; text-align: center; }
-.cs-val { font-family: var(--mono); font-size: 16px; color: var(--text); letter-spacing: -.03em; }
+.cs-val { font-family: var(--mono); font-size: 16px; color: var(--accent); letter-spacing: -.03em; }
 .cs-label { font-family: var(--mono); font-size: 7.5px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 3px; }
 
 /* ── FAB ── */
@@ -462,7 +462,7 @@ body.light .set-check.checked { background: #555; border-color: #555; }
 .fab {
   width: 100%;
   padding: 16px;
-  background: var(--text);
+  background: var(--accent);
   color: var(--bg);
   border: none;
   border-radius: var(--r);
@@ -520,7 +520,7 @@ body.light .set-check.checked { background: #555; border-color: #555; }
   padding: 16px;
   border: none;
   border-radius: var(--r);
-  background: var(--text);
+  background: var(--accent);
   color: var(--bg);
   font-family: var(--mono);
   font-size: 9.5px;
@@ -537,7 +537,7 @@ body.light .set-check.checked { background: #555; border-color: #555; }
 
 /* ── DRAG & DROP ── */
 .ex-block.dragging { opacity: .4; }
-.ex-block.drag-over { border-top: 2px solid var(--text); }
+.ex-block.drag-over { border-top: 2px solid var(--accent); }
 .drag-num {
   cursor: grab;
   flex-shrink: 0;
@@ -599,14 +599,14 @@ body.light .inf-knob { cx: 33px; }
 
 /* ── LIGHT MODE ── */
 body.light {
-  --bg: #F5F3EF;
-  --surf: #EDEAE5;
-  --surf2: #E4E1DC;
-  --line: #D8D4CE;
-  --line2: #C8C4BE;
-  --text: #1A1816;
-  --muted: #999490;
-  --muted2: #777370;
+  --bg: #F2F5EE;
+  --surf: #E8EDE1;
+  --surf2: #DDE4D4;
+  --line: #CDD6C2;
+  --line2: #BCC8B0;
+  --text: #1A2118;
+  --muted: #6E8265;
+  --muted2: #4E6245;
 }
 
 /* ── SET CONTROLS ── */
@@ -637,7 +637,7 @@ body.light {
 .set-ctrl-btn:active { opacity: .7; }
 .set-ctrl-btn:disabled { opacity: .22; cursor: default; }
 .set-ctrl-add {
-  background: var(--text);
+  background: var(--accent);
   color: var(--bg);
   border: none;
 }
@@ -659,9 +659,9 @@ body.light {
   width: 100%;
   padding: 14px;
   background: none;
-  border: 1.5px solid rgba(180,60,60,.3);
+  border: 1.5px solid rgba(200,169,110,.25);
   border-radius: var(--r);
-  color: #C06060;
+  color: var(--muted2);
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: .16em;
@@ -672,7 +672,7 @@ body.light {
   margin-top: 8px;
 }
 .del-ex-btn.visible { display: block; }
-.del-ex-btn:active { background: rgba(180,60,60,.08); border-color: rgba(180,60,60,.6); }
+.del-ex-btn:active { background: rgba(200,169,110,.06); border-color: rgba(200,169,110,.5); }
 
 /* ── PREV HINT ── */
 .set-input-wrap {
@@ -795,7 +795,7 @@ body.light {
     <div class="shl" id="day-sheet-title">Edit Day</div>
     <div class="field"><label>Day name</label><input id="day-name-input" type="text" placeholder="e.g. Shoulders" autocomplete="off" spellcheck="false"></div>
     <button class="bsv" id="day-save-btn" onclick="saveDay()">Save</button>
-    <button id="day-del-btn" onclick="deleteDay()" style="width:100%;margin-top:10px;padding:13px;background:none;border:1px solid var(--line);border-radius:var(--r);font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:#C06060;cursor:pointer;text-transform:uppercase;">Delete Day</button>
+    <button id="day-del-btn" onclick="deleteDay()" style="width:100%;margin-top:10px;padding:13px;background:none;border:1px solid var(--line);border-radius:var(--r);font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted2);cursor:pointer;text-transform:uppercase;">Delete Day</button>
   </div>
 </div>
 
@@ -814,7 +814,7 @@ const DEF_CFG = [
   { label: 'Back'  },
   { label: 'Legs'  }
 ];
-let CFG = JSON.parse(localStorage.getItem('kis8_cfg')||'null') || DEF_CFG.map(c=>({...c, color:'#F0EDE8'}));
+let CFG = JSON.parse(localStorage.getItem('kis8_cfg')||'null') || DEF_CFG.map(c=>({...c, color:'#C8A96E'}));
 const DEF = [
   [
     {id:1,name:'Incline Bench Press',sets:3,reps:12,weight:'25KG'},
@@ -1022,7 +1022,7 @@ function renderTable() {
     const doneCount = sArr.filter(Boolean).length;
     const inProg = doneCount > 0 && !exDone;
     const progressTxt = exDone ? '✓' : doneCount > 0 ? `${doneCount}/${ex.sets}` : `${ex.sets}×`;
-    const progressColor = exDone ? 'var(--text)' : inProg ? 'var(--muted2)' : 'var(--muted)';
+    const progressColor = exDone ? 'var(--accent)' : inProg ? 'var(--accent)' : 'var(--muted)';
     const last = lastFor(di, ex.name);
     if (isDel) {
       html += `<div class="ex-block"><div class="del-confirm">
@@ -1037,7 +1037,7 @@ function renderTable() {
 
     if (isEd) {
       html += `
-        <div class="ex-name-row" style="cursor:default;border-left:2px solid var(--text);padding-left:14px">
+        <div class="ex-name-row" style="cursor:default;border-left:2px solid var(--accent);padding-left:14px">
           <div class="ei">${String(ei+1).padStart(2,'0')}</div>
           <div class="ex-main">
             <input class="ie-input ie-name" id="ie-name" type="text" value="${escHtml(ex.name)}" spellcheck="false" autocomplete="off" style="width:100%;font-family:var(--font);font-size:15px;background:none;border:none;border-bottom:1px solid var(--line2);color:var(--text);outline:none;padding:2px 0;letter-spacing:-.01em;text-transform:uppercase">
@@ -1097,7 +1097,7 @@ function renderTable() {
             <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}"
               onclick="toggleSet(event,${di},${ei},${si})">
               <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                <path d="M1 4.8L4.5 8.5L11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M1 4.8L4.5 8.5L11 1" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
           </div>
@@ -1462,7 +1462,7 @@ function saveDay() {
   if (dayCtx.mode === 'edit') {
     CFG[dayCtx.di].label = name;
   } else {
-    CFG.push({ label: name, color: '#F0EDE8' });
+    CFG.push({ label: name, color: '#C8A96E' });
     data.push([]);
     setsDone.push([]);
     activeDay = CFG.length - 1;
@@ -1553,8 +1553,8 @@ const manifest = {
   description: "Minimalist workout tracker",
   start_url: ".",
   display: "standalone",
-  background_color: "#0A0A0A",
-  theme_color: "#0A0A0A",
+  background_color: "#0D110E",
+  theme_color: "#0D110E",
   orientation: "portrait",
   icons: [
     { src: makeIcon(192), sizes: "192x192", type: "image/png", purpose: "any maskable" },
@@ -1566,9 +1566,9 @@ function makeIcon(size) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const ctx2 = c.getContext('2d');
-  ctx2.fillStyle = '#0A0A0A';
+  ctx2.fillStyle = '#0D110E';
   ctx2.fillRect(0, 0, size, size);
-  ctx2.fillStyle = '#F0EDE8';
+  ctx2.fillStyle = '#C8A96E';
   ctx2.font = `${size * 0.52}px 'Georgia', serif`;
   ctx2.textAlign = 'center';
   ctx2.textBaseline = 'middle';
