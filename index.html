@@ -59,7 +59,6 @@ body {
   color: var(--text);
   opacity: .75;
 }
-.brand-sub { display: none; }
 
 .brand-timer {
   display: flex;
@@ -111,9 +110,21 @@ body {
 }
 .pn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-.day-tabs { display: flex; gap: 5px; margin-bottom: 18px; }
+/* FIX: day tabs scroll on small screens */
+.day-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.day-tabs::-webkit-scrollbar { display: none; }
+
 .dt {
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 60px;
   background: var(--surf);
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -127,8 +138,6 @@ body {
   justify-content: center;
 }
 .dt.active { background: var(--accent); border-color: var(--accent); }
-.dt-dot { display: none; }
-.dt-vol { display: none; }
 .dt-label {
   font-family: var(--font);
   font-size: 11px;
@@ -137,6 +146,7 @@ body {
   display: block;
   color: var(--text);
   text-transform: none;
+  white-space: nowrap;
 }
 .dt.active .dt-label { color: var(--bg); }
 .dt-edit {
@@ -157,6 +167,7 @@ body {
 body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
 .dt-add {
   flex: 0 0 32px !important;
+  min-width: 32px !important;
   padding: 8px 4px !important;
   display: flex;
   align-items: center;
@@ -196,10 +207,8 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
   letter-spacing: .01em;
   line-height: 1.2;
 }
-.ex-last { font-family: var(--mono); font-size: 7.5px; color: var(--muted); margin-top: 3px; }
 
-.ex-name-row.done-all .en { opacity: .35; color: var(--muted); text-decoration: none; }
-.ex-name-row.done-all .ex-last { display: none; }
+.ex-name-row.done-all .en { opacity: .35; color: var(--muted); }
 .ex-name-row.done-all::before {
   content: '';
   display: block;
@@ -213,7 +222,6 @@ body.light .dt.active .dt-edit { color: rgba(240,237,232,.8); }
   border-radius: 0 2px 2px 0;
 }
 .ex-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.set-progress { font-family: var(--mono); font-size: 10px; min-width: 26px; text-align: right; transition: color .2s; color: var(--muted); }
 .chevron { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; color: var(--muted2); transition: transform .25s cubic-bezier(.4,0,.2,1); font-size: 12px; }
 .chevron.open { transform: rotate(180deg); }
 
@@ -268,10 +276,6 @@ body.light .set-row.set-done { background: rgba(10,10,10,.04); }
   letter-spacing: 0;
 }
 .set-num.done-num { color: var(--muted); }
-.set-info { font-family: var(--mono); font-size: 11px; color: var(--text); transition: all .2s; }
-.set-info.done { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(240,237,232,.2); }
-.set-wt { font-family: var(--mono); font-size: 10px; color: var(--muted2); transition: opacity .2s; }
-.set-wt.done { opacity: .25; }
 .set-prev { font-family: var(--mono); font-size: 8px; color: var(--muted); opacity: .5; margin-top: 2px; }
 .set-check-wrap {
   position: relative;
@@ -292,7 +296,6 @@ body.light .set-row.set-done { background: rgba(10,10,10,.04); }
   z-index: 1;
 }
 .set-check.checked { border-color: var(--accent); background: var(--accent); }
-body.light .set-check.checked { background: var(--accent); border-color: var(--accent); }
 .set-check svg { opacity: 0; transition: opacity .15s; }
 .set-check.checked svg { opacity: 1; }
 
@@ -432,6 +435,22 @@ body.light .set-check.checked { background: var(--accent); border-color: var(--a
   font-family: var(--font);
   font-size: 14px;
   font-weight: 400;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+/* FIX: progress filter by day */
+.prog-day-filter { margin-bottom: 14px; }
+.prog-day-filter label { font-family: var(--mono); font-size: 8px; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; display: block; margin-bottom: 7px; }
+.prog-day-select {
+  width: 100%;
+  background: var(--surf);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 11px 14px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
   outline: none;
   cursor: pointer;
   -webkit-appearance: none;
@@ -770,6 +789,9 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
   display: flex;
   gap: 8px;
   margin-bottom: 22px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0 16px;
 }
 .rest-dur-btn {
   font-family: var(--mono);
@@ -855,12 +877,6 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
   transition: opacity .15s;
 }
 .rest-done-btn:active { opacity: .8; }
-
-/* Finished flash */
-@keyframes restDone {
-  0%   { background: var(--accent); }
-  100% { background: transparent; }
-}
 
 /* Rest toggle in set-controls */
 .rest-toggle-row {
@@ -1036,6 +1052,49 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
 }
 .import-toast.ok { border-color: var(--accent); color: var(--accent); }
 .import-toast.err { border-color: #E07B5A; color: #E07B5A; }
+
+/* ── CONFIRM MODAL ── */
+.confirm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,10,.7);
+  z-index: 600;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  padding: 22px;
+}
+.confirm-overlay.open { display: flex; animation: fadeIn .15s ease; }
+.confirm-box {
+  background: var(--surf);
+  border: 1px solid var(--line2);
+  border-radius: var(--r2);
+  padding: 28px 24px 22px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+}
+.confirm-icon { font-size: 28px; margin-bottom: 14px; }
+.confirm-title { font-family: var(--font); font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+.confirm-msg { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: .06em; line-height: 1.7; margin-bottom: 22px; }
+.confirm-btns { display: flex; gap: 10px; }
+.confirm-btn {
+  flex: 1;
+  padding: 13px;
+  border-radius: var(--r);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity .15s;
+  border: none;
+}
+.confirm-btn:active { opacity: .7; }
+.confirm-cancel { background: var(--surf2); color: var(--muted); border: 1px solid var(--line); }
+.confirm-ok { background: var(--accent); color: var(--bg); }
+.confirm-ok.danger { background: #E07B5A; }
 </style>
 </head>
 <body>
@@ -1043,7 +1102,6 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
 <!-- REST TIMER OVERLAY -->
 <div class="rest-overlay" id="rest-overlay">
   <div class="rest-set-label" id="rest-set-label">Set 1 complete</div>
-
   <div class="rest-svg-wrap">
     <svg width="200" height="200" viewBox="0 0 200 200">
       <circle class="rest-circle-bg" cx="100" cy="100" r="88"/>
@@ -1055,10 +1113,8 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
       <div class="rest-time-unit">sec rest</div>
     </div>
   </div>
-
   <div class="rest-ex-name" id="rest-ex-name"></div>
   <div class="rest-next-label">next set</div>
-
   <div class="rest-duration-row">
     <button class="rest-dur-btn" onclick="setRestDuration(30)">30s</button>
     <button class="rest-dur-btn" onclick="setRestDuration(60)">60s</button>
@@ -1066,16 +1122,27 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
     <button class="rest-dur-btn" onclick="setRestDuration(120)">2m</button>
     <button class="rest-dur-btn" onclick="setRestDuration(180)">3m</button>
   </div>
-
   <div class="rest-adjust-row">
     <button class="rest-adj-btn" onclick="adjustRest(-15)">−</button>
     <span class="rest-adj-label">±15 sec</span>
     <button class="rest-adj-btn" onclick="adjustRest(+15)">+</button>
   </div>
-
   <div class="rest-btns">
     <button class="rest-skip-btn" onclick="closeRestTimer()">Skip</button>
     <button class="rest-done-btn" onclick="closeRestTimer()">Done resting</button>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirm-icon">⚠️</div>
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-btn confirm-cancel" onclick="confirmNo()">Cancel</button>
+      <button class="confirm-btn confirm-ok" id="confirm-ok-btn" onclick="confirmYes()">Confirm</button>
+    </div>
   </div>
 </div>
 
@@ -1092,7 +1159,6 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
         </button>
         <span style="font-size:11px;letter-spacing:.22em;opacity:.45;text-transform:uppercase">Consistency</span>
       </div>
-      <div class="brand-sub">Training Log</div>
     </div>
     <div class="brand-timer" onclick="toggleSessionTimer()">
       <button class="st-play" id="st-play">
@@ -1136,7 +1202,8 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
     <div class="done-icon">&#9670;</div>
     <div class="done-title">Session complete</div>
     <div class="done-sub" id="done-sub"></div>
-    <button class="done-reset" onclick="resetSession()">Reset session</button>
+    <!-- FIX: Reset session now shows confirm modal -->
+    <button class="done-reset" onclick="confirmAction('Reset session?','All set progress for this day will be cleared.','Reset','danger',resetSession)">Reset session</button>
     <div class="backup-nudge" id="backup-nudge">
       <span class="backup-nudge-txt">Backup your data?<br>Keep it safe outside the browser.</span>
       <button class="backup-nudge-btn" onclick="exportData();dismissNudge()">Export now</button>
@@ -1153,7 +1220,7 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
     <span class="fs-dot">·</span>
     <span id="s-vol">—</span>
   </div>
-  <div class="hint">Tap to expand · ··· to rename · ☰ to reorder</div>
+  <div class="hint">Tap to expand · ✎ to rename · ☰ to reorder</div>
 </div>
 
 <!-- HISTORY PAGE -->
@@ -1164,6 +1231,13 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
 <!-- PROGRESS PAGE -->
 <div id="page-progress" class="hidden">
   <div class="progress-page">
+    <!-- FIX: filter by day to avoid mixing same-name exercises across days -->
+    <div class="prog-day-filter">
+      <label>Filter by day</label>
+      <select class="prog-day-select" id="prog-day-select" onchange="onProgDayChange()">
+        <option value="">— all days —</option>
+      </select>
+    </div>
     <div class="prog-select-wrap">
       <label>Select exercise</label>
       <select class="prog-select" id="prog-ex-select" onchange="renderProgress()">
@@ -1201,7 +1275,7 @@ body.light .rest-overlay { background: rgba(242,245,238,.96); }
     <div class="shl" id="day-sheet-title">Edit Day</div>
     <div class="field"><label>Day name</label><input id="day-name-input" type="text" placeholder="e.g. Shoulders" autocomplete="off" spellcheck="false"></div>
     <button class="bsv" id="day-save-btn" onclick="saveDay()">Save</button>
-    <button id="day-del-btn" onclick="deleteDay()" style="width:100%;margin-top:10px;padding:13px;background:none;border:1px solid var(--line);border-radius:var(--r);font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted2);cursor:pointer;text-transform:uppercase;">Delete Day</button>
+    <button id="day-del-btn" onclick="confirmDeleteDay()" style="width:100%;margin-top:10px;padding:13px;background:none;border:1px solid var(--line);border-radius:var(--r);font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted2);cursor:pointer;text-transform:uppercase;">Delete Day</button>
   </div>
 </div>
 
@@ -1214,6 +1288,29 @@ if (savedTheme === 'light') document.body.classList.add('light');
 function toggleTheme() {
   const isLight = document.body.classList.toggle('light');
   localStorage.setItem('kis8_theme', isLight ? 'light' : 'dark');
+}
+
+// ══════════════════════════════════════
+// CONFIRM MODAL (replaces browser confirm())
+// ══════════════════════════════════════
+let _confirmCallback = null;
+
+function confirmAction(title, msg, okLabel, okStyle, callback) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  const okBtn = document.getElementById('confirm-ok-btn');
+  okBtn.textContent = okLabel || 'Confirm';
+  okBtn.className = 'confirm-btn confirm-ok' + (okStyle === 'danger' ? ' danger' : '');
+  _confirmCallback = callback;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function confirmYes() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+}
+function confirmNo() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  _confirmCallback = null;
 }
 
 // ══════════════════════════════════════
@@ -1251,13 +1348,11 @@ const DEF = [
 ];
 
 let data      = JSON.parse(localStorage.getItem('kis8_data')||'null') || DEF.map(d => d.map(e => ({...e})));
-// FIX: ensure setsDone is always an array
 let setsDoneRaw = localStorage.getItem('kis8_sets');
 let setsDone  = (setsDoneRaw && Array.isArray(JSON.parse(setsDoneRaw))) ? JSON.parse(setsDoneRaw) : null;
 let history   = JSON.parse(localStorage.getItem('kis8_hist')||'[]');
 let activeDay = 0, sheetCtx = null, editingEx = null, deleteConfirm = null;
 let expanded  = new Set();
-// FIX: separate restEnabled per day-exercise
 let restEnabled = JSON.parse(localStorage.getItem('kis8_rest_en')||'{}');
 let restDefaultDuration = parseInt(localStorage.getItem('kis8_rest_dur')||'90');
 
@@ -1305,16 +1400,20 @@ function updatePlayBtn() {
 }
 
 // ══════════════════════════════════════
-// REST TIMER
+// REST TIMER — FIX: pause/resume correctly, no stale timer on reopen
 // ══════════════════════════════════════
 let restTick = null;
 let restRemaining = 0;
 let restTotal = 90;
 let restExName = '';
 let restSetNum = 0;
-const CIRCUMFERENCE = 2 * Math.PI * 88; // r=88
+const CIRCUMFERENCE = 2 * Math.PI * 88;
 
 function openRestTimer(exName, setNum, duration) {
+  // FIX: always clear any running timer before opening
+  clearInterval(restTick);
+  restTick = null;
+
   restTotal = duration;
   restRemaining = duration;
   restExName = exName;
@@ -1324,13 +1423,11 @@ function openRestTimer(exName, setNum, duration) {
   document.getElementById('rest-set-label').textContent = `Set ${setNum} complete`;
   document.getElementById('rest-time-val').textContent = duration;
 
-  // Update selected duration button
   updateRestDurBtns(duration);
   updateRestCircle();
 
   document.getElementById('rest-overlay').classList.add('active');
 
-  clearInterval(restTick);
   restTick = setInterval(tickRest, 1000);
 }
 
@@ -1359,8 +1456,10 @@ function updateRestCircle() {
   circle.classList.toggle('urgent', restRemaining <= 10 && restRemaining > 0);
 }
 
+// FIX: closeRestTimer always clears the interval
 function closeRestTimer() {
-  clearInterval(restTick); restTick = null;
+  clearInterval(restTick);
+  restTick = null;
   document.getElementById('rest-overlay').classList.remove('active');
 }
 
@@ -1372,7 +1471,6 @@ function setRestDuration(sec) {
   document.getElementById('rest-time-val').textContent = sec;
   updateRestDurBtns(sec);
   updateRestCircle();
-  // Restart tick
   clearInterval(restTick);
   restTick = setInterval(tickRest, 1000);
 }
@@ -1387,7 +1485,9 @@ function adjustRest(delta) {
 
 function updateRestDurBtns(sel) {
   document.querySelectorAll('.rest-dur-btn').forEach(b => {
-    const v = parseInt(b.textContent) * (b.textContent.includes('m') ? 60 : 1);
+    const txt = b.textContent.trim();
+    let v = parseInt(txt);
+    if (txt.includes('m')) v *= 60;
     b.classList.toggle('selected', v === sel);
   });
 }
@@ -1414,7 +1514,6 @@ function beepRest() {
 // DATA SYNC
 // ══════════════════════════════════════
 function syncSets() {
-  // FIX: ensure setsDone is always a proper array
   if (!Array.isArray(setsDone)) setsDone = [];
   data.forEach((day, di) => {
     if (!Array.isArray(setsDone[di])) setsDone[di] = [];
@@ -1423,7 +1522,6 @@ function syncSets() {
         const prev = Array.isArray(setsDone[di][ei]) ? setsDone[di][ei] : [];
         setsDone[di][ei] = Array.from({length: ex.sets}, (_, i) => prev[i] || false);
       }
-      // FIX: trim setOvr to current sets count
       if (ex.setOvr && ex.setOvr.length > ex.sets) ex.setOvr = ex.setOvr.slice(0, ex.sets);
     });
   });
@@ -1449,26 +1547,6 @@ function isAllDone(di) {
 
 function dayKey(d) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
-function lastFor(di, name) {
-  for (const h of history) {
-    if (h.day === CFG[di].label) {
-      const ex = (h.exercises||[]).find(e => e.name === name);
-      if (ex) return `${ex.sets}×${ex.reps} · ${ex.weight}`;
-    }
-  }
-  return null;
-}
-
-function lastExData(di, name) {
-  for (const h of history) {
-    if (h.day === CFG[di].label) {
-      const ex = (h.exercises||[]).find(e => e.name === name);
-      if (ex) return { reps: ex.reps, weight: ex.weight };
-    }
-  }
-  return null;
 }
 
 function calcVol(di) {
@@ -1508,13 +1586,10 @@ function renderTabs() {
   c.innerHTML = '';
   data.forEach((_, di) => {
     const cfg = CFG[di], active = di === activeDay, done = isAllDone(di);
-    const vol = calcVol(di);
     const el = document.createElement('div');
     el.className = 'dt' + (active ? ' active' : '') + (done && !active ? ' done' : '');
     el.innerHTML = `
-      <div class="dt-dot"></div>
       <span class="dt-label">${cfg.label}</span>
-      ${vol > 0 ? `<span class="dt-vol">${fmtVol(vol)}</span>` : ''}
       <button class="dt-edit" onclick="openDayEdit(event,${di})">···</button>`;
     el.onclick = (e) => {
       if (e.target.closest('.dt-edit')) return;
@@ -1545,9 +1620,8 @@ function renderTable() {
     const isDel = deleteConfirm && deleteConfirm.di === di && deleteConfirm.ei === ei;
     const sArr = Array.isArray(setsDone[di]?.[ei]) ? setsDone[di][ei] : [];
     const isExp = expanded.has(`${di}-${ei}`);
-    const doneCount = sArr.filter(Boolean).length;
     const restKey = `${di}-${ei}`;
-    const isRestOn = restEnabled[restKey] !== false; // default ON
+    const isRestOn = restEnabled[restKey] !== false;
 
     if (isDel) {
       html += `<div class="ex-block"><div class="del-confirm">
@@ -1563,7 +1637,6 @@ function renderTable() {
     if (isEd) {
       html += `
         <div class="ex-name-row" style="cursor:default;border-left:2px solid var(--accent);padding-left:14px">
-          <div class="ei">${String(ei+1).padStart(2,'0')}</div>
           <div class="ex-main">
             <input class="ie-input ie-name" id="ie-name" type="text" value="${escHtml(ex.name)}" spellcheck="false" autocomplete="off" style="width:100%;font-family:var(--font);font-size:14px;background:none;border:none;border-bottom:1px solid var(--line2);color:var(--text);outline:none;padding:2px 0;letter-spacing:.01em;text-transform:none">
           </div>
@@ -1593,7 +1666,6 @@ function renderTable() {
         <div class="sets-wrap${isExp ? ' open' : ''}">
           <div class="sets-inner"><div class="sets-pad">`;
 
-      // Header
       html += `<div class="sets-header">
         <span>Set</span>
         <span>Previous</span>
@@ -1634,7 +1706,6 @@ function renderTable() {
         </div>`;
       }
 
-      // Set controls + rest toggle
       html += `<div class="set-controls">
         <button class="set-ctrl-btn set-ctrl-add" onclick="addSet(event,${di},${ei})">
           <span class="ctrl-icon">
@@ -1682,7 +1753,7 @@ function renderTable() {
 }
 
 // ══════════════════════════════════════
-// DRAG & DROP
+// DRAG & DROP — FIX: correct restEnabled remapping after reorder
 // ══════════════════════════════════════
 let dragSrc = null;
 function dragStart(e, di, ei) {
@@ -1701,24 +1772,43 @@ function dragDrop(e, di, ei) {
   e.preventDefault();
   if (!dragSrc || dragSrc.di !== di || dragSrc.ei === ei) { dragEnd(e); return; }
   const src = dragSrc.ei, dst = ei;
-  // Swap exercises
+
+  // Snapshot restEnabled for this day before mutation
+  const dayRestSnap = {};
+  data[di].forEach((_, i) => {
+    dayRestSnap[i] = restEnabled[`${di}-${i}`];
+  });
+
+  // Move exercise and setsDone
   const [ex] = data[di].splice(src, 1);
   data[di].splice(dst, 0, ex);
-  // Swap setsDone
   const [sd] = setsDone[di].splice(src, 1);
   setsDone[di].splice(dst, 0, sd);
-  // FIX: rebuild restEnabled keys properly using index remapping
+
+  // FIX: rebuild restEnabled using pre-mutation snapshot
   const newRestEnabled = {};
+  // Copy keys from other days unchanged
   Object.keys(restEnabled).forEach(k => {
-    const parts = k.split('-');
-    if (parts[0] !== String(di)) { newRestEnabled[k] = restEnabled[k]; }
+    if (parseInt(k.split('-')[0]) !== di) newRestEnabled[k] = restEnabled[k];
   });
-  data[di].forEach((_, i) => {
-    const oldIdx = i === dst ? src : (i >= Math.min(src,dst) && i <= Math.max(src,dst)) ? i + (src < dst ? -1 : 1) : i;
-    const oldKey = `${di}-${oldIdx}`;
-    const newKey = `${di}-${i}`;
-    if (restEnabled[oldKey] !== undefined) newRestEnabled[newKey] = restEnabled[oldKey];
+  // Rebuild this day's keys from the snapshot after splice
+  // Build oldIndex array after splice: index i in new order came from which old index?
+  const oldOrder = Array.from({length: data[di].length}, (_, i) => i);
+  // reverse the splice: original was [0..n-1], src removed then inserted at dst
+  const origOrder = Array.from({length: data[di].length}, (_, i) => i);
+  origOrder.splice(dst, 1); // remove dst
+  origOrder.splice(src, 0, dst); // insert back at src — no, easier: just track directly
+  // Direct approach: new[i] came from old[?]
+  // new order after splice(src,1)+splice(dst,0): 
+  const newToOld = [];
+  const remaining = Array.from({length: dayRestSnap ? Object.keys(dayRestSnap).length : data[di].length}, (_,i) => i);
+  remaining.splice(src, 1);
+  remaining.splice(dst, 0, src);
+  remaining.forEach((oldIdx, newIdx) => {
+    const v = dayRestSnap[oldIdx];
+    if (v !== undefined) newRestEnabled[`${di}-${newIdx}`] = v;
   });
+
   restEnabled = newRestEnabled;
   dragSrc = null;
   persist(); render();
@@ -1753,7 +1843,6 @@ function toggleSet(e, di, ei, si) {
   if (!wasChecked) {
     expanded.add(`${di}-${ei}`);
     if (!sessionActive) startSessionTimer();
-    // Launch rest timer if enabled and not the last set
     const ex = data[di][ei];
     const restKey = `${di}-${ei}`;
     const isRestOn = restEnabled[restKey] !== false;
@@ -1772,8 +1861,8 @@ function toggleSet(e, di, ei, si) {
   });
 }
 
-// FIX: getPrevSet now skips current session (uses index > 0 in history)
 function getPrevSet(di, exName, si) {
+  // FIX: search history for the matching day label (not just any session)
   for (const h of history) {
     if (h.day === CFG[di].label) {
       const ex = (h.exercises||[]).find(e => e.name === exName);
@@ -1801,7 +1890,6 @@ function saveSetOvr(di, ei, si, field, val) {
     const v = parseInt(val);
     ex.setOvr[si].reps = (!isNaN(v) && v > 0) ? v : ex.reps;
   } else {
-    // FIX: treat "0" as valid weight (not BW)
     const t = val.trim().toUpperCase();
     ex.setOvr[si].weight = t;
   }
@@ -1827,7 +1915,7 @@ function cancelDelete() { deleteConfirm = null; renderTable(); }
 function confirmDelete(di, ei) {
   data[di].splice(ei, 1); setsDone[di].splice(ei, 1);
   expanded.delete(`${di}-${ei}`);
-  // Rebuild restEnabled for this day after deletion
+  // FIX: correct restEnabled rebuild after delete
   const newRestEnabled = {};
   Object.keys(restEnabled).forEach(k => {
     const parts = k.split('-');
@@ -1835,13 +1923,12 @@ function confirmDelete(di, ei) {
     if (kdi !== di) { newRestEnabled[k] = restEnabled[k]; return; }
     if (kei < ei) newRestEnabled[k] = restEnabled[k];
     else if (kei > ei) newRestEnabled[`${di}-${kei-1}`] = restEnabled[k];
-    // kei === ei is dropped
   });
   restEnabled = newRestEnabled;
   deleteConfirm = null; persist(); render();
 }
 
-// FIX: deep clone exercises when saving to history to avoid reference mutation
+// FIX: deep clone exercises when saving to history
 function saveToHistory(di) {
   const cfg = CFG[di], now = new Date();
   const dateStr = now.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
@@ -1852,18 +1939,17 @@ function saveToHistory(di) {
     date: dateStr,
     dk,
     ts: now.getTime(),
-    exercises: JSON.parse(JSON.stringify(data[di]))  // FIX: deep clone
+    exercises: JSON.parse(JSON.stringify(data[di]))
   });
   if (history.length > 60) history = history.slice(0, 60);
   persist();
-  // Show backup nudge after session complete
   setTimeout(() => {
     const nudge = document.getElementById('backup-nudge');
     if (nudge) nudge.classList.add('show');
   }, 600);
 }
 
-// FIX: resetSession also clears setOvr per exercise
+// FIX: resetSession clears setOvr per exercise + shows confirm first
 function resetSession() {
   data[activeDay].forEach(ex => { delete ex.setOvr; });
   setsDone[activeDay] = data[activeDay].map(e => Array(e.sets).fill(false));
@@ -1879,7 +1965,11 @@ function renderHistory() {
     c.innerHTML = '<div class="hist-empty">No sessions yet.<br>Complete a workout to see history.</div>';
     return;
   }
-  c.innerHTML = history.map((h, hi) => `
+  // FIX: show warning if approaching 60-session limit
+  const limitWarn = history.length >= 50
+    ? `<div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:.08em;text-align:center;padding:10px 0 4px;opacity:.8">⚠ ${history.length}/60 sessions stored · export a backup soon</div>`
+    : '';
+  c.innerHTML = limitWarn + history.map((h, hi) => `
     <div class="hist-item">
       <div class="hist-head">
         <div class="hist-dot"></div>
@@ -1889,7 +1979,7 @@ function renderHistory() {
         </div>
         <div class="hist-meta">
           <div class="hist-badge">${(h.exercises||[]).length} ex</div>
-          <button class="hist-del" onclick="deleteHistory(${hi})">×</button>
+          <button class="hist-del" onclick="deleteHistoryEntry(${hi})">×</button>
         </div>
       </div>
       <div class="hist-exs">
@@ -1911,32 +2001,66 @@ function renderHistory() {
       </div>
     </div>`).join('');
 }
-function deleteHistory(hi) { history.splice(hi, 1); persist(); renderHistory(); }
+
+function deleteHistoryEntry(hi) {
+  confirmAction(
+    'Delete session?',
+    `This will permanently remove the "${history[hi].day}" session from ${history[hi].date}.`,
+    'Delete', 'danger',
+    () => { history.splice(hi, 1); persist(); renderHistory(); }
+  );
+}
 
 // ══════════════════════════════════════
-// PROGRESS
+// PROGRESS — FIX: filter by day to avoid mixing exercises across days
 // ══════════════════════════════════════
-function initProgress() {
+function onProgDayChange() {
+  const dayFilter = document.getElementById('prog-day-select').value;
   const sel = document.getElementById('prog-ex-select');
-  const prev = sel.value;
   const nameSet = new Set();
-  history.forEach(h => (h.exercises||[]).forEach(e => nameSet.add(e.name)));
-  data.forEach(day => day.forEach(e => nameSet.add(e.name)));
+
+  if (dayFilter === '') {
+    // All days
+    history.forEach(h => (h.exercises||[]).forEach(e => nameSet.add(e.name)));
+    data.forEach(day => day.forEach(e => nameSet.add(e.name)));
+  } else {
+    // Filter by selected day label
+    history.filter(h => h.day === dayFilter).forEach(h => (h.exercises||[]).forEach(e => nameSet.add(e.name)));
+    const di = CFG.findIndex(c => c.label === dayFilter);
+    if (di >= 0) data[di].forEach(e => nameSet.add(e.name));
+  }
+
+  const prev = sel.value;
   const names = Array.from(nameSet).sort();
   sel.innerHTML = '<option value="">— choose an exercise —</option>' +
     names.map(n => `<option value="${escHtml(n)}"${n === prev ? ' selected':''} >${escHtml(n)}</option>`).join('');
   renderProgress();
 }
 
+function initProgress() {
+  const daySel = document.getElementById('prog-day-select');
+  const prevDay = daySel.value;
+  const dayLabels = [...new Set(CFG.map(c => c.label))];
+  daySel.innerHTML = '<option value="">— all days —</option>' +
+    dayLabels.map(l => `<option value="${escHtml(l)}"${l === prevDay ? ' selected':''}>${escHtml(l)}</option>`).join('');
+  onProgDayChange();
+}
+
 function renderProgress() {
   const sel = document.getElementById('prog-ex-select');
   const name = sel.value;
+  const dayFilter = document.getElementById('prog-day-select').value;
   const c = document.getElementById('prog-content');
   if (!name) { c.innerHTML = '<div class="prog-empty">Select an exercise to view progress.</div>'; return; }
 
+  // FIX: filter history by day if filter is set, to avoid mixing same-name exercises
+  const filteredHistory = dayFilter
+    ? history.filter(h => h.day === dayFilter)
+    : history;
+
   const pts = [];
-  for (let i = history.length - 1; i >= 0; i--) {
-    const h = history[i];
+  for (let i = filteredHistory.length - 1; i >= 0; i--) {
+    const h = filteredHistory[i];
     const ex = (h.exercises||[]).find(e => e.name === name);
     if (ex) {
       const kg = parseFloat(ex.weight);
@@ -1968,11 +2092,11 @@ function renderProgress() {
   const first = pts[0];
   const diff = last.weight - first.weight;
   const diffStr = diff === 0 ? '—' : (diff > 0 ? '+' : '') + diff.toFixed(1) + 'kg';
+  const filterLabel = dayFilter ? ` · ${dayFilter}` : '';
 
-  // FIX: use CSS variable references instead of hardcoded colors for progress chart
   c.innerHTML = `
     <div class="chart-wrap">
-      <div class="chart-label">${escHtml(name)} — Weight over time</div>
+      <div class="chart-label">${escHtml(name)}${filterLabel} — Weight over time</div>
       <div class="chart-canvas">
         <svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">
           <defs>
@@ -2017,7 +2141,6 @@ function saveEx() {
   const sets = parseInt(document.getElementById('fs').value) || 3;
   const reps = parseInt(document.getElementById('fr').value) || 12;
   const rawW = document.getElementById('fw2').value.trim();
-  // FIX: treat "0" as valid weight; only fallback to BW if field is empty
   const weight = (rawW !== '' && rawW !== null) ? (isNaN(parseFloat(rawW)) ? rawW.toUpperCase() : parseFloat(rawW) + 'KG') : 'BW';
   const { di } = sheetCtx;
   const id = data[di].length ? Math.max(...data[di].map(e => e.id)) + 1 : 1;
@@ -2075,16 +2198,25 @@ function saveDay() {
   closeDaySheet();
   persist(); render();
 }
-function deleteDay() {
+
+// FIX: delete day now shows confirm modal
+function confirmDeleteDay() {
   if (!dayCtx || dayCtx.mode !== 'edit') return;
   const di = dayCtx.di;
   if (data.length <= 1) return;
-  data.splice(di, 1);
-  setsDone.splice(di, 1);
-  CFG.splice(di, 1);
-  if (activeDay >= data.length) activeDay = data.length - 1;
-  closeDaySheet();
-  persist(); render();
+  confirmAction(
+    `Delete "${CFG[di].label}"?`,
+    'All exercises and progress for this day will be permanently removed.',
+    'Delete', 'danger',
+    () => {
+      data.splice(di, 1);
+      setsDone.splice(di, 1);
+      CFG.splice(di, 1);
+      if (activeDay >= data.length) activeDay = data.length - 1;
+      closeDaySheet();
+      persist(); render();
+    }
+  );
 }
 
 // ══════════════════════════════════════
@@ -2148,7 +2280,7 @@ document.addEventListener('click', e => {
 });
 
 // ══════════════════════════════════════
-// EXPORT / IMPORT
+// EXPORT / IMPORT — FIX: import shows confirm before overwriting
 // ══════════════════════════════════════
 function exportData() {
   const payload = {
@@ -2172,7 +2304,6 @@ function exportData() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  // Save last export timestamp
   localStorage.setItem('kis8_last_export', new Date().toISOString());
   updateBackupLabel();
   showToast('Backup saved!', 'ok');
@@ -2183,6 +2314,8 @@ function triggerImport() {
   document.getElementById('import-file-input').click();
 }
 
+let _pendingImportPayload = null;
+
 function handleImportFile(e) {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -2190,30 +2323,42 @@ function handleImportFile(e) {
   reader.onload = (ev) => {
     try {
       const payload = JSON.parse(ev.target.result);
-      // Validate basic structure
       if (!payload.data || !Array.isArray(payload.data)) throw new Error('Invalid file');
       if (!payload.cfg || !Array.isArray(payload.cfg)) throw new Error('Invalid file');
-      // Restore
-      CFG = payload.cfg;
-      data = payload.data;
-      setsDone = payload.setsDone || null;
-      history = payload.history || [];
-      restEnabled = payload.restEnabled || {};
-      restDefaultDuration = payload.restDefaultDuration || 90;
-      activeDay = 0;
-      expanded.clear();
-      editingEx = null;
-      deleteConfirm = null;
-      syncSets();
-      persist();
-      render();
-      showToast('Data restored successfully!', 'ok');
-      dismissNudge();
+      // FIX: confirm before overwriting current data
+      _pendingImportPayload = payload;
+      confirmAction(
+        'Restore backup?',
+        'This will overwrite all current workouts, exercises, and history with the backup file.',
+        'Restore', 'danger',
+        applyImport
+      );
     } catch(err) {
       showToast('Invalid backup file', 'err');
     }
   };
   reader.readAsText(file);
+}
+
+function applyImport() {
+  const payload = _pendingImportPayload;
+  if (!payload) return;
+  CFG = payload.cfg;
+  data = payload.data;
+  setsDone = payload.setsDone || null;
+  history = payload.history || [];
+  restEnabled = payload.restEnabled || {};
+  restDefaultDuration = payload.restDefaultDuration || 90;
+  activeDay = 0;
+  expanded.clear();
+  editingEx = null;
+  deleteConfirm = null;
+  _pendingImportPayload = null;
+  syncSets();
+  persist();
+  render();
+  showToast('Data restored successfully!', 'ok');
+  dismissNudge();
 }
 
 function updateBackupLabel() {
@@ -2240,17 +2385,6 @@ function showToast(msg, type) {
 
 function dismissNudge() {
   document.getElementById('backup-nudge')?.classList.remove('show');
-}
-
-// Show nudge when session completes (patched into saveToHistory)
-const _origSaveToHistory = saveToHistory;
-// We patch the nudge display directly in the done-banner render
-// The nudge is shown via render → renderTable → isAllDone check
-function maybeShowNudge(di) {
-  if (isAllDone(di)) {
-    const nudge = document.getElementById('backup-nudge');
-    if (nudge) nudge.classList.add('show');
-  }
 }
 
 render();
@@ -2291,41 +2425,6 @@ function makeIcon(size) {
 const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
 const manifestURL = URL.createObjectURL(manifestBlob);
 document.getElementById('manifest-placeholder').href = manifestURL;
-
-// NOTE: Service Worker via blob URL has limited scope support — offline mode may not work in all browsers
-if ('serviceWorker' in navigator) {
-  const swCode = `
-    const CACHE = 'kis-v2';
-    self.addEventListener('install', e => { self.skipWaiting(); });
-    self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-    self.addEventListener('fetch', e => {
-      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => new Response('Offline'))));
-    });
-  `;
-  const swBlob = new Blob([swCode], { type: 'application/javascript' });
-  const swURL = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swURL).catch(() => {});
-}
-
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault(); deferredPrompt = e; showInstallBanner();
-});
-function showInstallBanner() {
-  if (document.getElementById('install-banner')) return;
-  const banner = document.createElement('div');
-  banner.id = 'install-banner';
-  banner.style.cssText = `position:fixed;bottom:100px;left:50%;transform:translateX(-50%);width:calc(100% - 44px);max-width:436px;background:#F0EDE8;color:#0A0A0A;border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:999;box-shadow:0 4px 24px rgba(0,0,0,.5);font-family:'Space Mono',monospace;animation:slideUp .3s cubic-bezier(.32,1,.4,1);`;
-  banner.innerHTML = `<style>@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}</style><div><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px">Install App</div><div style="font-size:9px;color:#555;letter-spacing:.04em">Add to Home Screen</div></div><div style="display:flex;gap:8px;flex-shrink:0"><button onclick="dismissInstall()" style="font-family:'Space Mono',monospace;font-size:8.5px;letter-spacing:.08em;background:rgba(0,0,0,.08);border:none;border-radius:4px;padding:8px 12px;cursor:pointer;text-transform:uppercase;color:#555">Later</button><button onclick="doInstall()" style="font-family:'Space Mono',monospace;font-size:8.5px;letter-spacing:.08em;background:#0A0A0A;color:#F0EDE8;border:none;border-radius:4px;padding:8px 14px;cursor:pointer;text-transform:uppercase">Install</button></div>`;
-  document.body.appendChild(banner);
-}
-function doInstall() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(() => { deferredPrompt = null; dismissInstall(); });
-}
-function dismissInstall() { const b = document.getElementById('install-banner'); if (b) b.remove(); }
-window.addEventListener('appinstalled', () => dismissInstall());
 </script>
 </body>
 </html>
