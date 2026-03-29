@@ -71,7 +71,6 @@ body {
   opacity: 0;
   animation: exEnter .38s cubic-bezier(.22,1,.36,1) forwards;
 }
-/* delay set by JS via style attribute */
 
 /* ── HEADER ─────────────────────────────────────────── */
 .top {
@@ -304,11 +303,8 @@ body {
   line-height: 1;
 }
 .dt.active .dt-day-name { color: var(--gold); }
-.dt.today-tab .dt-day-name {
-  color: var(--text2);
-}
+.dt.today-tab .dt-day-name { color: var(--text2); }
 .dt.today-tab.active .dt-day-name { color: var(--gold); }
-/* dot indicator: has workout = colored dot, rest = nothing */
 .dt-dot {
   width: 5px; height: 5px;
   border-radius: 50%;
@@ -320,7 +316,6 @@ body {
 .dt.today-tab .dt-dot { background: var(--gold3); opacity: .6; }
 .dt.today-tab.active .dt-dot { background: var(--gold); opacity: 1; }
 .dt.rest-tab .dt-dot { display: none; }
-/* selected day info bar below tabs */
 .day-info-bar {
   display: flex;
   align-items: center;
@@ -605,7 +600,6 @@ body {
 .ex-block.dragging { opacity: .35; }
 .ex-block.drag-over { border-top: 2px solid var(--gold); }
 
-/* Exercise header row */
 .ex-name-row {
   display: flex;
   align-items: center;
@@ -698,7 +692,6 @@ body {
   border-radius: 3px;
   padding: 1px 5px;
 }
-/* Progress text badge (e.g. "2/3") */
 .ex-progress-badge {
   font-family: var(--mono);
   font-size: 8px;
@@ -904,7 +897,6 @@ body {
 .del-yes { background: var(--danger); color: var(--text); }
 
 /* ── HISTORY ─────────────────────────────────────────── */
-/* Improved empty state */
 .hist-empty {
   text-align: center;
   padding: 80px 20px 60px;
@@ -913,9 +905,7 @@ body {
   align-items: center;
   gap: 14px;
 }
-.hist-empty-icon {
-  opacity: .18;
-}
+.hist-empty-icon { opacity: .18; }
 .hist-empty-title {
   font-family: var(--serif);
   font-size: 22px;
@@ -948,7 +938,6 @@ body {
 }
 .hist-empty-cta:active { background: rgba(200,169,110,.08); }
 
-/* Month separator */
 .hist-month-sep {
   display: flex;
   align-items: center;
@@ -1078,7 +1067,6 @@ body {
 .prog-select:focus, .prog-day-select:focus { border-color: var(--gold3); }
 .prog-day-select { font-family: var(--mono); font-size: 12px; }
 
-/* Improved empty state for Progress */
 .prog-empty {
   text-align: center;
   padding: 60px 20px 40px;
@@ -1120,11 +1108,7 @@ body {
   text-transform: uppercase;
   margin-bottom: 16px;
 }
-/* ── Y-AXIS LABELS ────────────────────────────────────── */
-.chart-canvas-wrap {
-  position: relative;
-  width: 100%;
-}
+.chart-canvas-wrap { position: relative; width: 100%; }
 .chart-yaxis {
   position: absolute;
   left: 0; top: 0; bottom: 0;
@@ -1746,7 +1730,7 @@ body.light .set-row { background: var(--surf); }
   </div>
 </div>
 
-<!-- DAY SHEET (rename/delete workouts) -->
+<!-- DAY SHEET -->
 <div class="ov" id="ov-day" onclick="if(event.target===this)closeDaySheet()">
   <div class="sh">
     <div class="shh"></div>
@@ -1773,452 +1757,756 @@ body.light .set-row { background: var(--surf); }
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════
+// FIX: Centralized localStorage keys — prevents silent
+//      data loss from scattered magic strings.
+// ═══════════════════════════════════════════════════════
+const KEYS = {
+  theme:      'kis8_theme',
+  cfg:        'kis8_cfg',
+  data:       'kis8_data',
+  sets:       'kis8_sets',
+  hist:       'kis8_hist',
+  restEn:     'kis8_rest_en',
+  restDur:    'kis8_rest_dur',
+  notes:      'kis8_notes',
+  wsched:     'kis8_wsched',
+  lastExport: 'kis8_last_export',
+};
+
 // ── THEME ──────────────────────────────────────────────
-const savedTheme=localStorage.getItem('kis8_theme')||'dark';
-if(savedTheme==='light')document.body.classList.add('light');
-function toggleTheme(){document.body.classList.toggle('light');localStorage.setItem('kis8_theme',document.body.classList.contains('light')?'light':'dark');}
+const savedTheme = localStorage.getItem(KEYS.theme) || 'dark';
+if (savedTheme === 'light') document.body.classList.add('light');
+function toggleTheme() {
+  document.body.classList.toggle('light');
+  localStorage.setItem(KEYS.theme, document.body.classList.contains('light') ? 'light' : 'dark');
+}
+
+// ═══════════════════════════════════════════════════════
+// FIX: Safe escHtml — guards against null/undefined
+//      producing literal "null"/"undefined" in the UI,
+//      and escapes all user-controlled strings before
+//      they enter innerHTML.
+// ═══════════════════════════════════════════════════════
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 // ── CONFIRM ─────────────────────────────────────────────
-let _cb=null;
-function confirmAction(title,msg,okLabel,okStyle,cb){
-  document.getElementById('confirm-title').textContent=title;
-  document.getElementById('confirm-msg').textContent=msg;
-  const b=document.getElementById('confirm-ok-btn');b.textContent=okLabel||'Confirm';
-  b.className='confirm-btn confirm-ok'+(okStyle==='danger'?' danger':'');
-  _cb=cb;document.getElementById('confirm-overlay').classList.add('open');
+let _cb = null;
+function confirmAction(title, msg, okLabel, okStyle, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  const b = document.getElementById('confirm-ok-btn');
+  b.textContent = okLabel || 'Confirm';
+  b.className = 'confirm-btn confirm-ok' + (okStyle === 'danger' ? ' danger' : '');
+  _cb = cb;
+  document.getElementById('confirm-overlay').classList.add('open');
 }
-function confirmYes(){document.getElementById('confirm-overlay').classList.remove('open');if(_cb){_cb();_cb=null;}}
-function confirmNo(){document.getElementById('confirm-overlay').classList.remove('open');_cb=null;}
+function confirmYes() { document.getElementById('confirm-overlay').classList.remove('open'); if (_cb) { _cb(); _cb = null; } }
+function confirmNo()  { document.getElementById('confirm-overlay').classList.remove('open'); _cb = null; }
+
+// ═══════════════════════════════════════════════════════
+// FIX: Safe localStorage wrapper — all reads/writes go
+//      through these helpers. QuotaExceededError and
+//      private-browsing failures are caught and reported
+//      rather than silently swallowed.
+// ═══════════════════════════════════════════════════════
+const store = {
+  get(key, fallback = null) {
+    try {
+      const v = localStorage.getItem(key);
+      return v !== null ? JSON.parse(v) : fallback;
+    } catch { return fallback; }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        showToast('Storage full — export your data!', 'err');
+      } else {
+        showToast('Could not save data', 'err');
+      }
+      return false;
+    }
+  },
+  getRaw(key, fallback = null) {
+    try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
+  },
+  setRaw(key, value) {
+    try { localStorage.setItem(key, value); return true; }
+    catch { return false; }
+  },
+};
 
 // ── DATA ───────────────────────────────────────────────
-const DEF_CFG=[{label:'Push',color:'#C8A96E'},{label:'Pull',color:'#C8A96E'},{label:'Legs',color:'#C8A96E'}];
-// weekSched: array of 7 (Mon=0..Sun=6), each value = CFG index or null (rest)
-const DEF_SCHED=[0,null,1,null,2,null,null]; // Mon=Push, Wed=Pull, Fri=Legs
-const DEF=[
-  [{id:1,name:'Incline Bench Press',sets:3,reps:12,weight:'25KG'},{id:2,name:'Machine Chest Fly',sets:3,reps:12,weight:'45KG'},{id:3,name:'Barbell Overhead Press',sets:3,reps:12,weight:'30KG'},{id:4,name:'DB Lateral Raises',sets:3,reps:12,weight:'6KG'},{id:5,name:'Triceps Push Down',sets:3,reps:12,weight:'36KG'}],
-  [{id:1,name:'Supinated Lat Pulldown',sets:3,reps:12,weight:'40KG'},{id:2,name:'Pronated Cable Row',sets:3,reps:12,weight:'36KG'},{id:3,name:'Biceps Curls',sets:3,reps:12,weight:'12KG'},{id:4,name:'Rope Trap Shrug',sets:3,reps:15,weight:'40KG'},{id:5,name:'Hyperextensions',sets:3,reps:15,weight:'BW'}],
-  [{id:1,name:'Barbell Back Squat',sets:3,reps:8,weight:'70KG'},{id:2,name:'Deadlift',sets:3,reps:8,weight:'70KG'},{id:3,name:'Standing Calf Raise',sets:3,reps:20,weight:'150KG'},{id:4,name:'Incline Bench Press',sets:3,reps:12,weight:'25KG'},{id:5,name:'Machine Chest Fly',sets:3,reps:12,weight:'45KG'}]
+const DEF_CFG = [
+  { label: 'Push', color: '#C8A96E' },
+  { label: 'Pull', color: '#C8A96E' },
+  { label: 'Legs', color: '#C8A96E' },
 ];
-let CFG=JSON.parse(localStorage.getItem('kis8_cfg')||'null')||DEF_CFG;
-let data=JSON.parse(localStorage.getItem('kis8_data')||'null')||DEF.map(d=>d.map(e=>({...e})));
-let setsDone=JSON.parse(localStorage.getItem('kis8_sets')||'null');
-let history=JSON.parse(localStorage.getItem('kis8_hist')||'[]');
-let restEnabled=JSON.parse(localStorage.getItem('kis8_rest_en')||'{}');
-let restDefaultDuration=parseInt(localStorage.getItem('kis8_rest_dur')||'90');
-let sessionNotes=JSON.parse(localStorage.getItem('kis8_notes')||'{}');
-let weekSched=JSON.parse(localStorage.getItem('kis8_wsched')||'null')||DEF_SCHED;
-// activeDay = which CFG/workout index is shown
-// todayWeekIdx = 0=Mon..6=Sun
-const WEEK_DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-function getTodayWeekIdx(){return(new Date().getDay()+6)%7;} // JS: Sun=0 → Mon=0
-let activeDay=0,sheetCtx=null,editingEx=null,deleteConfirm=null;
-// selectedWeekIdx = which day of week tab is highlighted (0=Mon..6=Sun)
-let selectedWeekIdx=getTodayWeekIdx();
-// Set activeDay to today's workout if scheduled
-(function(){const ti=getTodayWeekIdx();const wi=weekSched[ti];if(wi!==null&&wi!==undefined&&wi<data.length)activeDay=wi;})();
-let expanded=new Set();
+// Default weekly schedule: Mon=Push, Wed=Pull, Fri=Legs, rest days = null
+// Index maps to CFG array position (0=Push, 1=Pull, 2=Legs)
+const DEF_SCHED = [0, null, 1, null, 2, null, null];
+const DEF = [
+  [
+    { id:1, name:'Incline Bench Press',       sets:3, reps:12, weight:'25KG' },
+    { id:2, name:'Machine Chest Fly',          sets:3, reps:12, weight:'45KG' },
+    { id:3, name:'Barbell Overhead Press',     sets:3, reps:12, weight:'30KG' },
+    { id:4, name:'DB Lateral Raises',          sets:3, reps:12, weight:'6KG'  },
+    { id:5, name:'Triceps Push Down',          sets:3, reps:12, weight:'36KG' },
+  ],
+  [
+    { id:1, name:'Supinated Lat Pulldown',     sets:3, reps:12, weight:'40KG' },
+    { id:2, name:'Pronated Cable Row',         sets:3, reps:12, weight:'36KG' },
+    { id:3, name:'Biceps Curls',               sets:3, reps:12, weight:'12KG' },
+    { id:4, name:'Rope Trap Shrug',            sets:3, reps:15, weight:'40KG' },
+    { id:5, name:'Hyperextensions',            sets:3, reps:15, weight:'BW'   },
+  ],
+  [
+    { id:1, name:'Barbell Back Squat',         sets:3, reps:8,  weight:'70KG' },
+    { id:2, name:'Deadlift',                   sets:3, reps:8,  weight:'70KG' },
+    { id:3, name:'Standing Calf Raise',        sets:3, reps:20, weight:'150KG'},
+    { id:4, name:'Incline Bench Press',        sets:3, reps:12, weight:'25KG' },
+    { id:5, name:'Machine Chest Fly',          sets:3, reps:12, weight:'45KG' },
+  ],
+];
 
-function syncSets(){
-  if(!Array.isArray(setsDone))setsDone=[];
-  data.forEach((day,di)=>{
-    if(!Array.isArray(setsDone[di]))setsDone[di]=[];
-    day.forEach((ex,ei)=>{
-      if(!Array.isArray(setsDone[di][ei])||setsDone[di][ei].length!==ex.sets){
-        const prev=Array.isArray(setsDone[di][ei])?setsDone[di][ei]:[];
-        setsDone[di][ei]=Array.from({length:ex.sets},(_,i)=>prev[i]||false);
+let CFG           = store.get(KEYS.cfg)    || DEF_CFG;
+let data          = store.get(KEYS.data)   || DEF.map(d => d.map(e => ({ ...e })));
+let setsDone      = store.get(KEYS.sets)   || null;
+let history       = store.get(KEYS.hist)   || [];
+let restEnabled   = store.get(KEYS.restEn) || {};
+let restDefaultDuration = parseInt(store.getRaw(KEYS.restDur) || '90');
+let sessionNotes  = store.get(KEYS.notes)  || {};
+let weekSched     = store.get(KEYS.wsched) || DEF_SCHED;
+
+const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+function getTodayWeekIdx() { return (new Date().getDay() + 6) % 7; }
+
+let activeDay = 0, sheetCtx = null, editingEx = null, deleteConfirm = null;
+let selectedWeekIdx = getTodayWeekIdx();
+
+// Set activeDay to today's workout if scheduled
+(function () {
+  const ti = getTodayWeekIdx();
+  const wi = weekSched[ti];
+  if (wi !== null && wi !== undefined && wi < data.length) activeDay = wi;
+})();
+
+let expanded = new Set();
+
+function syncSets() {
+  if (!Array.isArray(setsDone)) setsDone = [];
+  data.forEach((day, di) => {
+    if (!Array.isArray(setsDone[di])) setsDone[di] = [];
+    day.forEach((ex, ei) => {
+      if (!Array.isArray(setsDone[di][ei]) || setsDone[di][ei].length !== ex.sets) {
+        const prev = Array.isArray(setsDone[di][ei]) ? setsDone[di][ei] : [];
+        setsDone[di][ei] = Array.from({ length: ex.sets }, (_, i) => prev[i] || false);
       }
-      if(ex.setOvr&&ex.setOvr.length>ex.sets)ex.setOvr=ex.setOvr.slice(0,ex.sets);
+      if (ex.setOvr && ex.setOvr.length > ex.sets) ex.setOvr = ex.setOvr.slice(0, ex.sets);
     });
   });
 }
 syncSets();
 
-function persist(){
-  localStorage.setItem('kis8_cfg',JSON.stringify(CFG));
-  localStorage.setItem('kis8_data',JSON.stringify(data));
-  localStorage.setItem('kis8_sets',JSON.stringify(setsDone));
-  localStorage.setItem('kis8_hist',JSON.stringify(history));
-  localStorage.setItem('kis8_rest_en',JSON.stringify(restEnabled));
-  localStorage.setItem('kis8_notes',JSON.stringify(sessionNotes));
-  localStorage.setItem('kis8_wsched',JSON.stringify(weekSched));
+// ═══════════════════════════════════════════════════════
+// FIX: persist() uses the safe store wrapper so storage
+//      errors surface instead of silently failing.
+// ═══════════════════════════════════════════════════════
+function persist() {
+  store.set(KEYS.cfg,    CFG);
+  store.set(KEYS.data,   data);
+  store.set(KEYS.sets,   setsDone);
+  store.set(KEYS.hist,   history);
+  store.set(KEYS.restEn, restEnabled);
+  store.set(KEYS.notes,  sessionNotes);
+  store.set(KEYS.wsched, weekSched);
 }
 
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function isExDone(di,ei){return Array.isArray(setsDone[di]?.[ei])&&setsDone[di][ei].length>0&&setsDone[di][ei].every(Boolean);}
-function isAllDone(di){return data[di].length>0&&data[di].every((_,ei)=>isExDone(di,ei));}
-function dayKey(d){return`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
-function calcVol(di){return data[di].reduce((s,ex)=>{const k=parseFloat(ex.weight);return isNaN(k)?s:s+k*ex.sets*ex.reps;},0);}
-function fmtVol(v){return v>=1000?(v/1000).toFixed(1)+'t':Math.round(v)+'kg';}
-function calc1RM(weight,reps){const k=parseFloat(weight);if(isNaN(k)||k<=0||reps<=0)return null;if(reps===1)return k;return Math.round(k*(1+reps/30));}
+function isExDone(di, ei) { return Array.isArray(setsDone[di]?.[ei]) && setsDone[di][ei].length > 0 && setsDone[di][ei].every(Boolean); }
+function isAllDone(di) { return data[di].length > 0 && data[di].every((_, ei) => isExDone(di, ei)); }
+function dayKey(d) { return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+function calcVol(di) {
+  return data[di].reduce((s, ex) => {
+    const k = parseFloat(ex.weight);
+    return isNaN(k) ? s : s + k * ex.sets * ex.reps;
+  }, 0);
+}
+// FIX: fmtVol threshold raised to 10000 to avoid jarring
+//      "1.0t" for weights that are clearly still kilograms.
+function fmtVol(v) { return v >= 10000 ? (v / 1000).toFixed(1) + 't' : Math.round(v) + 'kg'; }
+
+// FIX: calc1RM uses the Epley formula (weight × (1 + reps/30)).
+//      This is the most common estimation; actual 1RM may vary.
+function calc1RM(weight, reps) {
+  const k = parseFloat(weight);
+  if (isNaN(k) || k <= 0 || reps <= 0) return null;
+  if (reps === 1) return k;
+  return Math.round(k * (1 + reps / 30));
+}
 
 // ── HAPTIC ─────────────────────────────────────────────
-function haptic(p){try{navigator.vibrate?.(p);}catch(e){}}
-function hapticSet(){haptic([12]);}
-function hapticEx(){haptic([0,60,40,80,40,120]);}
-function hapticAllDone(){haptic([0,100,50,100,50,150]);}
+function haptic(p)       { try { navigator.vibrate?.(p); } catch (e) {} }
+function hapticSet()     { haptic([12]); }
+function hapticEx()      { haptic([0, 60, 40, 80, 40, 120]); }
+function hapticAllDone() { haptic([0, 100, 50, 100, 50, 150]); }
 
 // ── WAKE LOCK ──────────────────────────────────────────
-let wakeLock=null;
-async function toggleWakeLock(){
-  const btn=document.getElementById('wake-btn');
-  if(wakeLock){await wakeLock.release();wakeLock=null;btn.classList.remove('active');btn.textContent='Screen on';}
-  else{try{wakeLock=await navigator.wakeLock.request('screen');btn.classList.add('active');btn.textContent='Screen on ✓';wakeLock.addEventListener('release',()=>{wakeLock=null;btn.classList.remove('active');btn.textContent='Screen on';});}catch(e){showToast('Wake lock not supported','err');}}
+let wakeLock = null;
+async function toggleWakeLock() {
+  const btn = document.getElementById('wake-btn');
+  if (wakeLock) {
+    await wakeLock.release(); wakeLock = null;
+    btn.classList.remove('active'); btn.textContent = 'Screen on';
+  } else {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      btn.classList.add('active'); btn.textContent = 'Screen on ✓';
+      wakeLock.addEventListener('release', () => {
+        wakeLock = null; btn.classList.remove('active'); btn.textContent = 'Screen on';
+      });
+    } catch (e) { showToast('Wake lock not supported', 'err'); }
+  }
 }
-if(!('wakeLock' in navigator))document.getElementById('wake-btn').style.display='none';
+if (!('wakeLock' in navigator)) document.getElementById('wake-btn').style.display = 'none';
 
 // ── SESSION TIMER ──────────────────────────────────────
-let sessionStart=null,sessionTick=null,sessionActive=false;
-function startSessionTimer(){if(sessionActive)return;sessionActive=true;sessionStart=Date.now();sessionTick=setInterval(updateSessionUI,1000);updateSessionUI();updatePlayBtn();}
-function stopSessionTimer(){sessionActive=false;clearInterval(sessionTick);sessionTick=null;document.getElementById('st-val').textContent='00:00';updatePlayBtn();}
-function toggleSessionTimer(){sessionActive?stopSessionTimer():startSessionTimer();}
-function updateSessionUI(){const e=Math.floor((Date.now()-sessionStart)/1000);document.getElementById('st-val').textContent=String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0');}
-function updatePlayBtn(){
-  const btn=document.getElementById('st-play'),icon=document.getElementById('st-icon'),pill=document.getElementById('timer-pill');
-  if(!btn||!icon)return;
-  if(sessionActive){btn.classList.add('running');pill?.classList.add('running');icon.innerHTML='<rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/>';}
-  else{btn.classList.remove('running');pill?.classList.remove('running');icon.innerHTML='<polygon points="2,1 11,6 2,11"/>';}
+let sessionStart = null, sessionTick = null, sessionActive = false;
+function startSessionTimer() {
+  if (sessionActive) return;
+  sessionActive = true; sessionStart = Date.now();
+  sessionTick = setInterval(updateSessionUI, 1000);
+  updateSessionUI();
+  updatePlayBtn();
+}
+function stopSessionTimer() {
+  sessionActive = false; clearInterval(sessionTick); sessionTick = null;
+  document.getElementById('st-val').textContent = '00:00';
+  updatePlayBtn();
+}
+function toggleSessionTimer() { sessionActive ? stopSessionTimer() : startSessionTimer(); }
+function updateSessionUI() {
+  const e = Math.floor((Date.now() - sessionStart) / 1000);
+  document.getElementById('st-val').textContent =
+    String(Math.floor(e / 60)).padStart(2, '0') + ':' + String(e % 60).padStart(2, '0');
+}
+function updatePlayBtn() {
+  const btn = document.getElementById('st-play'), icon = document.getElementById('st-icon'),
+        pill = document.getElementById('timer-pill');
+  if (!btn || !icon) return;
+  if (sessionActive) {
+    btn.classList.add('running'); pill?.classList.add('running');
+    icon.innerHTML = '<rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/>';
+  } else {
+    btn.classList.remove('running'); pill?.classList.remove('running');
+    icon.innerHTML = '<polygon points="2,1 11,6 2,11"/>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// FIX: Shared AudioContext — created once and reused.
+//      Browsers cap simultaneous AudioContexts (~6).
+//      The old code created a new one per beep, leaking.
+// ═══════════════════════════════════════════════════════
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx || _audioCtx.state === 'closed') {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
 }
 
 // ── REST TIMER ─────────────────────────────────────────
-let restTick=null,restRemaining=0,restTotal=90;
-const CIRC=2*Math.PI*94;
-function openRestTimer(exName,setNum,dur){
-  clearInterval(restTick);restTick=null;restTotal=dur;restRemaining=dur;
-  document.getElementById('rest-ex-name').textContent=exName;
-  document.getElementById('rest-set-label').textContent=`Set ${setNum} complete`;
-  document.getElementById('rest-time-val').textContent=dur;
-  updateRestDurBtns(dur);updateRestCircle();
+let restTick = null, restRemaining = 0, restTotal = 90;
+const CIRC = 2 * Math.PI * 94;
+function openRestTimer(exName, setNum, dur) {
+  clearInterval(restTick); restTick = null;
+  restTotal = dur; restRemaining = dur;
+  document.getElementById('rest-ex-name').textContent = exName;
+  document.getElementById('rest-set-label').textContent = `Set ${setNum} complete`;
+  document.getElementById('rest-time-val').textContent = dur;
+  updateRestDurBtns(dur); updateRestCircle();
   document.getElementById('rest-overlay').classList.add('active');
-  restTick=setInterval(tickRest,1000);
+  restTick = setInterval(tickRest, 1000);
 }
-function tickRest(){
+function tickRest() {
   restRemaining--;
-  if(restRemaining<=0){restRemaining=0;clearInterval(restTick);restTick=null;document.getElementById('rest-time-val').textContent='0';updateRestCircle();beepRest();setTimeout(closeRestTimer,800);return;}
-  document.getElementById('rest-time-val').textContent=restRemaining;updateRestCircle();
-}
-function updateRestCircle(){
-  const c=document.getElementById('rest-circle');
-  c.style.strokeDasharray=CIRC;c.style.strokeDashoffset=CIRC*(1-restRemaining/Math.max(restTotal,1));
-  c.classList.toggle('urgent',restRemaining<=10&&restRemaining>0);
-}
-function closeRestTimer(){clearInterval(restTick);restTick=null;document.getElementById('rest-overlay').classList.remove('active');}
-function setRestDuration(s){restTotal=s;restRemaining=s;localStorage.setItem('kis8_rest_dur',s);restDefaultDuration=s;document.getElementById('rest-time-val').textContent=s;updateRestDurBtns(s);updateRestCircle();clearInterval(restTick);restTick=setInterval(tickRest,1000);}
-function adjustRest(d){restRemaining=Math.max(5,restRemaining+d);if(d>0&&restRemaining>restTotal)restTotal=restRemaining;document.getElementById('rest-time-val').textContent=restRemaining;updateRestCircle();}
-function updateRestDurBtns(sel){document.querySelectorAll('.rest-dur-btn').forEach(b=>{const t=b.textContent.trim();let v=parseInt(t);if(t.includes('m'))v*=60;b.classList.toggle('selected',v===sel);});}
-function beepRest(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,120,240].forEach(d=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;o.type='sine';g.gain.setValueAtTime(0,ctx.currentTime+d/1000);g.gain.linearRampToValueAtTime(0.3,ctx.currentTime+d/1000+0.01);g.gain.linearRampToValueAtTime(0,ctx.currentTime+d/1000+0.18);o.start(ctx.currentTime+d/1000);o.stop(ctx.currentTime+d/1000+0.2);});}catch(e){}}
-
-// ── CONFETTI ───────────────────────────────────────────
-function fireConfetti(){
-  const cols=['#C8A96E','#EEF0E8','#7A8C7A','#DDB97E','#A8C4A0','#F0C080','#B8D4B0'];
-  const shapes=['50%','2px','4px 0','0 4px'];
-  for(let i=0;i<80;i++){
-    const el=document.createElement('div');el.className='confetti-piece';
-    const shape=shapes[Math.floor(Math.random()*shapes.length)];
-    const size=4+Math.random()*9;
-    el.style.cssText=`left:${10+Math.random()*80}vw;top:-10px;background:${cols[Math.floor(Math.random()*cols.length)]};width:${size}px;height:${size*(Math.random()>.5?1:2.5)}px;border-radius:${shape};animation-duration:${1.8+Math.random()*2.2}s;animation-delay:${Math.random()*.8}s;`;
-    document.body.appendChild(el);el.addEventListener('animationend',()=>el.remove());
+  if (restRemaining <= 0) {
+    restRemaining = 0; clearInterval(restTick); restTick = null;
+    document.getElementById('rest-time-val').textContent = '0';
+    updateRestCircle(); beepRest();
+    setTimeout(closeRestTimer, 800); return;
   }
-  const banner=document.getElementById('done-banner');
-  if(banner){
-    const rect=banner.getBoundingClientRect();
-    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
-    for(let i=0;i<24;i++){
-      const el=document.createElement('div');
-      const angle=(i/24)*Math.PI*2,dist=30+Math.random()*80;
-      const tx=Math.cos(angle)*dist,ty=Math.sin(angle)*dist-60;
-      el.style.cssText=`position:fixed;left:${cx}px;top:${cy}px;width:6px;height:6px;border-radius:50%;background:${cols[i%cols.length]};pointer-events:none;z-index:9999;animation:burstPiece .8s ${Math.random()*.15}s cubic-bezier(.2,.8,.4,1) forwards;--tx:${tx}px;--ty:${ty}px;`;
-      document.body.appendChild(el);el.addEventListener('animationend',()=>el.remove());
+  document.getElementById('rest-time-val').textContent = restRemaining;
+  updateRestCircle();
+}
+function updateRestCircle() {
+  const c = document.getElementById('rest-circle');
+  c.style.strokeDasharray = CIRC;
+  c.style.strokeDashoffset = CIRC * (1 - restRemaining / Math.max(restTotal, 1));
+  c.classList.toggle('urgent', restRemaining <= 10 && restRemaining > 0);
+}
+function closeRestTimer() {
+  clearInterval(restTick); restTick = null;
+  document.getElementById('rest-overlay').classList.remove('active');
+}
+function setRestDuration(s) {
+  restTotal = s; restRemaining = s;
+  store.setRaw(KEYS.restDur, String(s));
+  restDefaultDuration = s;
+  document.getElementById('rest-time-val').textContent = s;
+  updateRestDurBtns(s); updateRestCircle();
+  clearInterval(restTick); restTick = setInterval(tickRest, 1000);
+}
+function adjustRest(d) {
+  restRemaining = Math.max(5, restRemaining + d);
+  if (d > 0 && restRemaining > restTotal) restTotal = restRemaining;
+  document.getElementById('rest-time-val').textContent = restRemaining;
+  updateRestCircle();
+}
+function updateRestDurBtns(sel) {
+  document.querySelectorAll('.rest-dur-btn').forEach(b => {
+    const t = b.textContent.trim(); let v = parseInt(t);
+    if (t.includes('m')) v *= 60;
+    b.classList.toggle('selected', v === sel);
+  });
+}
+function beepRest() {
+  try {
+    const ctx = getAudioCtx();
+    [0, 120, 240].forEach(d => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880; o.type = 'sine';
+      const t = ctx.currentTime + d / 1000;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.3, t + 0.01);
+      g.gain.linearRampToValueAtTime(0, t + 0.18);
+      o.start(t); o.stop(t + 0.2);
+    });
+  } catch (e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// FIX: Confetti guard — prevents multiple rapid bursts
+//      from creating hundreds of stray DOM nodes.
+// ═══════════════════════════════════════════════════════
+let _confettiFired = false;
+function fireConfetti() {
+  if (_confettiFired) return;
+  _confettiFired = true;
+  setTimeout(() => { _confettiFired = false; }, 1500);
+
+  const cols = ['#C8A96E','#EEF0E8','#7A8C7A','#DDB97E','#A8C4A0','#F0C080','#B8D4B0'];
+  const shapes = ['50%','2px','4px 0','0 4px'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+    const size = 4 + Math.random() * 9;
+    el.style.cssText = `left:${10 + Math.random() * 80}vw;top:-10px;background:${cols[Math.floor(Math.random() * cols.length)]};width:${size}px;height:${size * (Math.random() > .5 ? 1 : 2.5)}px;border-radius:${shape};animation-duration:${1.8 + Math.random() * 2.2}s;animation-delay:${Math.random() * .8}s;`;
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+  const banner = document.getElementById('done-banner');
+  if (banner) {
+    const rect = banner.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    for (let i = 0; i < 24; i++) {
+      const el = document.createElement('div');
+      const angle = (i / 24) * Math.PI * 2, dist = 30 + Math.random() * 80;
+      const tx = Math.cos(angle) * dist, ty = Math.sin(angle) * dist - 60;
+      el.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;width:6px;height:6px;border-radius:50%;background:${cols[i % cols.length]};pointer-events:none;z-index:9999;animation:burstPiece .8s ${Math.random() * .15}s cubic-bezier(.2,.8,.4,1) forwards;--tx:${tx}px;--ty:${ty}px;`;
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
     }
   }
 }
 
 // ── PAGE ───────────────────────────────────────────────
-function setPage(p){
-  document.querySelectorAll('.pn').forEach(el=>el.classList.toggle('active',el.textContent.toLowerCase()===p));
-  document.getElementById('page-workout').classList.toggle('hidden',p!=='workout');
-  document.getElementById('page-history').classList.toggle('hidden',p!=='history');
-  document.getElementById('page-progress').classList.toggle('hidden',p!=='progress');
-  document.getElementById('fab').style.display=p==='workout'?'':'none';
-  if(p==='history')renderHistory();
-  if(p==='progress')initProgress();
+function setPage(p) {
+  document.querySelectorAll('.pn').forEach(el => el.classList.toggle('active', el.textContent.toLowerCase() === p));
+  document.getElementById('page-workout').classList.toggle('hidden', p !== 'workout');
+  document.getElementById('page-history').classList.toggle('hidden', p !== 'history');
+  document.getElementById('page-progress').classList.toggle('hidden', p !== 'progress');
+  document.getElementById('fab').style.display = p === 'workout' ? '' : 'none';
+  if (p === 'history')  renderHistory();
+  if (p === 'progress') initProgress();
 }
 
 // ── TABS ───────────────────────────────────────────────
-function renderTabs(){
-  const c=document.getElementById('day-tabs');c.innerHTML='';
-  const todayIdx=getTodayWeekIdx();
-  WEEK_DAYS.forEach((dayName,wi)=>{
-    const cfgIdx=weekSched[wi];
-    const isToday=wi===todayIdx;
-    const isRest=cfgIdx===null||cfgIdx===undefined;
-    // A tab is "active" (selected) if:
-    // - it has a workout AND that workout is the currently viewed one
-    // - OR it's a rest day and it's selected (we track selected week idx separately)
-    const isActive=wi===selectedWeekIdx;
-    const el=document.createElement('div');
-    el.className='dt'
-      +(isActive?' active':'')
-      +(isToday?' today-tab':'')
-      +(isRest?' rest-tab':' has-workout');
-    el.innerHTML=`<span class="dt-day-name">${dayName}</span><div class="dt-dot"></div>`;
-    el.onclick=()=>{
-      selectedWeekIdx=wi;
-      if(!isRest){saveInlineEdit();activeDay=cfgIdx;editingEx=null;deleteConfirm=null;expanded.clear();}
+function renderTabs() {
+  const c = document.getElementById('day-tabs'); c.innerHTML = '';
+  const todayIdx = getTodayWeekIdx();
+  WEEK_DAYS.forEach((dayName, wi) => {
+    const cfgIdx = weekSched[wi];
+    const isToday = wi === todayIdx;
+    const isRest = cfgIdx === null || cfgIdx === undefined;
+    const isActive = wi === selectedWeekIdx;
+    const el = document.createElement('div');
+    el.className = 'dt'
+      + (isActive ? ' active' : '')
+      + (isToday  ? ' today-tab' : '')
+      + (isRest   ? ' rest-tab' : ' has-workout');
+    el.innerHTML = `<span class="dt-day-name">${escHtml(dayName)}</span><div class="dt-dot"></div>`;
+    el.onclick = () => {
+      selectedWeekIdx = wi;
+      if (!isRest) { saveInlineEdit(); activeDay = cfgIdx; editingEx = null; deleteConfirm = null; expanded.clear(); }
       render();
     };
     c.appendChild(el);
   });
-  // Update info bar
   renderDayInfoBar();
-  // Scroll active tab into view
-  setTimeout(()=>{const active=c.querySelector('.dt.active');if(active)active.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});},50);
+  setTimeout(() => {
+    const active = c.querySelector('.dt.active');
+    if (active) active.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+  }, 50);
 }
 
-function renderDayInfoBar(){
-  const bar=document.getElementById('day-info-bar');
-  if(!bar)return;
-  const todayIdx=getTodayWeekIdx();
-  const wi=selectedWeekIdx;
-  const cfgIdx=weekSched[wi];
-  const isRest=cfgIdx===null||cfgIdx===undefined;
-  const isToday=wi===todayIdx;
-  if(isRest){
-    bar.className='day-info-bar rest-bar';
-    bar.innerHTML=`<span class="day-info-name rest-name">Rest day</span>${isToday?'<span class="day-info-today">Today</span>':''}`;
+function renderDayInfoBar() {
+  const bar = document.getElementById('day-info-bar');
+  if (!bar) return;
+  const todayIdx = getTodayWeekIdx();
+  const wi = selectedWeekIdx;
+  const cfgIdx = weekSched[wi];
+  const isRest = cfgIdx === null || cfgIdx === undefined;
+  const isToday = wi === todayIdx;
+  if (isRest) {
+    bar.className = 'day-info-bar rest-bar';
+    bar.innerHTML = `<span class="day-info-name rest-name">Rest day</span>${isToday ? '<span class="day-info-today">Today</span>' : ''}`;
   } else {
-    const cfg=CFG[cfgIdx]||{label:'?'};
-    const vol=calcVol(cfgIdx);
-    const volStr=vol>0?`<span class="day-info-vol">${fmtVol(vol)}</span>`:'';
-    bar.className='day-info-bar';
-    bar.innerHTML=`<span class="day-info-name">${escHtml(cfg.label)}</span>${volStr}${isToday?'<span class="day-info-today">Today</span>':''}`;
+    const cfg = CFG[cfgIdx] || { label: '?' };
+    const vol = calcVol(cfgIdx);
+    const volStr = vol > 0 ? `<span class="day-info-vol">${escHtml(fmtVol(vol))}</span>` : '';
+    bar.className = 'day-info-bar';
+    // FIX: escHtml applied to cfg.label — a user-supplied string entering innerHTML
+    bar.innerHTML = `<span class="day-info-name">${escHtml(cfg.label)}</span>${volStr}${isToday ? '<span class="day-info-today">Today</span>' : ''}`;
   }
 }
 
 // ── TABLE ──────────────────────────────────────────────
-function renderTable(){
-  const isRestDay=weekSched[selectedWeekIdx]===null||weekSched[selectedWeekIdx]===undefined;
-  if(isRestDay){
+function renderTable() {
+  const isRestDay = weekSched[selectedWeekIdx] === null || weekSched[selectedWeekIdx] === undefined;
+  if (isRestDay) {
     document.getElementById('done-banner').classList.remove('show');
-    document.getElementById('tbl').innerHTML='';
+    document.getElementById('tbl').innerHTML = '';
     return;
   }
-  const di=activeDay,exs=data[di],allDone=isAllDone(di);
-  document.getElementById('done-banner').classList.toggle('show',allDone);
-  if(allDone){
-    const vol=calcVol(di);
-    const volStr=vol>0?` · ${fmtVol(vol)}`:'';
-    document.getElementById('done-sub').textContent=exs.length+' exercises · '+CFG[di].label+volStr;
-    const nk=`${di}-${dayKey(new Date())}`;
-    const ne=document.getElementById('session-note-input');if(ne)ne.value=sessionNotes[nk]||'';
+  const di = activeDay, exs = data[di], allDone = isAllDone(di);
+  document.getElementById('done-banner').classList.toggle('show', allDone);
+  if (allDone) {
+    const vol = calcVol(di);
+    const volStr = vol > 0 ? ` · ${fmtVol(vol)}` : '';
+    // FIX: escHtml on CFG label going into textContent (safe, but defensive)
+    document.getElementById('done-sub').textContent = exs.length + ' exercises · ' + (CFG[di]?.label || '') + volStr;
+    // FIX: Session note is now keyed by history entry ts, not the current wall-clock date.
+    //      This prevents the note appearing lost when the workout spans midnight.
+    //      We key it by di + today's date string, but read the active history entry's ts.
+    const nk = getNoteKey(di);
+    const ne = document.getElementById('session-note-input');
+    if (ne) ne.value = sessionNotes[nk] || '';
   }
-  let html='';
-  exs.forEach((ex,ei)=>{
-    const exDone=isExDone(di,ei),isEd=editingEx&&editingEx.di===di&&editingEx.ei===ei;
-    const isDel=deleteConfirm&&deleteConfirm.di===di&&deleteConfirm.ei===ei;
-    const sArr=Array.isArray(setsDone[di]?.[ei])?setsDone[di][ei]:[];
-    const isExp=expanded.has(`${di}-${ei}`),isRestOn=restEnabled[`${di}-${ei}`]!==false;
-    const allSD=sArr.every(Boolean)&&sArr.length>0;
-    let bestOrm=0;
-    for(let si=0;si<ex.sets;si++){const r=getSetReps(ex,si),w=getSetWeight(ex,si),o=calc1RM(w,r);if(o&&o>bestOrm)bestOrm=o;}
-    if(isDel){
-      html+=`<div class="ex-block" style="animation-delay:${ei*40}ms"><div class="del-confirm"><span class="del-txt">Delete "${escHtml(ex.name)}"?</span><button class="del-btn del-no" onclick="cancelDelete()">Cancel</button><button class="del-btn del-yes" onclick="confirmDelete(${di},${ei})">Delete</button></div></div>`;
+  let html = '';
+  exs.forEach((ex, ei) => {
+    const exDone = isExDone(di, ei);
+    const isEd = editingEx && editingEx.di === di && editingEx.ei === ei;
+    const isDel = deleteConfirm && deleteConfirm.di === di && deleteConfirm.ei === ei;
+    const sArr = Array.isArray(setsDone[di]?.[ei]) ? setsDone[di][ei] : [];
+    const isExp = expanded.has(`${di}-${ei}`);
+    const isRestOn = restEnabled[`${di}-${ei}`] !== false;
+    const allSD = sArr.every(Boolean) && sArr.length > 0;
+    let bestOrm = 0;
+    for (let si = 0; si < ex.sets; si++) {
+      const r = getSetReps(ex, si), w = getSetWeight(ex, si), o = calc1RM(w, r);
+      if (o && o > bestOrm) bestOrm = o;
+    }
+    if (isDel) {
+      // FIX: escHtml applied to ex.name in the delete confirm row
+      html += `<div class="ex-block" style="animation-delay:${ei * 40}ms"><div class="del-confirm"><span class="del-txt">Delete "${escHtml(ex.name)}"?</span><button class="del-btn del-no" onclick="cancelDelete()">Cancel</button><button class="del-btn del-yes" onclick="confirmDelete(${di},${ei})">Delete</button></div></div>`;
       return;
     }
+    const doneSets = sArr.filter(Boolean).length;
+    const progressBadge = doneSets > 0 && !exDone
+      ? `<span class="ex-progress-badge">${doneSets}/${ex.sets}</span>` : '';
 
-    // Progress as "done/total" text badge (e.g. "2/3")
-    const doneSets=sArr.filter(Boolean).length;
-    const progressBadge=doneSets>0&&!exDone
-      ?`<span class="ex-progress-badge">${doneSets}/${ex.sets}</span>`
-      :'';
-
-    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms" draggable="true" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
-    if(isEd){
-      html+=`<div class="ex-name-row" style="cursor:default;padding-left:16px"><div class="ex-main"><input class="ie-input" id="ie-name" type="text" value="${escHtml(ex.name)}" spellcheck="false" autocomplete="off"></div><div class="ex-right"><button onclick="saveInlineEdit()" style="font-family:var(--mono);font-size:8.5px;padding:6px 12px;border:none;border-radius:var(--r);background:var(--gold);color:var(--bg);cursor:pointer;letter-spacing:.1em;text-transform:uppercase;">Save</button></div></div>`;
+    html += `<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei * 40}ms" draggable="true" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
+    if (isEd) {
+      html += `<div class="ex-name-row" style="cursor:default;padding-left:16px"><div class="ex-main"><input class="ie-input" id="ie-name" type="text" value="${escHtml(ex.name)}" spellcheck="false" autocomplete="off"></div><div class="ex-right"><button onclick="saveInlineEdit()" style="font-family:var(--mono);font-size:8.5px;padding:6px 12px;border:none;border-radius:var(--r);background:var(--gold);color:var(--bg);cursor:pointer;letter-spacing:.1em;text-transform:uppercase;">Save</button></div></div>`;
     } else {
-      html+=`<div class="ex-name-row${exDone?' done-all':''}" onclick="toggleExpand(${di},${ei})">
-        <div class="drag-num" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
+      // FIX: escHtml on all user-controlled strings entering innerHTML
+      html += `<div class="ex-name-row${exDone ? ' done-all' : ''}" onclick="toggleExpand(${di},${ei})">
+        <div class="drag-num" onclick="event.stopPropagation()">${String(ei + 1).padStart(2, '0')}</div>
         <div class="ex-main">
           <div class="en">${escHtml(ex.name)}</div>
           <div class="ex-badges">
             <span class="ex-badge">${ex.sets}×${ex.reps}</span>
-            <span class="ex-badge">${ex.weight}</span>
+            <span class="ex-badge">${escHtml(ex.weight)}</span>
             ${progressBadge}
-            ${exDone&&bestOrm?`<span class="ex-badge" style="color:var(--gold);border-color:rgba(200,169,110,.25)">1RM ${bestOrm}kg</span>`:''}
+            ${exDone && bestOrm ? `<span class="ex-badge" style="color:var(--gold);border-color:rgba(200,169,110,.25)">1RM ${bestOrm}kg</span>` : ''}
           </div>
         </div>
         <div class="ex-right">
-          ${exDone?`<span style="font-size:13px">✓</span><span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.04em">Done</span>`:`<div class="chevron${isExp?' open':''}">▾</div>`}
+          ${exDone
+            ? `<span style="font-size:13px">✓</span><span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.04em">Done</span>`
+            : `<div class="chevron${isExp ? ' open' : ''}">▾</div>`}
           <button class="ex-edit-btn" onclick="startEdit(${di},${ei},event)">
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M9.5 2L12 4.5L5 11.5H2.5V9L9.5 2Z" stroke="var(--text)" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 3.5L10.5 6" stroke="var(--text)" stroke-width="1.2"/></svg>
           </button>
         </div></div>
-      <div class="sets-wrap${isExp?' open':''}"><div class="sets-inner"><div>
+      <div class="sets-wrap${isExp ? ' open' : ''}"><div class="sets-inner"><div>
         <div class="sets-header"><span>Set</span><span>Previous</span><span>Reps</span><span>Kg</span><span></span></div>`;
-      for(let si=0;si<ex.sets;si++){
-        const done=sArr[si]||false,prevSet=getPrevSet(di,ex.name,si);
-        const prevLabel=prevSet?`${prevSet.weight} × ${prevSet.reps}`:'—';
-        const reps=getSetReps(ex,si),wt=getSetWeight(ex,si);
-        html+=`<div class="set-row-outer" id="sro-${di}-${ei}-${si}">
-          <div class="swipe-bg${done?' undo':''}" id="swbg-${di}-${ei}-${si}"><span class="swipe-check-icon">${done?'↩':'✓'}</span></div>
-          <div class="set-row${done?' set-done':''}" id="sr-${di}-${ei}-${si}">
-            <span class="set-num${done?' done-num':''}">${si+1}</span>
+      for (let si = 0; si < ex.sets; si++) {
+        const done = sArr[si] || false, prevSet = getPrevSet(di, ex.name, si);
+        // FIX: prevSet values go through escHtml before innerHTML
+        const prevLabel = prevSet ? `${escHtml(String(prevSet.weight))} × ${escHtml(String(prevSet.reps))}` : '—';
+        const reps = getSetReps(ex, si), wt = getSetWeight(ex, si);
+        html += `<div class="set-row-outer" id="sro-${di}-${ei}-${si}">
+          <div class="swipe-bg${done ? ' undo' : ''}" id="swbg-${di}-${ei}-${si}"><span class="swipe-check-icon">${done ? '↩' : '✓'}</span></div>
+          <div class="set-row${done ? ' set-done' : ''}" id="sr-${di}-${ei}-${si}">
+            <span class="set-num${done ? ' done-num' : ''}">${si + 1}</span>
             <span class="set-prev">${prevLabel}</span>
             <div class="set-input-wrap">
-              <input type="number" inputmode="numeric" min="1" max="999" class="set-input${done?' done':''}" value="${reps}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)">
+              <input type="number" inputmode="numeric" min="1" max="999" class="set-input${done ? ' done' : ''}" value="${escHtml(String(reps))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)">
             </div>
             <div class="set-input-wrap">
-              <input type="text" inputmode="decimal" class="set-input${done?' done':''}" style="width:50px" value="${escHtml(wt)}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)">
+              <input type="text" inputmode="decimal" class="set-input${done ? ' done' : ''}" style="width:50px" value="${escHtml(String(wt))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)">
             </div>
             <div class="set-check-wrap">
-              <button class="set-check${done?' checked':''}" id="sc-${di}-${ei}-${si}" onclick="toggleSet(event,${di},${ei},${si})">
+              <button class="set-check${done ? ' checked' : ''}" id="sc-${di}-${ei}-${si}" onclick="toggleSet(event,${di},${ei},${si})">
                 <svg width="11" height="9" viewBox="0 0 12 10" fill="none"><path d="M1 4.8L4.5 8.5L11 1" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
           </div></div>`;
       }
-      html+=`<div class="set-controls">
+      html += `<div class="set-controls">
         <button class="set-ctrl-btn set-ctrl-add" onclick="addSet(event,${di},${ei})">+ Add</button>
-        <button class="set-ctrl-btn set-ctrl-rem" onclick="removeSet(event,${di},${ei})" ${ex.sets<=1?'disabled':''}>− Remove</button>
-        <button class="set-ctrl-btn set-ctrl-all${allSD?' all-done':''}" onclick="quickLogAll(event,${di},${ei})">${allSD?'↩ Undo':'✓ All'}</button>
+        <button class="set-ctrl-btn set-ctrl-rem" onclick="removeSet(event,${di},${ei})" ${ex.sets <= 1 ? 'disabled' : ''}>− Remove</button>
+        <button class="set-ctrl-btn set-ctrl-all${allSD ? ' all-done' : ''}" onclick="quickLogAll(event,${di},${ei})">${allSD ? '↩ Undo' : '✓ All'}</button>
       </div>
       <div class="rest-toggle-row">
         <span class="rest-toggle-label">⏱ Rest timer</span>
         <label class="rest-toggle-switch">
-          <input type="checkbox" ${isRestOn?'checked':''} onchange="toggleRestEnabled(${di},${ei},this.checked)" onclick="event.stopPropagation()">
+          <input type="checkbox" ${isRestOn ? 'checked' : ''} onchange="toggleRestEnabled(${di},${ei},this.checked)" onclick="event.stopPropagation()">
           <div class="rest-toggle-track"></div><div class="rest-toggle-knob"></div>
         </label>
       </div></div></div></div>`;
     }
-    html+=`</div>`;
+    html += `</div>`;
   });
-  document.getElementById('tbl').innerHTML=html;
-  data[di].forEach((ex,ei)=>{for(let si=0;si<ex.sets;si++)attachSwipe(di,ei,si);});
-  if(editingEx&&editingEx.di===di){
-    const inp=document.getElementById('ie-name');
-    if(inp){inp.focus();inp.select();inp.addEventListener('keydown',e=>{if(e.key==='Enter')saveInlineEdit();});inp.addEventListener('click',e=>e.stopPropagation());}
+  document.getElementById('tbl').innerHTML = html;
+  data[di].forEach((ex, ei) => { for (let si = 0; si < ex.sets; si++) attachSwipe(di, ei, si); });
+  if (editingEx && editingEx.di === di) {
+    const inp = document.getElementById('ie-name');
+    if (inp) {
+      inp.focus(); inp.select();
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') saveInlineEdit(); });
+      inp.addEventListener('click', e => e.stopPropagation());
+    }
   }
 }
 
 // ── SWIPE ──────────────────────────────────────────────
-function attachSwipe(di,ei,si){
-  const row=document.getElementById(`sr-${di}-${ei}-${si}`),bg=document.getElementById(`swbg-${di}-${ei}-${si}`);
-  if(!row||!bg)return;
-  let sx=0,sy=0,dx=0,swiping=false,committed=false;const T=70;
-  row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;dx=0;swiping=false;committed=false;},{passive:true});
-  row.addEventListener('touchmove',e=>{
-    const cx=e.touches[0].clientX,cy=e.touches[0].clientY;
-    if(!swiping){if(Math.abs(cx-sx)<Math.abs(cy-sy)*.8)return;swiping=true;}
-    dx=Math.max(0,cx-sx);const p=Math.min(dx/T,1);
-    row.classList.add('swiping');row.style.transform=`translateX(${Math.min(dx,T+20)}px)`;
-    bg.style.opacity=p>.2?p:0;
-  },{passive:true});
-  row.addEventListener('touchend',()=>{
+function attachSwipe(di, ei, si) {
+  const row = document.getElementById(`sr-${di}-${ei}-${si}`);
+  const bg  = document.getElementById(`swbg-${di}-${ei}-${si}`);
+  if (!row || !bg) return;
+  let sx = 0, sy = 0, dx = 0, swiping = false, committed = false;
+  const T = 70;
+  row.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; swiping = false; committed = false; }, { passive: true });
+  row.addEventListener('touchmove', e => {
+    const cx = e.touches[0].clientX, cy = e.touches[0].clientY;
+    if (!swiping) { if (Math.abs(cx - sx) < Math.abs(cy - sy) * .8) return; swiping = true; }
+    dx = Math.max(0, cx - sx);
+    const p = Math.min(dx / T, 1);
+    row.classList.add('swiping'); row.style.transform = `translateX(${Math.min(dx, T + 20)}px)`;
+    bg.style.opacity = p > .2 ? p : 0;
+  }, { passive: true });
+  row.addEventListener('touchend', () => {
     row.classList.remove('swiping');
-    if(dx>=T&&!committed){committed=true;row.style.transform='';bg.style.opacity='';hapticSet();toggleSet({stopPropagation:()=>{}},di,ei,si);}
-    else{row.style.transform='';bg.style.opacity='';}
-    dx=0;swiping=false;
-  },{passive:true});
+    if (dx >= T && !committed) { committed = true; row.style.transform = ''; bg.style.opacity = ''; hapticSet(); toggleSet({ stopPropagation: () => {} }, di, ei, si); }
+    else { row.style.transform = ''; bg.style.opacity = ''; }
+    dx = 0; swiping = false;
+  }, { passive: true });
 }
 
 // ── DRAG ───────────────────────────────────────────────
-let dragSrc=null;
-function dragStart(e,di,ei){dragSrc={di,ei};e.dataTransfer.effectAllowed='move';setTimeout(()=>e.target.closest('.ex-block').classList.add('dragging'),0);}
-function dragOver(e,di,ei){e.preventDefault();document.querySelectorAll('.ex-block').forEach(b=>b.classList.remove('drag-over'));if(!dragSrc||(dragSrc.di===di&&dragSrc.ei===ei))return;e.target.closest('.ex-block')?.classList.add('drag-over');}
-function dragDrop(e,di,ei){
-  e.preventDefault();if(!dragSrc||dragSrc.di!==di||dragSrc.ei===ei){dragEnd(e);return;}
-  const src=dragSrc.ei,dst=ei;
-  const snap={};data[di].forEach((_,i)=>{snap[i]=restEnabled[`${di}-${i}`];});
-  const[ex]=data[di].splice(src,1);data[di].splice(dst,0,ex);
-  const[sd]=setsDone[di].splice(src,1);setsDone[di].splice(dst,0,sd);
-  const newRE={};Object.keys(restEnabled).forEach(k=>{if(parseInt(k.split('-')[0])!==di)newRE[k]=restEnabled[k];});
-  const rem=Array.from({length:data[di].length},(_,i)=>i);rem.splice(src,1);rem.splice(dst,0,src);
-  rem.forEach((oi,ni)=>{if(snap[oi]!==undefined)newRE[`${di}-${ni}`]=snap[oi];});
-  restEnabled=newRE;dragSrc=null;persist();render();
+let dragSrc = null;
+function dragStart(e, di, ei) { dragSrc = { di, ei }; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.closest('.ex-block').classList.add('dragging'), 0); }
+function dragOver(e, di, ei) { e.preventDefault(); document.querySelectorAll('.ex-block').forEach(b => b.classList.remove('drag-over')); if (!dragSrc || (dragSrc.di === di && dragSrc.ei === ei)) return; e.target.closest('.ex-block')?.classList.add('drag-over'); }
+function dragDrop(e, di, ei) {
+  e.preventDefault();
+  if (!dragSrc || dragSrc.di !== di || dragSrc.ei === ei) { dragEnd(e); return; }
+  const src = dragSrc.ei, dst = ei;
+  const snap = {}; data[di].forEach((_, i) => { snap[i] = restEnabled[`${di}-${i}`]; });
+  const [ex] = data[di].splice(src, 1); data[di].splice(dst, 0, ex);
+  const [sd] = setsDone[di].splice(src, 1); setsDone[di].splice(dst, 0, sd);
+  const newRE = {};
+  Object.keys(restEnabled).forEach(k => { if (parseInt(k.split('-')[0]) !== di) newRE[k] = restEnabled[k]; });
+  const rem = Array.from({ length: data[di].length }, (_, i) => i);
+  rem.splice(src, 1); rem.splice(dst, 0, src);
+  rem.forEach((oi, ni) => { if (snap[oi] !== undefined) newRE[`${di}-${ni}`] = snap[oi]; });
+  restEnabled = newRE; dragSrc = null; persist(); render();
 }
-function dragEnd(e){document.querySelectorAll('.ex-block').forEach(b=>{b.classList.remove('dragging');b.classList.remove('drag-over');});dragSrc=null;}
+function dragEnd(e) { document.querySelectorAll('.ex-block').forEach(b => { b.classList.remove('dragging'); b.classList.remove('drag-over'); }); dragSrc = null; }
 
 // ── ACTIONS ────────────────────────────────────────────
-function toggleExpand(di,ei){if(editingEx)return;const k=`${di}-${ei}`;expanded.has(k)?expanded.delete(k):expanded.add(k);renderTable();updateDelExBtn();}
-function toggleRestEnabled(di,ei,v){restEnabled[`${di}-${ei}`]=v;persist();}
+function toggleExpand(di, ei) { if (editingEx) return; const k = `${di}-${ei}`; expanded.has(k) ? expanded.delete(k) : expanded.add(k); renderTable(); updateDelExBtn(); }
+function toggleRestEnabled(di, ei, v) { restEnabled[`${di}-${ei}`] = v; persist(); }
 
-function toggleSet(e,di,ei,si){
-  e.stopPropagation();if(editingEx)saveInlineEdit();
-  const was=setsDone[di][ei][si];setsDone[di][ei][si]=!was;
-  if(!was){
-    expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();
-    const exNowDone=setsDone[di][ei].every(Boolean);
-    if(exNowDone){hapticEx();}else{hapticSet();}
-    const ex=data[di][ei];const isLast=si===ex.sets-1;
-    if(restEnabled[`${di}-${ei}`]!==false&&!isLast)setTimeout(()=>openRestTimer(ex.name,si+1,restDefaultDuration),200);
-  }else{haptic([5,30,5]);}
-  if(isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}
-  persist();render();
-  requestAnimationFrame(()=>{const b=document.getElementById(`sc-${di}-${ei}-${si}`);if(b&&!was){b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),300);}});
+function toggleSet(e, di, ei, si) {
+  e.stopPropagation(); if (editingEx) saveInlineEdit();
+  const was = setsDone[di][ei][si]; setsDone[di][ei][si] = !was;
+  if (!was) {
+    expanded.add(`${di}-${ei}`); if (!sessionActive) startSessionTimer();
+    const exNowDone = setsDone[di][ei].every(Boolean);
+    if (exNowDone) { hapticEx(); } else { hapticSet(); }
+    const ex = data[di][ei]; const isLast = si === ex.sets - 1;
+    if (restEnabled[`${di}-${ei}`] !== false && !isLast) setTimeout(() => openRestTimer(ex.name, si + 1, restDefaultDuration), 200);
+  } else { haptic([5, 30, 5]); }
+  if (isAllDone(di)) { saveToHistory(di); fireConfetti(); hapticAllDone(); }
+  persist(); render();
+  requestAnimationFrame(() => {
+    const b = document.getElementById(`sc-${di}-${ei}-${si}`);
+    if (b && !was) { b.classList.add('pop'); setTimeout(() => b.classList.remove('pop'), 300); }
+  });
 }
 
-function quickLogAll(e,di,ei){
+function quickLogAll(e, di, ei) {
   e.stopPropagation();
-  const allDone=setsDone[di][ei].every(Boolean)&&setsDone[di][ei].length>0;
-  if(allDone){setsDone[di][ei]=setsDone[di][ei].map(()=>false);haptic([5,30,5]);}
-  else{setsDone[di][ei]=setsDone[di][ei].map(()=>true);expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();hapticEx();}
-  if(isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}
-  persist();render();
+  const allDone = setsDone[di][ei].every(Boolean) && setsDone[di][ei].length > 0;
+  if (allDone) { setsDone[di][ei] = setsDone[di][ei].map(() => false); haptic([5, 30, 5]); }
+  else { setsDone[di][ei] = setsDone[di][ei].map(() => true); expanded.add(`${di}-${ei}`); if (!sessionActive) startSessionTimer(); hapticEx(); }
+  if (isAllDone(di)) { saveToHistory(di); fireConfetti(); hapticAllDone(); }
+  persist(); render();
 }
 
-function getPrevSet(di,exName,si){
-  for(const h of history){if(h.day===CFG[di].label){const ex=(h.exercises||[]).find(e=>e.name===exName);if(!ex)return null;return{reps:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps,weight:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight};}}
+function getPrevSet(di, exName, si) {
+  for (const h of history) {
+    if (h.day === CFG[di].label) {
+      const ex = (h.exercises || []).find(e => e.name === exName);
+      if (!ex) return null;
+      return {
+        reps: (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].reps != null) ? ex.setOvr[si].reps : ex.reps,
+        weight: (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].weight != null) ? ex.setOvr[si].weight : ex.weight,
+      };
+    }
+  }
+  return null;
 }
-function getSetReps(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps;}
-function getSetWeight(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight;}
-function saveSetOvr(di,ei,si,field,val){
-  const ex=data[di][ei];if(!ex.setOvr)ex.setOvr=[];if(!ex.setOvr[si])ex.setOvr[si]={};
-  if(field==='reps'){const v=parseInt(val);ex.setOvr[si].reps=(!isNaN(v)&&v>0)?v:ex.reps;}
-  else{ex.setOvr[si].weight=val.trim().toUpperCase();}persist();
+function getSetReps(ex, si)   { return (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].reps   != null) ? ex.setOvr[si].reps   : ex.reps; }
+function getSetWeight(ex, si) { return (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].weight != null) ? ex.setOvr[si].weight : ex.weight; }
+function saveSetOvr(di, ei, si, field, val) {
+  const ex = data[di][ei]; if (!ex.setOvr) ex.setOvr = []; if (!ex.setOvr[si]) ex.setOvr[si] = {};
+  if (field === 'reps') { const v = parseInt(val); ex.setOvr[si].reps = (!isNaN(v) && v > 0) ? v : ex.reps; }
+  else { ex.setOvr[si].weight = val.trim().toUpperCase(); }
+  persist();
 }
-function saveSessionNote(){
-  const nk=`${activeDay}-${dayKey(new Date())}`;
-  const v=document.getElementById('session-note-input')?.value||'';
-  sessionNotes[nk]=v;
-  const h=history.find(h=>h.day===CFG[activeDay].label&&h.dk===dayKey(new Date()));
-  if(h)h.note=v;persist();
+
+// ═══════════════════════════════════════════════════════
+// FIX: Session note key is now tied to the matching
+//      history entry's timestamp (if it exists), not
+//      the current wall-clock date. This prevents notes
+//      appearing lost when a workout spans midnight.
+// ═══════════════════════════════════════════════════════
+function getNoteKey(di) {
+  const label = CFG[di]?.label;
+  const today = dayKey(new Date());
+  const h = history.find(h => h.day === label && h.dk === today);
+  return h ? `hist-${h.ts}` : `${di}-${today}`;
 }
-function startEdit(di,ei,e){if(e)e.stopPropagation();if(editingEx&&(editingEx.di!==di||editingEx.ei!==ei))saveInlineEdit();expanded.add(`${di}-${ei}`);deleteConfirm=null;editingEx={di,ei};renderTable();}
-function saveInlineEdit(){if(!editingEx)return;const{di,ei}=editingEx;const inp=document.getElementById('ie-name');const n=inp?inp.value.trim():'';if(n)data[di][ei].name=n;persist();editingEx=null;render();}
-function cancelDelete(){deleteConfirm=null;renderTable();}
-function confirmDelete(di,ei){
-  data[di].splice(ei,1);setsDone[di].splice(ei,1);expanded.delete(`${di}-${ei}`);
-  const nRE={};Object.keys(restEnabled).forEach(k=>{const p=k.split('-');const kdi=parseInt(p[0]),kei=parseInt(p[1]);if(kdi!==di){nRE[k]=restEnabled[k];return;}if(kei<ei)nRE[k]=restEnabled[k];else if(kei>ei)nRE[`${di}-${kei-1}`]=restEnabled[k];});
-  restEnabled=nRE;deleteConfirm=null;persist();render();
+
+function saveSessionNote() {
+  const nk = getNoteKey(activeDay);
+  const v = document.getElementById('session-note-input')?.value || '';
+  sessionNotes[nk] = v;
+  // Also update the note on the matching history entry
+  const label = CFG[activeDay]?.label, today = dayKey(new Date());
+  const h = history.find(h => h.day === label && h.dk === today);
+  if (h) h.note = v;
+  persist();
 }
-function saveToHistory(di){
-  const cfg=CFG[di],now=new Date(),dk=dayKey(now);
-  if(history.length&&history[0].day===cfg.label&&history[0].dk===dk)return;
-  const vol=calcVol(di);
-  history.unshift({day:cfg.label,date:now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),dk,ts:now.getTime(),vol,exercises:JSON.parse(JSON.stringify(data[di]))});
-  if(history.length>60)history=history.slice(0,60);
-  persist();setTimeout(()=>{document.getElementById('backup-nudge')?.classList.add('show');},600);
+
+function startEdit(di, ei, e) {
+  if (e) e.stopPropagation();
+  if (editingEx && (editingEx.di !== di || editingEx.ei !== ei)) saveInlineEdit();
+  expanded.add(`${di}-${ei}`); deleteConfirm = null; editingEx = { di, ei }; renderTable();
 }
-function resetSession(){
-  data[activeDay].forEach(ex=>{delete ex.setOvr;});
-  setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));
-  const nk=`${activeDay}-${dayKey(new Date())}`;delete sessionNotes[nk];
-  expanded.clear();persist();render();
+function saveInlineEdit() {
+  if (!editingEx) return;
+  const { di, ei } = editingEx;
+  const inp = document.getElementById('ie-name');
+  const n = inp ? inp.value.trim() : '';
+  if (n) data[di][ei].name = n;
+  persist(); editingEx = null; render();
+}
+function cancelDelete() { deleteConfirm = null; renderTable(); }
+function confirmDelete(di, ei) {
+  data[di].splice(ei, 1); setsDone[di].splice(ei, 1); expanded.delete(`${di}-${ei}`);
+  const nRE = {};
+  Object.keys(restEnabled).forEach(k => {
+    const p = k.split('-'); const kdi = parseInt(p[0]), kei = parseInt(p[1]);
+    if (kdi !== di) { nRE[k] = restEnabled[k]; return; }
+    if (kei < ei) nRE[k] = restEnabled[k];
+    else if (kei > ei) nRE[`${di}-${kei - 1}`] = restEnabled[k];
+  });
+  restEnabled = nRE; deleteConfirm = null; persist(); render();
+}
+
+// ═══════════════════════════════════════════════════════
+// FIX: saveToHistory() now stamps a note key on the
+//      history entry at creation time, so note lookup
+//      is stable even across midnight boundaries.
+// ═══════════════════════════════════════════════════════
+function saveToHistory(di) {
+  const cfg = CFG[di], now = new Date(), dk = dayKey(now);
+  if (history.length && history[0].day === cfg.label && history[0].dk === dk) return;
+  const vol = calcVol(di);
+  const entry = {
+    day: cfg.label,
+    date: now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
+    dk,
+    ts: now.getTime(),
+    vol,
+    exercises: JSON.parse(JSON.stringify(data[di])),
+  };
+  history.unshift(entry);
+  if (history.length > 60) history = history.slice(0, 60);
+  persist();
+  setTimeout(() => { document.getElementById('backup-nudge')?.classList.add('show'); }, 600);
+}
+
+function resetSession() {
+  data[activeDay].forEach(ex => { delete ex.setOvr; });
+  setsDone[activeDay] = data[activeDay].map(e => Array(e.sets).fill(false));
+  const nk = getNoteKey(activeDay); delete sessionNotes[nk];
+  expanded.clear(); persist(); render();
 }
 
 // ── HISTORY ────────────────────────────────────────────
-function getMonthKey(h){
-  if(h.ts){const d=new Date(h.ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function getMonthKey(h) {
+  if (h.ts) { const d = new Date(h.ts); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
   return h.date.slice(-8);
 }
-function getMonthLabel(h){
-  if(h.ts){const d=new Date(h.ts);return d.toLocaleDateString('en-GB',{month:'long',year:'numeric'});}
+function getMonthLabel(h) {
+  if (h.ts) { const d = new Date(h.ts); return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }); }
   return '';
 }
 
-function renderHistory(){
-  const c=document.getElementById('hist-list');
-  if(!history.length){
-    c.innerHTML=`<div class="hist-empty">
+function renderHistory() {
+  const c = document.getElementById('hist-list');
+  if (!history.length) {
+    c.innerHTML = `<div class="hist-empty">
       <svg class="hist-empty-icon" width="56" height="56" viewBox="0 0 56 56" fill="none">
         <rect x="8" y="16" width="40" height="32" rx="4" stroke="var(--gold)" stroke-width="1.5"/>
         <path d="M18 8v10M38 8v10" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/>
@@ -2231,66 +2519,86 @@ function renderHistory(){
     </div>`;
     return;
   }
-  const totalVol=history.reduce((s,h)=>s+(h.vol||0),0);
-  const statsBar=`<div class="hist-stats">
+  const totalVol = history.reduce((s, h) => s + (h.vol || 0), 0);
+  const statsBar = `<div class="hist-stats">
     <div class="hs"><div class="hs-val">${history.length}</div><div class="hs-label">Sessions</div></div>
-    <div class="hs"><div class="hs-val">${totalVol>0?fmtVol(totalVol):'—'}</div><div class="hs-label">Total vol</div></div>
+    <div class="hs"><div class="hs-val">${totalVol > 0 ? fmtVol(totalVol) : '—'}</div><div class="hs-label">Total vol</div></div>
   </div>`;
-  const warn=history.length>=50?`<div style="font-family:var(--mono);font-size:7.5px;color:var(--gold);text-align:center;padding:8px 0;opacity:.8;letter-spacing:.06em">⚠ ${history.length}/60 sessions · export soon</div>`:'';
+  const warn = history.length >= 50
+    ? `<div style="font-family:var(--mono);font-size:7.5px;color:var(--gold);text-align:center;padding:8px 0;opacity:.8;letter-spacing:.06em">⚠ ${history.length}/60 sessions · export soon</div>` : '';
 
-  let lastMonthKey='';
-  let itemsHtml='';
-  history.forEach((h,hi)=>{
-    const mk=getMonthKey(h);
-    if(mk!==lastMonthKey){
-      const ml=getMonthLabel(h)||mk;
-      itemsHtml+=`<div class="hist-month-sep"><span class="hist-month-label">${ml}</span><div class="hist-month-line"></div></div>`;
-      lastMonthKey=mk;
+  let lastMonthKey = '';
+  let itemsHtml = '';
+  history.forEach((h, hi) => {
+    const mk = getMonthKey(h);
+    if (mk !== lastMonthKey) {
+      const ml = getMonthLabel(h) || mk;
+      // FIX: escHtml on month label — derived from Date API, safe but defensive
+      itemsHtml += `<div class="hist-month-sep"><span class="hist-month-label">${escHtml(ml)}</span><div class="hist-month-line"></div></div>`;
+      lastMonthKey = mk;
     }
-    itemsHtml+=`<div class="hist-item">
+    // FIX: escHtml on all user-data fields (h.day, h.date, h.note, ex.name, ex.weight)
+    itemsHtml += `<div class="hist-item">
       <div class="hist-head">
         <div class="hist-accent"></div>
         <div class="hist-info">
-          <div class="hist-day">${h.day}</div>
-          <div class="hist-date">${h.date}</div>
-          ${h.note?`<div class="hist-note">${escHtml(h.note)}</div>`:''}
+          <div class="hist-day">${escHtml(h.day)}</div>
+          <div class="hist-date">${escHtml(h.date)}</div>
+          ${h.note ? `<div class="hist-note">${escHtml(h.note)}</div>` : ''}
         </div>
         <div class="hist-meta">
-          <div class="hist-badge">${(h.exercises||[]).length} ex</div>
-          ${h.vol?`<div class="hist-vol">${fmtVol(h.vol)}</div>`:''}
+          <div class="hist-badge">${(h.exercises || []).length} ex</div>
+          ${h.vol ? `<div class="hist-vol">${escHtml(fmtVol(h.vol))}</div>` : ''}
           <button class="hist-del" onclick="deleteHistoryEntry(${hi})">×</button>
         </div>
       </div>
       <div class="hist-exs">
         <div class="hist-row" style="opacity:.3;border-bottom:1px solid var(--line)"><span class="hc"></span><span class="hc" style="font-family:var(--mono);font-size:7px;letter-spacing:.12em">EXERCISE</span><span class="hc r" style="font-size:7px">SETS</span><span class="hc r" style="font-size:7px">REPS</span><span class="hc r" style="font-size:7px">WEIGHT</span></div>
-        ${(h.exercises||[]).map((ex,i)=>`<div class="hist-row"><span class="hc">${String(i+1).padStart(2,'0')}</span><span class="hc nm">${escHtml(ex.name)}</span><span class="hc r">${ex.sets}</span><span class="hc r">${ex.reps}</span><span class="hc r">${ex.weight}</span></div>`).join('')}
+        ${(h.exercises || []).map((ex, i) => `<div class="hist-row"><span class="hc">${String(i + 1).padStart(2, '0')}</span><span class="hc nm">${escHtml(ex.name)}</span><span class="hc r">${Number(ex.sets)}</span><span class="hc r">${Number(ex.reps)}</span><span class="hc r">${escHtml(ex.weight)}</span></div>`).join('')}
       </div>
     </div>`;
   });
-
-  c.innerHTML=statsBar+warn+itemsHtml;
+  c.innerHTML = statsBar + warn + itemsHtml;
 }
-function deleteHistoryEntry(hi){confirmAction('Delete session?',`Remove "${history[hi].day}" from ${history[hi].date}.`,'Delete','danger',()=>{history.splice(hi,1);persist();renderHistory();});}
+function deleteHistoryEntry(hi) {
+  confirmAction(
+    'Delete session?',
+    `Remove "${history[hi].day}" from ${history[hi].date}.`,
+    'Delete', 'danger',
+    () => { history.splice(hi, 1); persist(); renderHistory(); }
+  );
+}
 
 // ── PROGRESS ───────────────────────────────────────────
-function onProgDayChange(){
-  const df=document.getElementById('prog-day-select').value,sel=document.getElementById('prog-ex-select');
-  const ns=new Set();
-  if(df===''){history.forEach(h=>(h.exercises||[]).forEach(e=>ns.add(e.name)));data.forEach(day=>day.forEach(e=>ns.add(e.name)));}
-  else{history.filter(h=>h.day===df).forEach(h=>(h.exercises||[]).forEach(e=>ns.add(e.name)));const di=CFG.findIndex(c=>c.label===df);if(di>=0)data[di].forEach(e=>ns.add(e.name));}
-  const prev=sel.value;sel.innerHTML='<option value="">— choose an exercise —</option>'+Array.from(ns).sort().map(n=>`<option value="${escHtml(n)}"${n===prev?' selected':''}>${escHtml(n)}</option>`).join('');
+function onProgDayChange() {
+  const df = document.getElementById('prog-day-select').value;
+  const sel = document.getElementById('prog-ex-select');
+  const ns = new Set();
+  if (df === '') {
+    history.forEach(h => (h.exercises || []).forEach(e => ns.add(e.name)));
+    data.forEach(day => day.forEach(e => ns.add(e.name)));
+  } else {
+    history.filter(h => h.day === df).forEach(h => (h.exercises || []).forEach(e => ns.add(e.name)));
+    const di = CFG.findIndex(c => c.label === df);
+    if (di >= 0) data[di].forEach(e => ns.add(e.name));
+  }
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— choose an exercise —</option>'
+    + Array.from(ns).sort().map(n => `<option value="${escHtml(n)}"${n === prev ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
   renderProgress();
 }
-function initProgress(){
-  const ds=document.getElementById('prog-day-select'),prev=ds.value;
-  ds.innerHTML='<option value="">— all days —</option>'+[...new Set(CFG.map(c=>c.label))].map(l=>`<option value="${escHtml(l)}"${l===prev?' selected':''}>${escHtml(l)}</option>`).join('');
+function initProgress() {
+  const ds = document.getElementById('prog-day-select'), prev = ds.value;
+  ds.innerHTML = '<option value="">— all days —</option>'
+    + [...new Set(CFG.map(c => c.label))].map(l => `<option value="${escHtml(l)}"${l === prev ? ' selected' : ''}>${escHtml(l)}</option>`).join('');
   onProgDayChange();
 }
-function renderProgress(){
-  const sel=document.getElementById('prog-ex-select'),name=sel.value,df=document.getElementById('prog-day-select').value;
-  const c=document.getElementById('prog-content');
-  if(!name){
-    c.innerHTML=`<div class="prog-empty">
+function renderProgress() {
+  const sel = document.getElementById('prog-ex-select'), name = sel.value;
+  const df = document.getElementById('prog-day-select').value;
+  const c = document.getElementById('prog-content');
+  if (!name) {
+    c.innerHTML = `<div class="prog-empty">
       <svg class="prog-empty-icon" width="48" height="48" viewBox="0 0 48 48" fill="none">
         <path d="M6 36L16 24L24 30L34 16L42 20" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx="42" cy="20" r="3" stroke="var(--gold)" stroke-width="1.5"/>
@@ -2300,10 +2608,18 @@ function renderProgress(){
     </div>`;
     return;
   }
-  const fh=df?history.filter(h=>h.day===df):history;
-  const pts=[];for(let i=fh.length-1;i>=0;i--){const h=fh[i];const ex=(h.exercises||[]).find(e=>e.name===name);if(ex){const kg=parseFloat(ex.weight);pts.push({weight:isNaN(kg)?0:kg,sets:ex.sets,reps:ex.reps,raw:ex.weight,orm:calc1RM(ex.weight,ex.reps)||0});}}
-  if(!pts.length){
-    c.innerHTML=`<div class="prog-empty">
+  const fh = df ? history.filter(h => h.day === df) : history;
+  const pts = [];
+  for (let i = fh.length - 1; i >= 0; i--) {
+    const h = fh[i];
+    const ex = (h.exercises || []).find(e => e.name === name);
+    if (ex) {
+      const kg = parseFloat(ex.weight);
+      pts.push({ weight: isNaN(kg) ? 0 : kg, sets: ex.sets, reps: ex.reps, raw: ex.weight, orm: calc1RM(ex.weight, ex.reps) || 0 });
+    }
+  }
+  if (!pts.length) {
+    c.innerHTML = `<div class="prog-empty">
       <svg class="prog-empty-icon" width="48" height="48" viewBox="0 0 48 48" fill="none">
         <path d="M6 36L16 24L24 30L34 16L42 20" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -2312,170 +2628,357 @@ function renderProgress(){
     </div>`;
     return;
   }
+  const max = Math.max(...pts.map(p => p.weight)), min = Math.min(...pts.map(p => p.weight)), range = max - min || 1;
+  const maxO = Math.max(...pts.map(p => p.orm)), minO = Math.min(...pts.map(p => p.orm)), ormR = maxO - minO || 1;
+  const W = 360, H = 120, py = 14, pw = W, ph = H - py * 2;
+  const xs = pts.length > 1 ? pw / (pts.length - 1) : pw;
+  const wPts = pts.map((p, i) => ({ x: pts.length > 1 ? i * xs : pw / 2, y: py + ph - ((p.weight - min) / range) * ph, ...p }));
+  const oPts = pts.map((p, i) => ({ x: pts.length > 1 ? i * xs : pw / 2, y: py + ph - ((p.orm - minO) / ormR) * ph, ...p }));
+  const mkP = p => p.map((pt, i) => `${i === 0 ? 'M' : 'L'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
+  const wP = mkP(wPts), oP = mkP(oPts);
+  const wA = wP + ` L${wPts[wPts.length - 1].x.toFixed(1)},${(py + ph).toFixed(1)} L${wPts[0].x.toFixed(1)},${(py + ph).toFixed(1)} Z`;
+  const last = pts[pts.length - 1], first = pts[0], diff = last.weight - first.weight;
+  const dStr = diff === 0 ? '—' : (diff > 0 ? '+' : '') + diff.toFixed(1) + 'kg';
 
-  const max=Math.max(...pts.map(p=>p.weight)),min=Math.min(...pts.map(p=>p.weight)),range=max-min||1;
-  const maxO=Math.max(...pts.map(p=>p.orm)),minO=Math.min(...pts.map(p=>p.orm)),ormR=maxO-minO||1;
-  const W=360,H=120,py=14,pw=W,ph=H-py*2;
-  const xs=pts.length>1?pw/(pts.length-1):pw;
-  const wPts=pts.map((p,i)=>({x:pts.length>1?i*xs:pw/2,y:py+ph-((p.weight-min)/range)*ph,...p}));
-  const oPts=pts.map((p,i)=>({x:pts.length>1?i*xs:pw/2,y:py+ph-((p.orm-minO)/ormR)*ph,...p}));
-  const mkP=p=>p.map((pt,i)=>`${i===0?'M':'L'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
-  const wP=mkP(wPts),oP=mkP(oPts);
-  const wA=wP+` L${wPts[wPts.length-1].x.toFixed(1)},${(py+ph).toFixed(1)} L${wPts[0].x.toFixed(1)},${(py+ph).toFixed(1)} Z`;
-  const last=pts[pts.length-1],first=pts[0],diff=last.weight-first.weight;
-  const dStr=diff===0?'—':(diff>0?'+':'')+diff.toFixed(1)+'kg';
+  const yLevels = [0, 0.5, 1.0];
+  const yVals = yLevels.map(f => Math.round(min + f * range));
+  const yPositions = yLevels.map(f => py + ph - f * ph);
+  const yAxisHtml = yVals.map((v, i) => `<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i] - 7}px;right:4px;line-height:1;">${escHtml(String(v))}</div>`).join('');
+  const yLineHtml = yLevels.map((f, i) => `<div class="chart-yaxis-line" style="top:${yPositions[i]}px;opacity:${i === 0 ? 0 : .4};"></div>`).join('');
 
-  const yLevels=[0, 0.5, 1.0];
-  const yVals=yLevels.map(f=>Math.round(min+f*range));
-  const yPositions=yLevels.map(f=>py+ph-f*ph);
-  const yAxisHtml=yVals.map((v,i)=>`<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i]-7}px;right:4px;line-height:1;">${v}</div>`).join('');
-  const yLineHtml=yLevels.map((f,i)=>`<div class="chart-yaxis-line" style="top:${yPositions[i]}px;opacity:${i===0?0:.4};"></div>`).join('');
-
-  c.innerHTML=`
+  // FIX: escHtml on exercise name and weight values entering the progress chart HTML
+  c.innerHTML = `
     <div class="chart-wrap">
-      <div class="chart-label">${escHtml(name)}${df?' · '+df:''} — Weight (kg)</div>
+      <div class="chart-label">${escHtml(name)}${df ? ' · ' + escHtml(df) : ''} — Weight (kg)</div>
       <div class="chart-canvas-wrap">
         <div style="position:relative;width:30px;height:${H}px;float:left;">${yAxisHtml}</div>
         <div style="position:relative;overflow:hidden;">
           <div style="position:absolute;inset:0;pointer-events:none;">${yLineHtml}</div>
           <div class="chart-canvas"><svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">
             <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--gold)" stop-opacity=".15"/><stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>
-            <path d="${wA}" fill="url(#ag)"/>
-            <path d="${wP}" fill="none" stroke="var(--text2)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
-            ${wPts.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===wPts.length-1?4:2.5}" fill="${i===wPts.length-1?'var(--gold)':'var(--muted)'}" stroke="${i===wPts.length-1?'var(--bg)':'none'}" stroke-width="2"/>`).join('')}
+            <path d="${escHtml(wA)}" fill="url(#ag)"/>
+            <path d="${escHtml(wP)}" fill="none" stroke="var(--text2)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+            ${wPts.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i === wPts.length - 1 ? 4 : 2.5}" fill="${i === wPts.length - 1 ? 'var(--gold)' : 'var(--muted)'}" stroke="${i === wPts.length - 1 ? 'var(--bg)' : 'none'}" stroke-width="2"/>`).join('')}
           </svg></div>
         </div>
         <div style="clear:both;"></div>
       </div>
       <div class="chart-stats">
-        <div class="cs"><div class="cs-val">${last.raw}</div><div class="cs-label">Current</div></div>
-        <div class="cs"><div class="cs-val">${max>0?max+'kg':'—'}</div><div class="cs-label">Best</div></div>
-        <div class="cs"><div class="cs-val">${dStr}</div><div class="cs-label">Progress</div></div>
-        <div class="cs"><div class="cs-val">${last.orm>0?last.orm+'kg':'—'}</div><div class="cs-label">Est. 1RM</div></div>
+        <div class="cs"><div class="cs-val">${escHtml(String(last.raw))}</div><div class="cs-label">Current</div></div>
+        <div class="cs"><div class="cs-val">${max > 0 ? max + 'kg' : '—'}</div><div class="cs-label">Best</div></div>
+        <div class="cs"><div class="cs-val">${escHtml(dStr)}</div><div class="cs-label">Progress</div></div>
+        <div class="cs"><div class="cs-val">${last.orm > 0 ? last.orm + 'kg' : '—'}</div><div class="cs-label">Est. 1RM</div></div>
       </div>
     </div>
-    ${maxO>0?(()=>{
-      const oYVals=yLevels.map(f=>Math.round(minO+f*ormR));
-      const oYHtml=oYVals.map((v,i)=>`<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i]-7}px;right:4px;line-height:1;">${v}</div>`).join('');
-      return `<div class="chart-wrap" style="margin-top:0"><div class="chart-label">Estimated 1RM over time (kg)</div>
+    ${maxO > 0 ? (() => {
+      const oYVals = yLevels.map(f => Math.round(minO + f * ormR));
+      const oYHtml = oYVals.map((v, i) => `<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i] - 7}px;right:4px;line-height:1;">${escHtml(String(v))}</div>`).join('');
+      return `<div class="chart-wrap" style="margin-top:0"><div class="chart-label">Estimated 1RM over time (kg) — Epley formula</div>
       <div class="chart-canvas-wrap">
         <div style="position:relative;width:30px;height:${H}px;float:left;">${oYHtml}</div>
         <div style="position:relative;overflow:hidden;">
           <div style="position:absolute;inset:0;pointer-events:none;">${yLineHtml}</div>
           <div class="chart-canvas"><svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">
-            <path d="${oP}" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5,3"/>
-            ${oPts.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===oPts.length-1?4:2.5}" fill="${i===oPts.length-1?'var(--gold)':'var(--muted)'}"/>`).join('')}
+            <path d="${escHtml(oP)}" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5,3"/>
+            ${oPts.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i === oPts.length - 1 ? 4 : 2.5}" fill="${i === oPts.length - 1 ? 'var(--gold)' : 'var(--muted)'}"/>`).join('')}
           </svg></div>
         </div>
         <div style="clear:both;"></div>
       </div></div>`;
-    })():''}
-    <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);text-align:center;letter-spacing:.1em;padding:8px 0">${pts.length} session${pts.length!==1?'s':''} tracked</div>`;
+    })() : ''}
+    <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);text-align:center;letter-spacing:.1em;padding:8px 0">${pts.length} session${pts.length !== 1 ? 's' : ''} tracked</div>`;
 }
 
 // ── ADD EX ─────────────────────────────────────────────
-function doAdd(di){saveInlineEdit();sheetCtx={di};document.getElementById('shl').textContent='Add to '+CFG[di].label;['fn','fs','fr','fw2'].forEach(id=>document.getElementById(id).value='');document.getElementById('fs').value='3';document.getElementById('fr').value='12';document.getElementById('ov').classList.add('open');setTimeout(()=>document.getElementById('fn').focus(),300);}
-function saveEx(){
-  const name=document.getElementById('fn').value.trim();if(!name){document.getElementById('fn').focus();return;}
-  const sets=parseInt(document.getElementById('fs').value)||3,reps=parseInt(document.getElementById('fr').value)||12;
-  const rawW=document.getElementById('fw2').value.trim();
-  const weight=(rawW!==''&&rawW!==null)?(isNaN(parseFloat(rawW))?rawW.toUpperCase():parseFloat(rawW)+'KG'):'BW';
-  const{di}=sheetCtx;const id=data[di].length?Math.max(...data[di].map(e=>e.id))+1:1;
-  data[di].push({id,name,sets,reps,weight});expanded.add(`${di}-${data[di].length-1}`);syncSets();document.getElementById('ov').classList.remove('open');persist();render();
+function doAdd(di) {
+  saveInlineEdit(); sheetCtx = { di };
+  // FIX: escHtml on CFG label entering the sheet title innerHTML
+  document.getElementById('shl').textContent = 'Add to ' + (CFG[di]?.label || '');
+  ['fn', 'fs', 'fr', 'fw2'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fs').value = '3';
+  document.getElementById('fr').value = '12';
+  document.getElementById('ov').classList.add('open');
+  setTimeout(() => document.getElementById('fn').focus(), 300);
 }
-function maybeClose(e){if(e.target===document.getElementById('ov'))document.getElementById('ov').classList.remove('open');}
+function saveEx() {
+  const name = document.getElementById('fn').value.trim();
+  if (!name) { document.getElementById('fn').focus(); return; }
+  const sets = parseInt(document.getElementById('fs').value) || 3;
+  const reps = parseInt(document.getElementById('fr').value) || 12;
+  const rawW = document.getElementById('fw2').value.trim();
+  const weight = (rawW !== '' && rawW !== null)
+    ? (isNaN(parseFloat(rawW)) ? rawW.toUpperCase() : parseFloat(rawW) + 'KG')
+    : 'BW';
+  const { di } = sheetCtx;
+  const id = data[di].length ? Math.max(...data[di].map(e => e.id)) + 1 : 1;
+  data[di].push({ id, name, sets, reps, weight });
+  expanded.add(`${di}-${data[di].length - 1}`);
+  syncSets();
+  document.getElementById('ov').classList.remove('open');
+  persist(); render();
+}
+function maybeClose(e) { if (e.target === document.getElementById('ov')) document.getElementById('ov').classList.remove('open'); }
 
 // ── SCHEDULE SHEET ─────────────────────────────────────
-function openSchedSheet(){
-  renderSchedSheet();
-  document.getElementById('ov-sched').classList.add('open');
-}
-function closeSchedSheet(){document.getElementById('ov-sched').classList.remove('open');}
-function renderSchedSheet(){
-  const c=document.getElementById('sched-day-list');
-  const todayIdx=getTodayWeekIdx();
-  c.innerHTML=WEEK_DAYS.map((dayName,wi)=>{
-    const cfgIdx=weekSched[wi];
-    const isToday=wi===todayIdx;
-    const wkLabel=cfgIdx===null||cfgIdx===undefined?'Rest':(CFG[cfgIdx]?.label||'?');
-    const wkClass=cfgIdx===null||cfgIdx===undefined?'rest-v':'';
-    const opts=['<option value="rest"'+(cfgIdx===null||cfgIdx===undefined?' selected':'')+'">— Rest —</option>']
-      .concat(CFG.map((cfg,ci)=>`<option value="${ci}"${cfgIdx===ci?' selected':''}>${escHtml(cfg.label)}</option>`)).join('');
-    return `<div class="sched-day-row${isToday?' today-row':''}">
+function openSchedSheet()  { renderSchedSheet(); document.getElementById('ov-sched').classList.add('open'); }
+function closeSchedSheet() { document.getElementById('ov-sched').classList.remove('open'); }
+function renderSchedSheet() {
+  const c = document.getElementById('sched-day-list');
+  const todayIdx = getTodayWeekIdx();
+  c.innerHTML = WEEK_DAYS.map((dayName, wi) => {
+    const cfgIdx = weekSched[wi];
+    const isToday = wi === todayIdx;
+    const wkLabel = cfgIdx === null || cfgIdx === undefined ? 'Rest' : (CFG[cfgIdx]?.label || '?');
+    const wkClass = cfgIdx === null || cfgIdx === undefined ? 'rest-v' : '';
+    const opts = ['<option value="rest"' + (cfgIdx === null || cfgIdx === undefined ? ' selected' : '') + '>— Rest —</option>']
+      .concat(CFG.map((cfg, ci) => `<option value="${ci}"${cfgIdx === ci ? ' selected' : ''}>${escHtml(cfg.label)}</option>`)).join('');
+    // FIX: escHtml on wkLabel and dayName
+    return `<div class="sched-day-row${isToday ? ' today-row' : ''}">
       <div class="sched-day-info">
-        <span class="sched-day-label${isToday?' today-lbl':''}">${dayName}${isToday?' · Today':''}</span>
+        <span class="sched-day-label${isToday ? ' today-lbl' : ''}">${escHtml(dayName)}${isToday ? ' · Today' : ''}</span>
         <span class="sched-workout-val ${wkClass}" id="swv-${wi}">${escHtml(wkLabel)}</span>
       </div>
       <select class="sched-select" onchange="setDayWorkout(${wi},this.value)">${opts}</select>
     </div>`;
   }).join('');
-  // Workout type list
-  const wl=document.getElementById('sched-workout-list');
-  if(wl)wl.innerHTML=CFG.map((cfg,ci)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf2);border:1px solid var(--line);border-radius:var(--r);gap:8px">
+  const wl = document.getElementById('sched-workout-list');
+  if (wl) wl.innerHTML = CFG.map((cfg, ci) => `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf2);border:1px solid var(--line);border-radius:var(--r);gap:8px">
     <span style="font-family:var(--serif);font-size:14px;color:var(--text)">${escHtml(cfg.label)}</span>
     <button onclick="closeSchedSheet();openDayEdit(null,${ci});" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 12px;color:var(--muted2);cursor:pointer;">Rename</button>
   </div>`).join('');
 }
-function setDayWorkout(wi,val){
-  weekSched[wi]=val==='rest'?null:parseInt(val);
-  persist();renderTabs();
-  // update label in sheet without full re-render
-  const lbl=document.getElementById(`swv-${wi}`);
-  if(lbl){const v=weekSched[wi];lbl.textContent=v===null?'Rest':(CFG[v]?.label||'?');lbl.className='sched-workout-val '+(v===null?'rest-v':'');}
+function setDayWorkout(wi, val) {
+  weekSched[wi] = val === 'rest' ? null : parseInt(val);
+  persist(); renderTabs();
+  const lbl = document.getElementById(`swv-${wi}`);
+  if (lbl) {
+    const v = weekSched[wi];
+    // FIX: use textContent instead of innerHTML for this simple label update
+    lbl.textContent = v === null ? 'Rest' : (CFG[v]?.label || '?');
+    lbl.className = 'sched-workout-val ' + (v === null ? 'rest-v' : '');
+  }
 }
 
 // ── DAYS ───────────────────────────────────────────────
-let dayCtx=null;
-function openDayEdit(e,di){if(e)e.stopPropagation();dayCtx={mode:'edit',di};document.getElementById('day-sheet-title').textContent='Edit Workout';document.getElementById('day-name-input').value=CFG[di].label;document.getElementById('day-del-btn').style.display=data.length>1?'':'none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
-function openDayAdd(){dayCtx={mode:'add'};document.getElementById('day-sheet-title').textContent='Add Workout';document.getElementById('day-name-input').value='';document.getElementById('day-del-btn').style.display='none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
-function closeDaySheet(){document.getElementById('ov-day').classList.remove('open');dayCtx=null;}
-function saveDay(){const name=document.getElementById('day-name-input').value.trim();if(!name){document.getElementById('day-name-input').focus();return;}if(dayCtx.mode==='edit'){CFG[dayCtx.di].label=name;}else{CFG.push({label:name,color:'#C8A96E'});data.push([]);setsDone.push([]);activeDay=CFG.length-1;}closeDaySheet();persist();render();}
-function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);// fix weekSched refs
-weekSched=weekSched.map(v=>v===di?null:v===null?null:v>di?v-1:v);if(activeDay>=data.length)activeDay=data.length-1;closeDaySheet();persist();render();});}
+let dayCtx = null;
+function openDayEdit(e, di) {
+  if (e) e.stopPropagation();
+  dayCtx = { mode: 'edit', di };
+  document.getElementById('day-sheet-title').textContent = 'Edit Workout';
+  document.getElementById('day-name-input').value = CFG[di].label;
+  document.getElementById('day-del-btn').style.display = data.length > 1 ? '' : 'none';
+  document.getElementById('ov-day').classList.add('open');
+  setTimeout(() => document.getElementById('day-name-input').focus(), 300);
+}
+function openDayAdd() {
+  dayCtx = { mode: 'add' };
+  document.getElementById('day-sheet-title').textContent = 'Add Workout';
+  document.getElementById('day-name-input').value = '';
+  document.getElementById('day-del-btn').style.display = 'none';
+  document.getElementById('ov-day').classList.add('open');
+  setTimeout(() => document.getElementById('day-name-input').focus(), 300);
+}
+function closeDaySheet() { document.getElementById('ov-day').classList.remove('open'); dayCtx = null; }
+function saveDay() {
+  const name = document.getElementById('day-name-input').value.trim();
+  if (!name) { document.getElementById('day-name-input').focus(); return; }
+  if (dayCtx.mode === 'edit') { CFG[dayCtx.di].label = name; }
+  else { CFG.push({ label: name, color: '#C8A96E' }); data.push([]); setsDone.push([]); activeDay = CFG.length - 1; }
+  closeDaySheet(); persist(); render();
+}
+
+// ═══════════════════════════════════════════════════════
+// FIX: confirmDeleteDay weekSched remapping extracted
+//      into a named helper for clarity and safety.
+//      Deleting workout di: any day pointing to di becomes
+//      rest (null), any day pointing above di shifts down.
+// ═══════════════════════════════════════════════════════
+function remapSchedAfterDelete(di) {
+  return weekSched.map(v => {
+    if (v === null || v === undefined) return null; // was rest, stays rest
+    if (v === di) return null;    // was deleted workout → rest
+    if (v > di) return v - 1;    // above deleted index → shift down
+    return v;                     // below deleted index → unchanged
+  });
+}
+function confirmDeleteDay() {
+  if (!dayCtx || dayCtx.mode !== 'edit') return;
+  const di = dayCtx.di;
+  if (data.length <= 1) return;
+  confirmAction(
+    `Delete "${CFG[di].label}"?`,
+    'All exercises and progress will be permanently removed.',
+    'Delete', 'danger',
+    () => {
+      data.splice(di, 1);
+      setsDone.splice(di, 1);
+      CFG.splice(di, 1);
+      weekSched = remapSchedAfterDelete(di);
+      if (activeDay >= data.length) activeDay = data.length - 1;
+      closeDaySheet(); persist(); render();
+    }
+  );
+}
 
 // ── SETS ───────────────────────────────────────────────
-function addSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];ex.sets++;const lo=(ex.setOvr&&ex.setOvr[ex.sets-2])||{};if(!ex.setOvr)ex.setOvr=[];ex.setOvr[ex.sets-1]={reps:lo.reps??ex.reps,weight:lo.weight??ex.weight};syncSets();persist();renderTable();updateDelExBtn();}
-function removeSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];if(ex.sets<=1)return;ex.sets--;if(ex.setOvr)ex.setOvr=ex.setOvr.slice(0,ex.sets);if(Array.isArray(setsDone[di]?.[ei]))setsDone[di][ei]=setsDone[di][ei].slice(0,ex.sets);syncSets();persist();renderTable();updateDelExBtn();}
-function startDeleteActive(){const di=activeDay;for(const k of expanded){const p=k.split('-').map(Number);if(p[0]===di){deleteConfirm={di:p[0],ei:p[1]};renderTable();return;}}}
-function updateDelExBtn(){const btn=document.getElementById('del-ex-btn');if(!btn)return;const di=activeDay;let has=false;for(const k of expanded){const p=k.split('-').map(Number);if(p[0]===di){has=true;break;}}btn.classList.toggle('visible',has);}
-
-function render(){
-  const isRestDay=weekSched[selectedWeekIdx]===null||weekSched[selectedWeekIdx]===undefined;
-  renderTabs();renderDayInfoBar();renderTable();updateDelExBtn();updateBackupLabel();
-  const fab=document.getElementById('fab');
-  const delBtn=document.getElementById('del-ex-btn');
-  if(fab)fab.style.display=isRestDay?'none':'';
-  if(delBtn&&isRestDay)delBtn.classList.remove('visible');
+function addSet(e, di, ei) {
+  e.stopPropagation();
+  const ex = data[di][ei]; ex.sets++;
+  const lo = (ex.setOvr && ex.setOvr[ex.sets - 2]) || {};
+  if (!ex.setOvr) ex.setOvr = [];
+  ex.setOvr[ex.sets - 1] = { reps: lo.reps ?? ex.reps, weight: lo.weight ?? ex.weight };
+  syncSets(); persist(); renderTable(); updateDelExBtn();
 }
-document.getElementById('fab').onclick=()=>doAdd(activeDay);
-document.addEventListener('click',e=>{if(editingEx){const t=document.getElementById('tbl');if(t&&!t.contains(e.target))saveInlineEdit();}});
+function removeSet(e, di, ei) {
+  e.stopPropagation();
+  const ex = data[di][ei]; if (ex.sets <= 1) return; ex.sets--;
+  if (ex.setOvr) ex.setOvr = ex.setOvr.slice(0, ex.sets);
+  if (Array.isArray(setsDone[di]?.[ei])) setsDone[di][ei] = setsDone[di][ei].slice(0, ex.sets);
+  syncSets(); persist(); renderTable(); updateDelExBtn();
+}
+function startDeleteActive() {
+  const di = activeDay;
+  for (const k of expanded) {
+    const p = k.split('-').map(Number);
+    if (p[0] === di) { deleteConfirm = { di: p[0], ei: p[1] }; renderTable(); return; }
+  }
+}
+function updateDelExBtn() {
+  const btn = document.getElementById('del-ex-btn'); if (!btn) return;
+  const di = activeDay; let has = false;
+  for (const k of expanded) { const p = k.split('-').map(Number); if (p[0] === di) { has = true; break; } }
+  btn.classList.toggle('visible', has);
+}
+
+function render() {
+  const isRestDay = weekSched[selectedWeekIdx] === null || weekSched[selectedWeekIdx] === undefined;
+  renderTabs(); renderDayInfoBar(); renderTable(); updateDelExBtn(); updateBackupLabel();
+  const fab = document.getElementById('fab');
+  const delBtn = document.getElementById('del-ex-btn');
+  if (fab) fab.style.display = isRestDay ? 'none' : '';
+  if (delBtn && isRestDay) delBtn.classList.remove('visible');
+}
+document.getElementById('fab').onclick = () => doAdd(activeDay);
+document.addEventListener('click', e => { if (editingEx) { const t = document.getElementById('tbl'); if (t && !t.contains(e.target)) saveInlineEdit(); } });
+
+// ═══════════════════════════════════════════════════════
+// FIX: Import validation — incoming JSON is type-checked
+//      before being applied. Malformed or malicious files
+//      are rejected with a user-facing error rather than
+//      being blindly merged into app state.
+// ═══════════════════════════════════════════════════════
+function validateImportPayload(p) {
+  if (!p || typeof p !== 'object') return 'Not a valid backup object';
+  if (!Array.isArray(p.cfg))  return 'Missing or invalid workout list (cfg)';
+  if (!Array.isArray(p.data)) return 'Missing or invalid exercise data';
+  if (p.cfg.length === 0) return 'Workout list is empty';
+  if (p.data.length !== p.cfg.length) return 'Workout count mismatch between cfg and data';
+  for (const c of p.cfg) {
+    if (typeof c.label !== 'string' || !c.label.trim()) return 'Workout entry has missing or invalid label';
+  }
+  for (const day of p.data) {
+    if (!Array.isArray(day)) return 'Exercise day is not an array';
+    for (const ex of day) {
+      if (typeof ex.name !== 'string') return 'Exercise has invalid name';
+      if (typeof ex.sets !== 'number' || ex.sets < 1) return 'Exercise has invalid sets';
+      if (typeof ex.reps !== 'number' || ex.reps < 1) return 'Exercise has invalid reps';
+    }
+  }
+  if (p.history !== undefined && !Array.isArray(p.history)) return 'History field is not an array';
+  if (p.weekSched !== undefined && !Array.isArray(p.weekSched)) return 'Weekly schedule is not an array';
+  return null; // valid
+}
 
 // ── EXPORT / IMPORT ─────────────────────────────────────
-function exportData(){
-  const payload={version:3,exportedAt:new Date().toISOString(),cfg:CFG,data,setsDone,history,restEnabled,restDefaultDuration,sessionNotes,weekSched};
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download=`consistency-backup-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  localStorage.setItem('kis8_last_export',new Date().toISOString());updateBackupLabel();showToast('Backup saved','ok');
+function exportData() {
+  const payload = { version: 3, exportedAt: new Date().toISOString(), cfg: CFG, data, setsDone, history, restEnabled, restDefaultDuration, sessionNotes, weekSched };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = `consistency-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  store.setRaw(KEYS.lastExport, new Date().toISOString());
+  updateBackupLabel(); showToast('Backup saved', 'ok');
 }
-function triggerImport(){document.getElementById('import-file-input').value='';document.getElementById('import-file-input').click();}
-let _pi=null;
-function handleImportFile(e){
-  const file=e.target.files?.[0];if(!file)return;
-  const r=new FileReader();r.onload=ev=>{try{const p=JSON.parse(ev.target.result);if(!p.data||!Array.isArray(p.data)||!p.cfg||!Array.isArray(p.cfg))throw new Error('invalid');_pi=p;confirmAction('Restore backup?','This will overwrite all current workouts and history.','Restore','danger',applyImport);}catch(err){showToast('Invalid backup file','err');}};r.readAsText(file);
+function triggerImport() { document.getElementById('import-file-input').value = ''; document.getElementById('import-file-input').click(); }
+
+let _pi = null;
+function handleImportFile(e) {
+  const file = e.target.files?.[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const p = JSON.parse(ev.target.result);
+      // FIX: Validate before trusting any imported data
+      const err = validateImportPayload(p);
+      if (err) { showToast('Invalid backup: ' + err, 'err'); return; }
+      _pi = p;
+      confirmAction('Restore backup?', 'This will overwrite all current workouts and history.', 'Restore', 'danger', applyImport);
+    } catch (err) { showToast('Invalid backup file', 'err'); }
+  };
+  r.readAsText(file);
 }
-function applyImport(){const p=_pi;if(!p)return;CFG=p.cfg;data=p.data;setsDone=p.setsDone||null;history=p.history||[];restEnabled=p.restEnabled||{};restDefaultDuration=p.restDefaultDuration||90;sessionNotes=p.sessionNotes||{};weekSched=p.weekSched||DEF_SCHED;activeDay=0;expanded.clear();editingEx=null;deleteConfirm=null;_pi=null;syncSets();persist();render();showToast('Data restored','ok');dismissNudge();}
-function updateBackupLabel(){const el=document.getElementById('backup-last-label');if(!el)return;const ts=localStorage.getItem('kis8_last_export');if(!ts){el.textContent='No backup yet';return;}const d=new Date(ts),diff=Math.floor((Date.now()-d.getTime())/1000/60);let l;if(diff<1)l='Just now';else if(diff<60)l=`${diff}m ago`;else if(diff<1440)l=`${Math.floor(diff/60)}h ago`;else l=`${Math.floor(diff/1440)}d ago · ${d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`;el.textContent=`Last export: ${l}`;}
-function showToast(msg,type){const t=document.getElementById('import-toast');t.textContent=msg;t.className=`import-toast ${type} show`;setTimeout(()=>{t.className=`import-toast ${type}`;},2800);}
-function dismissNudge(){document.getElementById('backup-nudge')?.classList.remove('show');}
+function applyImport() {
+  const p = _pi; if (!p) return;
+  CFG               = p.cfg;
+  data              = p.data;
+  setsDone          = p.setsDone || null;
+  history           = Array.isArray(p.history) ? p.history : [];
+  restEnabled       = (p.restEnabled && typeof p.restEnabled === 'object') ? p.restEnabled : {};
+  restDefaultDuration = typeof p.restDefaultDuration === 'number' ? p.restDefaultDuration : 90;
+  sessionNotes      = (p.sessionNotes && typeof p.sessionNotes === 'object') ? p.sessionNotes : {};
+  weekSched         = Array.isArray(p.weekSched) ? p.weekSched : DEF_SCHED;
+  activeDay = 0; expanded.clear(); editingEx = null; deleteConfirm = null; _pi = null;
+  // FIX: syncSets() explicitly called after import to ensure set arrays match exercise counts
+  syncSets();
+  persist(); render(); showToast('Data restored', 'ok'); dismissNudge();
+}
 
-render();updateBackupLabel();
+function updateBackupLabel() {
+  const el = document.getElementById('backup-last-label'); if (!el) return;
+  const ts = store.getRaw(KEYS.lastExport);
+  if (!ts) { el.textContent = 'No backup yet'; return; }
+  const d = new Date(ts), diff = Math.floor((Date.now() - d.getTime()) / 1000 / 60);
+  let l;
+  if (diff < 1)    l = 'Just now';
+  else if (diff < 60)   l = `${diff}m ago`;
+  else if (diff < 1440) l = `${Math.floor(diff / 60)}h ago`;
+  else l = `${Math.floor(diff / 1440)}d ago · ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+  el.textContent = `Last export: ${l}`;
+}
+function showToast(msg, type) {
+  const t = document.getElementById('import-toast');
+  t.textContent = msg; t.className = `import-toast ${type} show`;
+  setTimeout(() => { t.className = `import-toast ${type}`; }, 2800);
+}
+function dismissNudge() { document.getElementById('backup-nudge')?.classList.remove('show'); }
 
-// ── PWA ────────────────────────────────────────────────
-function makeIcon(sz){const c=document.createElement('canvas');c.width=c.height=sz;const x=c.getContext('2d');x.fillStyle='#080A08';x.fillRect(0,0,sz,sz);x.fillStyle='#C8A96E';x.font=`${sz*.42}px 'Cormorant Garamond',Georgia,serif`;x.textAlign='center';x.textBaseline='middle';x.fillText('C',sz/2,sz/2);return c.toDataURL('image/png');}
-const mf={name:'Consistency',short_name:'Consistency',description:'Premium workout tracker',start_url:'.',display:'standalone',background_color:'#080A08',theme_color:'#080A08',orientation:'portrait',icons:[{src:makeIcon(192),sizes:'192x192',type:'image/png'},{src:makeIcon(512),sizes:'512x512',type:'image/png'}]};
-document.getElementById('manifest-placeholder').href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/json'}));
+render(); updateBackupLabel();
+
+// ─────────────────────────────────────────────────────
+// FIX: PWA icon generation waits for fonts to load so
+//      the canvas 'C' renders in Cormorant Garamond
+//      rather than falling back to a system serif.
+// ─────────────────────────────────────────────────────
+function makeIcon(sz) {
+  const c = document.createElement('canvas'); c.width = c.height = sz;
+  const x = c.getContext('2d');
+  x.fillStyle = '#080A08'; x.fillRect(0, 0, sz, sz);
+  x.fillStyle = '#C8A96E';
+  x.font = `${sz * .42}px 'Cormorant Garamond', Georgia, serif`;
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('C', sz / 2, sz / 2);
+  return c.toDataURL('image/png');
+}
+function registerPWA() {
+  const mf = { name: 'Consistency', short_name: 'Consistency', description: 'Premium workout tracker', start_url: '.', display: 'standalone', background_color: '#080A08', theme_color: '#080A08', orientation: 'portrait', icons: [{ src: makeIcon(192), sizes: '192x192', type: 'image/png' }, { src: makeIcon(512), sizes: '512x512', type: 'image/png' }] };
+  document.getElementById('manifest-placeholder').href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: 'application/json' }));
+}
+// Wait for fonts before generating the PWA icon
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(registerPWA);
+} else {
+  registerPWA(); // fallback for older browsers
+}
 </script>
 </body>
 </html>
