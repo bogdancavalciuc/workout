@@ -286,6 +286,92 @@ body {
   padding: 10px 4px !important;
 }
 
+/* ── WEEKLY SCHEDULE TABS ────────────────────────────── */
+.dt {
+  min-width: 52px !important;
+  padding: 8px 4px 7px !important;
+}
+.dt-day-name {
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 3px;
+  position: relative;
+}
+.dt.active .dt-day-name { color: var(--gold3); }
+.dt.today-tab .dt-day-name::after {
+  content: '•';
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  font-size: 8px;
+  color: var(--gold);
+}
+.dt-workout-label {
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: .03em;
+  color: var(--text2);
+  position: relative;
+}
+.dt.active .dt-workout-label { color: var(--gold); }
+.dt-workout-label.rest-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .06em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.dt.today-tab { border-color: var(--line3); }
+.dt.today-tab.active { border-color: var(--gold3); }
+
+/* ── SCHEDULE SHEET ──────────────────────────────────── */
+.sched-day-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.sched-day-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--surf2);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  gap: 12px;
+}
+.sched-day-row.today-row { border-color: var(--gold3); background: rgba(200,169,110,.04); }
+.sched-day-info { display: flex; flex-direction: column; gap: 2px; }
+.sched-day-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+.sched-day-label.today-lbl { color: var(--gold); }
+.sched-workout-val {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text);
+}
+.sched-workout-val.rest-v { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing:.08em; text-transform:uppercase; }
+.sched-select {
+  background: var(--surf3);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .06em;
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  min-width: 110px;
+  text-align: center;
+}
+.sched-select:focus { border-color: var(--gold3); }
+
 /* ── BACKUP BAR ──────────────────────────────────────── */
 .backup-bar {
   display: flex;
@@ -1548,7 +1634,10 @@ body.light .set-row { background: var(--surf); }
 
 <!-- WORKOUT PAGE -->
 <div id="page-workout" style="padding:0 24px">
-  <div class="day-tabs" id="day-tabs"></div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:22px">
+    <div class="day-tabs" id="day-tabs" style="margin-bottom:0;flex:1"></div>
+    <button onclick="openSchedSheet()" style="flex-shrink:0;width:34px;height:34px;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:14px;transition:border-color .2s,color .2s" title="Weekly schedule">📅</button>
+  </div>
   <div id="done-banner" class="done-banner">
     <div class="done-banner-shimmer"></div>
     <div class="done-icon">🏆</div>
@@ -1614,14 +1703,29 @@ body.light .set-row { background: var(--surf); }
   </div>
 </div>
 
-<!-- DAY SHEET -->
+<!-- DAY SHEET (rename/delete workouts) -->
 <div class="ov" id="ov-day" onclick="if(event.target===this)closeDaySheet()">
   <div class="sh">
     <div class="shh"></div>
-    <div class="shl" id="day-sheet-title">Edit Day</div>
-    <div class="field"><label>Day name</label><input id="day-name-input" type="text" placeholder="e.g. Shoulders" autocomplete="off" spellcheck="false"></div>
+    <div class="shl" id="day-sheet-title">Edit Workout</div>
+    <div class="field"><label>Workout name</label><input id="day-name-input" type="text" placeholder="e.g. Push" autocomplete="off" spellcheck="false"></div>
     <button class="bsv" onclick="saveDay()">Save</button>
-    <button id="day-del-btn" onclick="confirmDeleteDay()" style="width:100%;margin-top:10px;padding:14px;background:none;border:1px solid var(--line);border-radius:var(--r);font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--muted2);cursor:pointer;text-transform:uppercase;">Delete this day</button>
+    <button id="day-del-btn" onclick="confirmDeleteDay()" style="width:100%;margin-top:10px;padding:14px;background:none;border:1px solid var(--line);border-radius:var(--r);font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--muted2);cursor:pointer;text-transform:uppercase;">Delete this workout</button>
+  </div>
+</div>
+
+<!-- SCHEDULE SHEET -->
+<div class="ov" id="ov-sched" onclick="if(event.target===this)closeSchedSheet()">
+  <div class="sh" style="max-height:88vh;overflow-y:auto">
+    <div class="shh"></div>
+    <div class="shl">Weekly Schedule</div>
+    <div class="sched-day-list" id="sched-day-list"></div>
+    <div style="border-top:1px solid var(--line);padding-top:16px;margin-bottom:16px">
+      <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Manage Workouts</div>
+      <div id="sched-workout-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      <button onclick="closeSchedSheet();openDayAdd();" style="width:100%;margin-top:8px;padding:12px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--muted);cursor:pointer;text-transform:uppercase;">+ Add workout type</button>
+    </div>
+    <button class="bsv" onclick="closeSchedSheet()">Done</button>
   </div>
 </div>
 
@@ -1644,7 +1748,9 @@ function confirmYes(){document.getElementById('confirm-overlay').classList.remov
 function confirmNo(){document.getElementById('confirm-overlay').classList.remove('open');_cb=null;}
 
 // ── DATA ───────────────────────────────────────────────
-const DEF_CFG=[{label:'Chest',color:'#C8A96E'},{label:'Back',color:'#C8A96E'},{label:'Legs',color:'#C8A96E'}];
+const DEF_CFG=[{label:'Push',color:'#C8A96E'},{label:'Pull',color:'#C8A96E'},{label:'Legs',color:'#C8A96E'}];
+// weekSched: array of 7 (Mon=0..Sun=6), each value = CFG index or null (rest)
+const DEF_SCHED=[0,null,1,null,2,null,null]; // Mon=Push, Wed=Pull, Fri=Legs
 const DEF=[
   [{id:1,name:'Incline Bench Press',sets:3,reps:12,weight:'25KG'},{id:2,name:'Machine Chest Fly',sets:3,reps:12,weight:'45KG'},{id:3,name:'Barbell Overhead Press',sets:3,reps:12,weight:'30KG'},{id:4,name:'DB Lateral Raises',sets:3,reps:12,weight:'6KG'},{id:5,name:'Triceps Push Down',sets:3,reps:12,weight:'36KG'}],
   [{id:1,name:'Supinated Lat Pulldown',sets:3,reps:12,weight:'40KG'},{id:2,name:'Pronated Cable Row',sets:3,reps:12,weight:'36KG'},{id:3,name:'Biceps Curls',sets:3,reps:12,weight:'12KG'},{id:4,name:'Rope Trap Shrug',sets:3,reps:15,weight:'40KG'},{id:5,name:'Hyperextensions',sets:3,reps:15,weight:'BW'}],
@@ -1657,7 +1763,14 @@ let history=JSON.parse(localStorage.getItem('kis8_hist')||'[]');
 let restEnabled=JSON.parse(localStorage.getItem('kis8_rest_en')||'{}');
 let restDefaultDuration=parseInt(localStorage.getItem('kis8_rest_dur')||'90');
 let sessionNotes=JSON.parse(localStorage.getItem('kis8_notes')||'{}');
+let weekSched=JSON.parse(localStorage.getItem('kis8_wsched')||'null')||DEF_SCHED;
+// activeDay = which CFG/workout index is shown
+// todayWeekIdx = 0=Mon..6=Sun
+const WEEK_DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+function getTodayWeekIdx(){return(new Date().getDay()+6)%7;} // JS: Sun=0 → Mon=0
 let activeDay=0,sheetCtx=null,editingEx=null,deleteConfirm=null;
+// Set activeDay to today's workout if scheduled
+(function(){const ti=getTodayWeekIdx();const wi=weekSched[ti];if(wi!==null&&wi!==undefined&&wi<data.length)activeDay=wi;})();
 let expanded=new Set();
 
 function syncSets(){
@@ -1682,6 +1795,7 @@ function persist(){
   localStorage.setItem('kis8_hist',JSON.stringify(history));
   localStorage.setItem('kis8_rest_en',JSON.stringify(restEnabled));
   localStorage.setItem('kis8_notes',JSON.stringify(sessionNotes));
+  localStorage.setItem('kis8_wsched',JSON.stringify(weekSched));
 }
 
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -1787,19 +1901,27 @@ function setPage(p){
 // ── TABS ───────────────────────────────────────────────
 function renderTabs(){
   const c=document.getElementById('day-tabs');c.innerHTML='';
-  data.forEach((_,di)=>{
-    const cfg=CFG[di],active=di===activeDay;
-    const vol=calcVol(di);
-    const volStr=vol>0?fmtVol(vol):'';
+  const todayIdx=getTodayWeekIdx();
+  WEEK_DAYS.forEach((dayName,wi)=>{
+    const cfgIdx=weekSched[wi]; // null = rest
+    const isToday=wi===todayIdx;
+    const isActive=cfgIdx!==null&&cfgIdx===activeDay&&cfgIdx!==undefined;
     const el=document.createElement('div');
-    el.className='dt'+(active?' active':'');
-    el.innerHTML=`<span class="dt-label">${cfg.label}</span>${volStr&&active?`<span class="dt-vol">${volStr}</span>`:''}<button class="dt-edit" onclick="openDayEdit(event,${di})">···</button>`;
-    el.onclick=e=>{if(e.target.closest('.dt-edit'))return;saveInlineEdit();activeDay=di;editingEx=null;deleteConfirm=null;expanded.clear();render();};
+    el.className='dt'+(isActive?' active':'')+(isToday?' today-tab':'');
+    if(cfgIdx===null||cfgIdx===undefined){
+      el.innerHTML=`<span class="dt-day-name">${dayName}</span><span class="dt-workout-label rest-label">Rest</span>`;
+      el.onclick=()=>openSchedSheet();
+    } else {
+      const cfg=CFG[cfgIdx]||{label:'?'};
+      const vol=calcVol(cfgIdx);
+      const volStr=vol>0&&isActive?`<span class="dt-vol">${fmtVol(vol)}</span>`:'';
+      el.innerHTML=`<span class="dt-day-name">${dayName}</span><span class="dt-workout-label">${escHtml(cfg.label)}</span>${volStr}`;
+      el.onclick=e=>{saveInlineEdit();activeDay=cfgIdx;editingEx=null;deleteConfirm=null;expanded.clear();render();};
+    }
     c.appendChild(el);
   });
-  const add=document.createElement('div');add.className='dt dt-add';
-  add.innerHTML=`<span style="font-size:18px;line-height:1;color:var(--muted)">+</span>`;
-  add.onclick=()=>openDayAdd();c.appendChild(add);
+  // Scroll active tab into view
+  setTimeout(()=>{const active=c.querySelector('.dt.active');if(active)active.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});},50);
 }
 
 // ── TABLE ──────────────────────────────────────────────
@@ -2187,13 +2309,53 @@ function saveEx(){
 }
 function maybeClose(e){if(e.target===document.getElementById('ov'))document.getElementById('ov').classList.remove('open');}
 
+// ── SCHEDULE SHEET ─────────────────────────────────────
+function openSchedSheet(){
+  renderSchedSheet();
+  document.getElementById('ov-sched').classList.add('open');
+}
+function closeSchedSheet(){document.getElementById('ov-sched').classList.remove('open');}
+function renderSchedSheet(){
+  const c=document.getElementById('sched-day-list');
+  const todayIdx=getTodayWeekIdx();
+  c.innerHTML=WEEK_DAYS.map((dayName,wi)=>{
+    const cfgIdx=weekSched[wi];
+    const isToday=wi===todayIdx;
+    const wkLabel=cfgIdx===null||cfgIdx===undefined?'Rest':(CFG[cfgIdx]?.label||'?');
+    const wkClass=cfgIdx===null||cfgIdx===undefined?'rest-v':'';
+    const opts=['<option value="rest"'+(cfgIdx===null||cfgIdx===undefined?' selected':'')+'">— Rest —</option>']
+      .concat(CFG.map((cfg,ci)=>`<option value="${ci}"${cfgIdx===ci?' selected':''}>${escHtml(cfg.label)}</option>`)).join('');
+    return `<div class="sched-day-row${isToday?' today-row':''}">
+      <div class="sched-day-info">
+        <span class="sched-day-label${isToday?' today-lbl':''}">${dayName}${isToday?' · Today':''}</span>
+        <span class="sched-workout-val ${wkClass}" id="swv-${wi}">${escHtml(wkLabel)}</span>
+      </div>
+      <select class="sched-select" onchange="setDayWorkout(${wi},this.value)">${opts}</select>
+    </div>`;
+  }).join('');
+  // Workout type list
+  const wl=document.getElementById('sched-workout-list');
+  if(wl)wl.innerHTML=CFG.map((cfg,ci)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf2);border:1px solid var(--line);border-radius:var(--r);gap:8px">
+    <span style="font-family:var(--serif);font-size:14px;color:var(--text)">${escHtml(cfg.label)}</span>
+    <button onclick="closeSchedSheet();openDayEdit(null,${ci});" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 12px;color:var(--muted2);cursor:pointer;">Rename</button>
+  </div>`).join('');
+}
+function setDayWorkout(wi,val){
+  weekSched[wi]=val==='rest'?null:parseInt(val);
+  persist();renderTabs();
+  // update label in sheet without full re-render
+  const lbl=document.getElementById(`swv-${wi}`);
+  if(lbl){const v=weekSched[wi];lbl.textContent=v===null?'Rest':(CFG[v]?.label||'?');lbl.className='sched-workout-val '+(v===null?'rest-v':'');}
+}
+
 // ── DAYS ───────────────────────────────────────────────
 let dayCtx=null;
-function openDayEdit(e,di){e.stopPropagation();dayCtx={mode:'edit',di};document.getElementById('day-sheet-title').textContent='Edit Day';document.getElementById('day-name-input').value=CFG[di].label;document.getElementById('day-del-btn').style.display=data.length>1?'':'none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
-function openDayAdd(){dayCtx={mode:'add'};document.getElementById('day-sheet-title').textContent='Add Day';document.getElementById('day-name-input').value='';document.getElementById('day-del-btn').style.display='none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
+function openDayEdit(e,di){if(e)e.stopPropagation();dayCtx={mode:'edit',di};document.getElementById('day-sheet-title').textContent='Edit Workout';document.getElementById('day-name-input').value=CFG[di].label;document.getElementById('day-del-btn').style.display=data.length>1?'':'none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
+function openDayAdd(){dayCtx={mode:'add'};document.getElementById('day-sheet-title').textContent='Add Workout';document.getElementById('day-name-input').value='';document.getElementById('day-del-btn').style.display='none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
 function closeDaySheet(){document.getElementById('ov-day').classList.remove('open');dayCtx=null;}
 function saveDay(){const name=document.getElementById('day-name-input').value.trim();if(!name){document.getElementById('day-name-input').focus();return;}if(dayCtx.mode==='edit'){CFG[dayCtx.di].label=name;}else{CFG.push({label:name,color:'#C8A96E'});data.push([]);setsDone.push([]);activeDay=CFG.length-1;}closeDaySheet();persist();render();}
-function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);if(activeDay>=data.length)activeDay=data.length-1;closeDaySheet();persist();render();});}
+function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);// fix weekSched refs
+weekSched=weekSched.map(v=>v===di?null:v===null?null:v>di?v-1:v);if(activeDay>=data.length)activeDay=data.length-1;closeDaySheet();persist();render();});}
 
 // ── SETS ───────────────────────────────────────────────
 function addSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];ex.sets++;const lo=(ex.setOvr&&ex.setOvr[ex.sets-2])||{};if(!ex.setOvr)ex.setOvr=[];ex.setOvr[ex.sets-1]={reps:lo.reps??ex.reps,weight:lo.weight??ex.weight};syncSets();persist();renderTable();updateDelExBtn();}
@@ -2207,7 +2369,7 @@ document.addEventListener('click',e=>{if(editingEx){const t=document.getElementB
 
 // ── EXPORT / IMPORT ─────────────────────────────────────
 function exportData(){
-  const payload={version:3,exportedAt:new Date().toISOString(),cfg:CFG,data,setsDone,history,restEnabled,restDefaultDuration,sessionNotes};
+  const payload={version:3,exportedAt:new Date().toISOString(),cfg:CFG,data,setsDone,history,restEnabled,restDefaultDuration,sessionNotes,weekSched};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download=`consistency-backup-${new Date().toISOString().slice(0,10)}.json`;
@@ -2220,7 +2382,7 @@ function handleImportFile(e){
   const file=e.target.files?.[0];if(!file)return;
   const r=new FileReader();r.onload=ev=>{try{const p=JSON.parse(ev.target.result);if(!p.data||!Array.isArray(p.data)||!p.cfg||!Array.isArray(p.cfg))throw new Error('invalid');_pi=p;confirmAction('Restore backup?','This will overwrite all current workouts and history.','Restore','danger',applyImport);}catch(err){showToast('Invalid backup file','err');}};r.readAsText(file);
 }
-function applyImport(){const p=_pi;if(!p)return;CFG=p.cfg;data=p.data;setsDone=p.setsDone||null;history=p.history||[];restEnabled=p.restEnabled||{};restDefaultDuration=p.restDefaultDuration||90;sessionNotes=p.sessionNotes||{};activeDay=0;expanded.clear();editingEx=null;deleteConfirm=null;_pi=null;syncSets();persist();render();showToast('Data restored','ok');dismissNudge();}
+function applyImport(){const p=_pi;if(!p)return;CFG=p.cfg;data=p.data;setsDone=p.setsDone||null;history=p.history||[];restEnabled=p.restEnabled||{};restDefaultDuration=p.restDefaultDuration||90;sessionNotes=p.sessionNotes||{};weekSched=p.weekSched||DEF_SCHED;activeDay=0;expanded.clear();editingEx=null;deleteConfirm=null;_pi=null;syncSets();persist();render();showToast('Data restored','ok');dismissNudge();}
 function updateBackupLabel(){const el=document.getElementById('backup-last-label');if(!el)return;const ts=localStorage.getItem('kis8_last_export');if(!ts){el.textContent='No backup yet';return;}const d=new Date(ts),diff=Math.floor((Date.now()-d.getTime())/1000/60);let l;if(diff<1)l='Just now';else if(diff<60)l=`${diff}m ago`;else if(diff<1440)l=`${Math.floor(diff/60)}h ago`;else l=`${Math.floor(diff/1440)}d ago · ${d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`;el.textContent=`Last export: ${l}`;}
 function showToast(msg,type){const t=document.getElementById('import-toast');t.textContent=msg;t.className=`import-toast ${type} show`;setTimeout(()=>{t.className=`import-toast ${type}`;},2800);}
 function dismissNudge(){document.getElementById('backup-nudge')?.classList.remove('show');}
