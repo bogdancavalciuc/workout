@@ -556,7 +556,7 @@ body {
   margin-top: 3px;
 }
 
-/* ── PROGRESS DOTS (replaces "2/3" badge) ─────────────── */
+/* ── EXERCISE BADGES ──────────────────────────────────── */
 .ex-badges {
   display: flex; gap: 5px; align-items: center; margin-top: 5px;
 }
@@ -570,30 +570,16 @@ body {
   border-radius: 3px;
   padding: 1px 5px;
 }
-/* Mini set-dots progress bar */
-.set-dots {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  margin-top: 5px;
-}
-.set-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  border: 1px solid var(--line3);
-  background: transparent;
-  transition: background .2s, border-color .2s;
-  flex-shrink: 0;
-}
-.set-dot.done {
-  background: var(--gold);
-  border-color: var(--gold);
-}
-.set-dot.done-all-dot {
-  background: var(--gold);
-  border-color: var(--gold);
-  box-shadow: 0 0 4px rgba(200,169,110,.4);
+/* Progress text badge (e.g. "2/3") */
+.ex-progress-badge {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .06em;
+  background: var(--surf3);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: var(--gold);
 }
 
 /* Sets expand */
@@ -1706,11 +1692,11 @@ function calcVol(di){return data[di].reduce((s,ex)=>{const k=parseFloat(ex.weigh
 function fmtVol(v){return v>=1000?(v/1000).toFixed(1)+'t':Math.round(v)+'kg';}
 function calc1RM(weight,reps){const k=parseFloat(weight);if(isNaN(k)||k<=0||reps<=0)return null;if(reps===1)return k;return Math.round(k*(1+reps/30));}
 
-// ── #7 HAPTIC — hierarchical feedback ──────────────────
+// ── HAPTIC ─────────────────────────────────────────────
 function haptic(p){try{navigator.vibrate?.(p);}catch(e){}}
-function hapticSet(){haptic([12]);}   // single set done
-function hapticEx(){haptic([0,60,40,80,40,120]);}  // full exercise done — distinct escalating pattern
-function hapticAllDone(){haptic([0,100,50,100,50,150]);}  // all exercises done
+function hapticSet(){haptic([12]);}
+function hapticEx(){haptic([0,60,40,80,40,120]);}
+function hapticAllDone(){haptic([0,100,50,100,50,150]);}
 
 // ── WAKE LOCK ──────────────────────────────────────────
 let wakeLock=null;
@@ -1803,7 +1789,6 @@ function renderTabs(){
   const c=document.getElementById('day-tabs');c.innerHTML='';
   data.forEach((_,di)=>{
     const cfg=CFG[di],active=di===activeDay;
-    // #3: Calculate live volume for active day tab
     const vol=calcVol(di);
     const volStr=vol>0?fmtVol(vol):'';
     const el=document.createElement('div');
@@ -1842,13 +1827,11 @@ function renderTable(){
       return;
     }
 
-    // #1: Build set-dots instead of "2/3" text badge
+    // Progress as "done/total" text badge (e.g. "2/3")
     const doneSets=sArr.filter(Boolean).length;
-    const dotsHtml=Array.from({length:ex.sets},(_,si)=>{
-      const dotDone=sArr[si]||false;
-      const allDotDone=exDone;
-      return `<span class="set-dot${dotDone?(allDotDone?' done-all-dot':' done'):''}"></span>`;
-    }).join('');
+    const progressBadge=doneSets>0&&!exDone
+      ?`<span class="ex-progress-badge">${doneSets}/${ex.sets}</span>`
+      :'';
 
     html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms" draggable="true" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
     if(isEd){
@@ -1861,9 +1844,9 @@ function renderTable(){
           <div class="ex-badges">
             <span class="ex-badge">${ex.sets}×${ex.reps}</span>
             <span class="ex-badge">${ex.weight}</span>
+            ${progressBadge}
             ${exDone&&bestOrm?`<span class="ex-badge" style="color:var(--gold);border-color:rgba(200,169,110,.25)">1RM ${bestOrm}kg</span>`:''}
           </div>
-          <div class="set-dots">${dotsHtml}</div>
         </div>
         <div class="ex-right">
           ${exDone?`<span style="font-size:13px">✓</span><span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.04em">Done</span>`:`<div class="chevron${isExp?' open':''}">▾</div>`}
@@ -1965,7 +1948,6 @@ function toggleSet(e,di,ei,si){
   const was=setsDone[di][ei][si];setsDone[di][ei][si]=!was;
   if(!was){
     expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();
-    // #7: Check if exercise is now fully done → stronger haptic
     const exNowDone=setsDone[di][ei].every(Boolean);
     if(exNowDone){hapticEx();}else{hapticSet();}
     const ex=data[di][ei];const isLast=si===ex.sets-1;
@@ -2027,9 +2009,8 @@ function resetSession(){
 
 // ── HISTORY ────────────────────────────────────────────
 function getMonthKey(h){
-  // parse ts or date string for month bucket
   if(h.ts){const d=new Date(h.ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
-  return h.date.slice(-8); // fallback
+  return h.date.slice(-8);
 }
 function getMonthLabel(h){
   if(h.ts){const d=new Date(h.ts);return d.toLocaleDateString('en-GB',{month:'long',year:'numeric'});}
@@ -2039,7 +2020,6 @@ function getMonthLabel(h){
 function renderHistory(){
   const c=document.getElementById('hist-list');
   if(!history.length){
-    // #4: Improved empty state
     c.innerHTML=`<div class="hist-empty">
       <svg class="hist-empty-icon" width="56" height="56" viewBox="0 0 56 56" fill="none">
         <rect x="8" y="16" width="40" height="32" rx="4" stroke="var(--gold)" stroke-width="1.5"/>
@@ -2060,7 +2040,6 @@ function renderHistory(){
   </div>`;
   const warn=history.length>=50?`<div style="font-family:var(--mono);font-size:7.5px;color:var(--gold);text-align:center;padding:8px 0;opacity:.8;letter-spacing:.06em">⚠ ${history.length}/60 sessions · export soon</div>`:'';
 
-  // #5: Month separators
   let lastMonthKey='';
   let itemsHtml='';
   history.forEach((h,hi)=>{
@@ -2113,7 +2092,6 @@ function renderProgress(){
   const sel=document.getElementById('prog-ex-select'),name=sel.value,df=document.getElementById('prog-day-select').value;
   const c=document.getElementById('prog-content');
   if(!name){
-    // #4: Improved empty state for Progress
     c.innerHTML=`<div class="prog-empty">
       <svg class="prog-empty-icon" width="48" height="48" viewBox="0 0 48 48" fill="none">
         <path d="M6 36L16 24L24 30L34 16L42 20" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -2139,7 +2117,7 @@ function renderProgress(){
 
   const max=Math.max(...pts.map(p=>p.weight)),min=Math.min(...pts.map(p=>p.weight)),range=max-min||1;
   const maxO=Math.max(...pts.map(p=>p.orm)),minO=Math.min(...pts.map(p=>p.orm)),ormR=maxO-minO||1;
-  const W=360,H=120,py=14,pw=W,ph=H-py*2;  // leave left margin handled by CSS
+  const W=360,H=120,py=14,pw=W,ph=H-py*2;
   const xs=pts.length>1?pw/(pts.length-1):pw;
   const wPts=pts.map((p,i)=>({x:pts.length>1?i*xs:pw/2,y:py+ph-((p.weight-min)/range)*ph,...p}));
   const oPts=pts.map((p,i)=>({x:pts.length>1?i*xs:pw/2,y:py+ph-((p.orm-minO)/ormR)*ph,...p}));
@@ -2149,10 +2127,9 @@ function renderProgress(){
   const last=pts[pts.length-1],first=pts[0],diff=last.weight-first.weight;
   const dStr=diff===0?'—':(diff>0?'+':'')+diff.toFixed(1)+'kg';
 
-  // #6: Y-axis values (3-4 labels: min, mid, max, and one quarter if room)
-  const yLevels=[0, 0.5, 1.0]; // fractions of chart height → from bottom
+  const yLevels=[0, 0.5, 1.0];
   const yVals=yLevels.map(f=>Math.round(min+f*range));
-  const yPositions=yLevels.map(f=>py+ph-f*ph); // pixel positions from top
+  const yPositions=yLevels.map(f=>py+ph-f*ph);
   const yAxisHtml=yVals.map((v,i)=>`<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i]-7}px;right:4px;line-height:1;">${v}</div>`).join('');
   const yLineHtml=yLevels.map((f,i)=>`<div class="chart-yaxis-line" style="top:${yPositions[i]}px;opacity:${i===0?0:.4};"></div>`).join('');
 
