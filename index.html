@@ -62,6 +62,17 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--line3); border-radius: 2px; }
 
+/* ── STAGGERED ENTRY ANIMATION ──────────────────────── */
+@keyframes exEnter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ex-block {
+  opacity: 0;
+  animation: exEnter .38s cubic-bezier(.22,1,.36,1) forwards;
+}
+/* delay set by JS via style attribute */
+
 /* ── HEADER ─────────────────────────────────────────── */
 .top {
   padding: 56px 24px 0;
@@ -101,6 +112,21 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+.brand-sub-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+}
+.brand-sub-controls .theme-btn {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
+}
+.brand-sub-controls .wake-btn {
+  font-size: 7.5px;
+  padding: 4px 9px;
 }
 .theme-btn {
   background: none;
@@ -232,6 +258,16 @@ body {
   position: relative;
 }
 .dt.active .dt-label { color: var(--gold); }
+
+/* ── DAY VOLUME BADGE ────────────────────────────────── */
+.dt-vol {
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: .06em;
+  color: var(--gold3);
+  opacity: .8;
+  position: relative;
+}
 .dt-edit {
   display: none;
   font-family: var(--mono);
@@ -519,8 +555,10 @@ body {
   letter-spacing: .08em;
   margin-top: 3px;
 }
+
+/* ── PROGRESS DOTS (replaces "2/3" badge) ─────────────── */
 .ex-badges {
-  display: flex; gap: 5px; align-items: center; margin-top: 3px;
+  display: flex; gap: 5px; align-items: center; margin-top: 5px;
 }
 .ex-badge {
   font-family: var(--mono);
@@ -531,6 +569,31 @@ body {
   border: 1px solid var(--line);
   border-radius: 3px;
   padding: 1px 5px;
+}
+/* Mini set-dots progress bar */
+.set-dots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 5px;
+}
+.set-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid var(--line3);
+  background: transparent;
+  transition: background .2s, border-color .2s;
+  flex-shrink: 0;
+}
+.set-dot.done {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+.set-dot.done-all-dot {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 4px rgba(200,169,110,.4);
 }
 
 /* Sets expand */
@@ -727,16 +790,71 @@ body {
 .del-yes { background: var(--danger); color: var(--text); }
 
 /* ── HISTORY ─────────────────────────────────────────── */
+/* Improved empty state */
 .hist-empty {
   text-align: center;
-  padding: 80px 20px;
-  color: var(--muted);
+  padding: 80px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.hist-empty-icon {
+  opacity: .18;
+}
+.hist-empty-title {
   font-family: var(--serif);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 300;
   font-style: italic;
-  line-height: 1.7;
+  color: var(--text2);
+  line-height: 1.5;
 }
+.hist-empty-sub {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  line-height: 1.8;
+}
+.hist-empty-cta {
+  margin-top: 6px;
+  padding: 11px 24px;
+  border: 1px solid var(--gold3);
+  border-radius: var(--r);
+  background: none;
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.hist-empty-cta:active { background: rgba(200,169,110,.08); }
+
+/* Month separator */
+.hist-month-sep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px 12px;
+}
+.hist-month-label {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.hist-month-line {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
 .hist-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -845,14 +963,33 @@ body {
 }
 .prog-select:focus, .prog-day-select:focus { border-color: var(--gold3); }
 .prog-day-select { font-family: var(--mono); font-size: 12px; }
+
+/* Improved empty state for Progress */
 .prog-empty {
   text-align: center;
-  padding: 60px 20px;
-  color: var(--muted);
-  font-family: var(--serif);
-  font-size: 18px;
-  font-style: italic;
+  padding: 60px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
+.prog-empty-icon { opacity: .15; }
+.prog-empty-title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text2);
+}
+.prog-empty-sub {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: .14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  line-height: 1.9;
+}
+
 .chart-wrap {
   background: var(--surf);
   border: 1px solid var(--line);
@@ -869,7 +1006,48 @@ body {
   text-transform: uppercase;
   margin-bottom: 16px;
 }
-.chart-canvas { width: 100%; height: 160px; position: relative; }
+/* ── Y-AXIS LABELS ────────────────────────────────────── */
+.chart-canvas-wrap {
+  position: relative;
+  width: 100%;
+}
+.chart-yaxis {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+  padding: 2px 0 4px;
+  width: 30px;
+}
+.chart-yaxis-val {
+  font-family: var(--mono);
+  font-size: 7px;
+  color: var(--muted);
+  letter-spacing: .04em;
+  line-height: 1;
+  text-align: right;
+  padding-right: 6px;
+}
+.chart-yaxis-lines {
+  position: absolute;
+  left: 30px; right: 0; top: 0; bottom: 0;
+  pointer-events: none;
+}
+.chart-yaxis-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: var(--line);
+  opacity: .6;
+}
+.chart-canvas {
+  width: calc(100% - 30px);
+  height: 160px;
+  position: relative;
+  margin-left: 30px;
+}
 .chart-stats {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -1358,16 +1536,18 @@ body.light .set-row { background: var(--surf); }
     <div class="brand-wordmark">
       <div class="brand-title">Consistency</div>
       <div class="brand-rule"></div>
+      <div class="brand-sub-controls">
+        <button class="wake-btn" id="wake-btn" onclick="toggleWakeLock()">Screen on</button>
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">◑</button>
+      </div>
     </div>
     <div class="brand-controls">
-      <button class="wake-btn" id="wake-btn" onclick="toggleWakeLock()">Screen on</button>
       <div class="timer-pill" id="timer-pill" onclick="toggleSessionTimer()">
         <button class="timer-play" id="st-play">
           <svg id="st-icon" width="8" height="8" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>
         </button>
         <span class="timer-val" id="st-val">00:00</span>
       </div>
-      <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">◑</button>
     </div>
   </div>
   <div class="page-nav">
@@ -1525,7 +1705,12 @@ function dayKey(d){return`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
 function calcVol(di){return data[di].reduce((s,ex)=>{const k=parseFloat(ex.weight);return isNaN(k)?s:s+k*ex.sets*ex.reps;},0);}
 function fmtVol(v){return v>=1000?(v/1000).toFixed(1)+'t':Math.round(v)+'kg';}
 function calc1RM(weight,reps){const k=parseFloat(weight);if(isNaN(k)||k<=0||reps<=0)return null;if(reps===1)return k;return Math.round(k*(1+reps/30));}
+
+// ── #7 HAPTIC — hierarchical feedback ──────────────────
 function haptic(p){try{navigator.vibrate?.(p);}catch(e){}}
+function hapticSet(){haptic([12]);}   // single set done
+function hapticEx(){haptic([0,60,40,80,40,120]);}  // full exercise done — distinct escalating pattern
+function hapticAllDone(){haptic([0,100,50,100,50,150]);}  // all exercises done
 
 // ── WAKE LOCK ──────────────────────────────────────────
 let wakeLock=null;
@@ -1618,9 +1803,12 @@ function renderTabs(){
   const c=document.getElementById('day-tabs');c.innerHTML='';
   data.forEach((_,di)=>{
     const cfg=CFG[di],active=di===activeDay;
+    // #3: Calculate live volume for active day tab
+    const vol=calcVol(di);
+    const volStr=vol>0?fmtVol(vol):'';
     const el=document.createElement('div');
     el.className='dt'+(active?' active':'');
-    el.innerHTML=`<span class="dt-label">${cfg.label}</span><button class="dt-edit" onclick="openDayEdit(event,${di})">···</button>`;
+    el.innerHTML=`<span class="dt-label">${cfg.label}</span>${volStr&&active?`<span class="dt-vol">${volStr}</span>`:''}<button class="dt-edit" onclick="openDayEdit(event,${di})">···</button>`;
     el.onclick=e=>{if(e.target.closest('.dt-edit'))return;saveInlineEdit();activeDay=di;editingEx=null;deleteConfirm=null;expanded.clear();render();};
     c.appendChild(el);
   });
@@ -1650,14 +1838,22 @@ function renderTable(){
     let bestOrm=0;
     for(let si=0;si<ex.sets;si++){const r=getSetReps(ex,si),w=getSetWeight(ex,si),o=calc1RM(w,r);if(o&&o>bestOrm)bestOrm=o;}
     if(isDel){
-      html+=`<div class="ex-block"><div class="del-confirm"><span class="del-txt">Delete "${escHtml(ex.name)}"?</span><button class="del-btn del-no" onclick="cancelDelete()">Cancel</button><button class="del-btn del-yes" onclick="confirmDelete(${di},${ei})">Delete</button></div></div>`;
+      html+=`<div class="ex-block" style="animation-delay:${ei*40}ms"><div class="del-confirm"><span class="del-txt">Delete "${escHtml(ex.name)}"?</span><button class="del-btn del-no" onclick="cancelDelete()">Cancel</button><button class="del-btn del-yes" onclick="confirmDelete(${di},${ei})">Delete</button></div></div>`;
       return;
     }
-    html+=`<div class="ex-block" id="exb-${di}-${ei}" draggable="true" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
+
+    // #1: Build set-dots instead of "2/3" text badge
+    const doneSets=sArr.filter(Boolean).length;
+    const dotsHtml=Array.from({length:ex.sets},(_,si)=>{
+      const dotDone=sArr[si]||false;
+      const allDotDone=exDone;
+      return `<span class="set-dot${dotDone?(allDotDone?' done-all-dot':' done'):''}"></span>`;
+    }).join('');
+
+    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms" draggable="true" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
     if(isEd){
       html+=`<div class="ex-name-row" style="cursor:default;padding-left:16px"><div class="ex-main"><input class="ie-input" id="ie-name" type="text" value="${escHtml(ex.name)}" spellcheck="false" autocomplete="off"></div><div class="ex-right"><button onclick="saveInlineEdit()" style="font-family:var(--mono);font-size:8.5px;padding:6px 12px;border:none;border-radius:var(--r);background:var(--gold);color:var(--bg);cursor:pointer;letter-spacing:.1em;text-transform:uppercase;">Save</button></div></div>`;
     } else {
-      const doneSets=sArr.filter(Boolean).length;
       html+=`<div class="ex-name-row${exDone?' done-all':''}" onclick="toggleExpand(${di},${ei})">
         <div class="drag-num" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
         <div class="ex-main">
@@ -1666,8 +1862,8 @@ function renderTable(){
             <span class="ex-badge">${ex.sets}×${ex.reps}</span>
             <span class="ex-badge">${ex.weight}</span>
             ${exDone&&bestOrm?`<span class="ex-badge" style="color:var(--gold);border-color:rgba(200,169,110,.25)">1RM ${bestOrm}kg</span>`:''}
-            ${!exDone&&doneSets>0?`<span class="ex-badge" style="color:var(--gold3)">${doneSets}/${ex.sets}</span>`:''}
           </div>
+          <div class="set-dots">${dotsHtml}</div>
         </div>
         <div class="ex-right">
           ${exDone?`<span style="font-size:13px">✓</span><span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.04em">Done</span>`:`<div class="chevron${isExp?' open':''}">▾</div>`}
@@ -1737,7 +1933,7 @@ function attachSwipe(di,ei,si){
   },{passive:true});
   row.addEventListener('touchend',()=>{
     row.classList.remove('swiping');
-    if(dx>=T&&!committed){committed=true;row.style.transform='';bg.style.opacity='';haptic([15]);toggleSet({stopPropagation:()=>{}},di,ei,si);}
+    if(dx>=T&&!committed){committed=true;row.style.transform='';bg.style.opacity='';hapticSet();toggleSet({stopPropagation:()=>{}},di,ei,si);}
     else{row.style.transform='';bg.style.opacity='';}
     dx=0;swiping=false;
   },{passive:true});
@@ -1768,11 +1964,14 @@ function toggleSet(e,di,ei,si){
   e.stopPropagation();if(editingEx)saveInlineEdit();
   const was=setsDone[di][ei][si];setsDone[di][ei][si]=!was;
   if(!was){
-    expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();haptic([10]);
+    expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();
+    // #7: Check if exercise is now fully done → stronger haptic
+    const exNowDone=setsDone[di][ei].every(Boolean);
+    if(exNowDone){hapticEx();}else{hapticSet();}
     const ex=data[di][ei];const isLast=si===ex.sets-1;
     if(restEnabled[`${di}-${ei}`]!==false&&!isLast)setTimeout(()=>openRestTimer(ex.name,si+1,restDefaultDuration),200);
   }else{haptic([5,30,5]);}
-  if(isAllDone(di)){saveToHistory(di);fireConfetti();haptic([0,100,50,100,50,150]);}
+  if(isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}
   persist();render();
   requestAnimationFrame(()=>{const b=document.getElementById(`sc-${di}-${ei}-${si}`);if(b&&!was){b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),300);}});
 }
@@ -1781,8 +1980,8 @@ function quickLogAll(e,di,ei){
   e.stopPropagation();
   const allDone=setsDone[di][ei].every(Boolean)&&setsDone[di][ei].length>0;
   if(allDone){setsDone[di][ei]=setsDone[di][ei].map(()=>false);haptic([5,30,5]);}
-  else{setsDone[di][ei]=setsDone[di][ei].map(()=>true);expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();haptic([10,50,10]);}
-  if(isAllDone(di)){saveToHistory(di);fireConfetti();haptic([0,100,50,100,50,150]);}
+  else{setsDone[di][ei]=setsDone[di][ei].map(()=>true);expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();hapticEx();}
+  if(isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}
   persist();render();
 }
 
@@ -1827,17 +2026,51 @@ function resetSession(){
 }
 
 // ── HISTORY ────────────────────────────────────────────
+function getMonthKey(h){
+  // parse ts or date string for month bucket
+  if(h.ts){const d=new Date(h.ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+  return h.date.slice(-8); // fallback
+}
+function getMonthLabel(h){
+  if(h.ts){const d=new Date(h.ts);return d.toLocaleDateString('en-GB',{month:'long',year:'numeric'});}
+  return '';
+}
+
 function renderHistory(){
   const c=document.getElementById('hist-list');
-  if(!history.length){c.innerHTML='<div class="hist-empty">No sessions yet.<br>Complete a workout<br>to see your history.</div>';return;}
+  if(!history.length){
+    // #4: Improved empty state
+    c.innerHTML=`<div class="hist-empty">
+      <svg class="hist-empty-icon" width="56" height="56" viewBox="0 0 56 56" fill="none">
+        <rect x="8" y="16" width="40" height="32" rx="4" stroke="var(--gold)" stroke-width="1.5"/>
+        <path d="M18 8v10M38 8v10" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M8 26h40" stroke="var(--gold)" stroke-width="1.5"/>
+        <path d="M19 36l4 4 10-10" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="hist-empty-title">No sessions yet.</div>
+      <div class="hist-empty-sub">Complete a workout to see<br>your history appear here.</div>
+      <button class="hist-empty-cta" onclick="setPage('workout')">Start first workout</button>
+    </div>`;
+    return;
+  }
   const totalVol=history.reduce((s,h)=>s+(h.vol||0),0);
   const statsBar=`<div class="hist-stats">
     <div class="hs"><div class="hs-val">${history.length}</div><div class="hs-label">Sessions</div></div>
     <div class="hs"><div class="hs-val">${totalVol>0?fmtVol(totalVol):'—'}</div><div class="hs-label">Total vol</div></div>
   </div>`;
   const warn=history.length>=50?`<div style="font-family:var(--mono);font-size:7.5px;color:var(--gold);text-align:center;padding:8px 0;opacity:.8;letter-spacing:.06em">⚠ ${history.length}/60 sessions · export soon</div>`:'';
-  c.innerHTML=statsBar+warn+history.map((h,hi)=>`
-    <div class="hist-item">
+
+  // #5: Month separators
+  let lastMonthKey='';
+  let itemsHtml='';
+  history.forEach((h,hi)=>{
+    const mk=getMonthKey(h);
+    if(mk!==lastMonthKey){
+      const ml=getMonthLabel(h)||mk;
+      itemsHtml+=`<div class="hist-month-sep"><span class="hist-month-label">${ml}</span><div class="hist-month-line"></div></div>`;
+      lastMonthKey=mk;
+    }
+    itemsHtml+=`<div class="hist-item">
       <div class="hist-head">
         <div class="hist-accent"></div>
         <div class="hist-info">
@@ -1855,7 +2088,10 @@ function renderHistory(){
         <div class="hist-row" style="opacity:.3;border-bottom:1px solid var(--line)"><span class="hc"></span><span class="hc" style="font-family:var(--mono);font-size:7px;letter-spacing:.12em">EXERCISE</span><span class="hc r" style="font-size:7px">SETS</span><span class="hc r" style="font-size:7px">REPS</span><span class="hc r" style="font-size:7px">WEIGHT</span></div>
         ${(h.exercises||[]).map((ex,i)=>`<div class="hist-row"><span class="hc">${String(i+1).padStart(2,'0')}</span><span class="hc nm">${escHtml(ex.name)}</span><span class="hc r">${ex.sets}</span><span class="hc r">${ex.reps}</span><span class="hc r">${ex.weight}</span></div>`).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  });
+
+  c.innerHTML=statsBar+warn+itemsHtml;
 }
 function deleteHistoryEntry(hi){confirmAction('Delete session?',`Remove "${history[hi].day}" from ${history[hi].date}.`,'Delete','danger',()=>{history.splice(hi,1);persist();renderHistory();});}
 
@@ -1876,30 +2112,66 @@ function initProgress(){
 function renderProgress(){
   const sel=document.getElementById('prog-ex-select'),name=sel.value,df=document.getElementById('prog-day-select').value;
   const c=document.getElementById('prog-content');
-  if(!name){c.innerHTML='<div class="prog-empty">Select an exercise to view progress.</div>';return;}
+  if(!name){
+    // #4: Improved empty state for Progress
+    c.innerHTML=`<div class="prog-empty">
+      <svg class="prog-empty-icon" width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <path d="M6 36L16 24L24 30L34 16L42 20" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="42" cy="20" r="3" stroke="var(--gold)" stroke-width="1.5"/>
+      </svg>
+      <div class="prog-empty-title">Select an exercise</div>
+      <div class="prog-empty-sub">Choose from the dropdown above<br>to see your progress over time.</div>
+    </div>`;
+    return;
+  }
   const fh=df?history.filter(h=>h.day===df):history;
   const pts=[];for(let i=fh.length-1;i>=0;i--){const h=fh[i];const ex=(h.exercises||[]).find(e=>e.name===name);if(ex){const kg=parseFloat(ex.weight);pts.push({weight:isNaN(kg)?0:kg,sets:ex.sets,reps:ex.reps,raw:ex.weight,orm:calc1RM(ex.weight,ex.reps)||0});}}
-  if(!pts.length){c.innerHTML='<div class="prog-empty">No history found for this exercise yet.</div>';return;}
+  if(!pts.length){
+    c.innerHTML=`<div class="prog-empty">
+      <svg class="prog-empty-icon" width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <path d="M6 36L16 24L24 30L34 16L42 20" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="prog-empty-title">No history yet</div>
+      <div class="prog-empty-sub">Complete sessions with this exercise<br>to see your progress chart.</div>
+    </div>`;
+    return;
+  }
+
   const max=Math.max(...pts.map(p=>p.weight)),min=Math.min(...pts.map(p=>p.weight)),range=max-min||1;
   const maxO=Math.max(...pts.map(p=>p.orm)),minO=Math.min(...pts.map(p=>p.orm)),ormR=maxO-minO||1;
-  const W=400,H=120,px=10,py=14,pw=W-px*2,ph=H-py*2;
+  const W=360,H=120,py=14,pw=W,ph=H-py*2;  // leave left margin handled by CSS
   const xs=pts.length>1?pw/(pts.length-1):pw;
-  const wPts=pts.map((p,i)=>({x:px+(pts.length>1?i*xs:pw/2),y:py+ph-((p.weight-min)/range)*ph,...p}));
-  const oPts=pts.map((p,i)=>({x:px+(pts.length>1?i*xs:pw/2),y:py+ph-((p.orm-minO)/ormR)*ph,...p}));
+  const wPts=pts.map((p,i)=>({x:pts.length>1?i*xs:pw/2,y:py+ph-((p.weight-min)/range)*ph,...p}));
+  const oPts=pts.map((p,i)=>({x:pts.length>1?i*xs:pw/2,y:py+ph-((p.orm-minO)/ormR)*ph,...p}));
   const mkP=p=>p.map((pt,i)=>`${i===0?'M':'L'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
   const wP=mkP(wPts),oP=mkP(oPts);
   const wA=wP+` L${wPts[wPts.length-1].x.toFixed(1)},${(py+ph).toFixed(1)} L${wPts[0].x.toFixed(1)},${(py+ph).toFixed(1)} Z`;
   const last=pts[pts.length-1],first=pts[0],diff=last.weight-first.weight;
   const dStr=diff===0?'—':(diff>0?'+':'')+diff.toFixed(1)+'kg';
+
+  // #6: Y-axis values (3-4 labels: min, mid, max, and one quarter if room)
+  const yLevels=[0, 0.5, 1.0]; // fractions of chart height → from bottom
+  const yVals=yLevels.map(f=>Math.round(min+f*range));
+  const yPositions=yLevels.map(f=>py+ph-f*ph); // pixel positions from top
+  const yAxisHtml=yVals.map((v,i)=>`<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i]-7}px;right:4px;line-height:1;">${v}</div>`).join('');
+  const yLineHtml=yLevels.map((f,i)=>`<div class="chart-yaxis-line" style="top:${yPositions[i]}px;opacity:${i===0?0:.4};"></div>`).join('');
+
   c.innerHTML=`
     <div class="chart-wrap">
-      <div class="chart-label">${escHtml(name)}${df?' · '+df:''} — Weight</div>
-      <div class="chart-canvas"><svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">
-        <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--gold)" stop-opacity=".15"/><stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>
-        <path d="${wA}" fill="url(#ag)"/>
-        <path d="${wP}" fill="none" stroke="var(--text2)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
-        ${wPts.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===wPts.length-1?4:2.5}" fill="${i===wPts.length-1?'var(--gold)':'var(--muted)'}" stroke="${i===wPts.length-1?'var(--bg)':'none'}" stroke-width="2"/>`).join('')}
-      </svg></div>
+      <div class="chart-label">${escHtml(name)}${df?' · '+df:''} — Weight (kg)</div>
+      <div class="chart-canvas-wrap">
+        <div style="position:relative;width:30px;height:${H}px;float:left;">${yAxisHtml}</div>
+        <div style="position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;pointer-events:none;">${yLineHtml}</div>
+          <div class="chart-canvas"><svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">
+            <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--gold)" stop-opacity=".15"/><stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>
+            <path d="${wA}" fill="url(#ag)"/>
+            <path d="${wP}" fill="none" stroke="var(--text2)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+            ${wPts.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===wPts.length-1?4:2.5}" fill="${i===wPts.length-1?'var(--gold)':'var(--muted)'}" stroke="${i===wPts.length-1?'var(--bg)':'none'}" stroke-width="2"/>`).join('')}
+          </svg></div>
+        </div>
+        <div style="clear:both;"></div>
+      </div>
       <div class="chart-stats">
         <div class="cs"><div class="cs-val">${last.raw}</div><div class="cs-label">Current</div></div>
         <div class="cs"><div class="cs-val">${max>0?max+'kg':'—'}</div><div class="cs-label">Best</div></div>
@@ -1907,10 +2179,22 @@ function renderProgress(){
         <div class="cs"><div class="cs-val">${last.orm>0?last.orm+'kg':'—'}</div><div class="cs-label">Est. 1RM</div></div>
       </div>
     </div>
-    ${maxO>0?`<div class="chart-wrap" style="margin-top:0"><div class="chart-label">Estimated 1RM over time</div><div class="chart-canvas"><svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">
-      <path d="${oP}" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5,3"/>
-      ${oPts.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===oPts.length-1?4:2.5}" fill="${i===oPts.length-1?'var(--gold)':'var(--muted)'}"/>`).join('')}
-    </svg></div></div>`:''}
+    ${maxO>0?(()=>{
+      const oYVals=yLevels.map(f=>Math.round(minO+f*ormR));
+      const oYHtml=oYVals.map((v,i)=>`<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i]-7}px;right:4px;line-height:1;">${v}</div>`).join('');
+      return `<div class="chart-wrap" style="margin-top:0"><div class="chart-label">Estimated 1RM over time (kg)</div>
+      <div class="chart-canvas-wrap">
+        <div style="position:relative;width:30px;height:${H}px;float:left;">${oYHtml}</div>
+        <div style="position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;pointer-events:none;">${yLineHtml}</div>
+          <div class="chart-canvas"><svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">
+            <path d="${oP}" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5,3"/>
+            ${oPts.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===oPts.length-1?4:2.5}" fill="${i===oPts.length-1?'var(--gold)':'var(--muted)'}"/>`).join('')}
+          </svg></div>
+        </div>
+        <div style="clear:both;"></div>
+      </div></div>`;
+    })():''}
     <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);text-align:center;letter-spacing:.1em;padding:8px 0">${pts.length} session${pts.length!==1?'s':''} tracked</div>`;
 }
 
