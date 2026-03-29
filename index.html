@@ -288,45 +288,87 @@ body {
 
 /* ── WEEKLY SCHEDULE TABS ────────────────────────────── */
 .dt {
-  min-width: 52px !important;
-  padding: 8px 4px 7px !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  padding: 7px 2px 6px !important;
+  gap: 5px !important;
+  border-radius: var(--r) !important;
 }
 .dt-day-name {
   font-family: var(--mono);
-  font-size: 7px;
+  font-size: 8px;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: var(--muted);
+  position: relative;
+  line-height: 1;
+}
+.dt.active .dt-day-name { color: var(--gold); }
+.dt.today-tab .dt-day-name {
+  color: var(--text2);
+}
+.dt.today-tab.active .dt-day-name { color: var(--gold); }
+/* dot indicator: has workout = colored dot, rest = nothing */
+.dt-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--line3);
+  transition: background .2s;
+}
+.dt.has-workout .dt-dot { background: var(--muted2); }
+.dt.active.has-workout .dt-dot { background: var(--gold); }
+.dt.today-tab .dt-dot { background: var(--gold3); opacity: .6; }
+.dt.today-tab.active .dt-dot { background: var(--gold); opacity: 1; }
+.dt.rest-tab .dt-dot { display: none; }
+/* selected day info bar below tabs */
+.day-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  background: var(--surf);
+  border: 1px solid var(--line2);
+  border-radius: var(--r2);
+  min-height: 42px;
+  transition: background .2s;
+}
+.day-info-bar.rest-bar {
+  background: transparent;
+  border-color: var(--line);
+}
+.day-info-name {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: .04em;
+  color: var(--text);
+  flex: 1;
+}
+.day-info-name.rest-name {
+  font-family: var(--mono);
+  font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 3px;
-  position: relative;
 }
-.dt.active .dt-day-name { color: var(--gold3); }
-.dt.today-tab .dt-day-name::after {
-  content: '•';
-  position: absolute;
-  top: -5px;
-  right: -4px;
-  font-size: 8px;
-  color: var(--gold);
+.day-info-today {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gold3);
+  padding: 3px 7px;
+  border: 1px solid rgba(200,169,110,.25);
+  border-radius: 20px;
 }
-.dt-workout-label {
-  font-family: var(--serif);
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: .03em;
-  color: var(--text2);
-  position: relative;
-}
-.dt.active .dt-workout-label { color: var(--gold); }
-.dt-workout-label.rest-label {
+.day-info-vol {
   font-family: var(--mono);
   font-size: 8px;
   letter-spacing: .06em;
   color: var(--muted);
-  text-transform: uppercase;
 }
-.dt.today-tab { border-color: var(--line3); }
-.dt.today-tab.active { border-color: var(--gold3); }
+.day-tabs { gap: 4px !important; }
 
 /* ── SCHEDULE SHEET ──────────────────────────────────── */
 .sched-day-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
@@ -1634,10 +1676,11 @@ body.light .set-row { background: var(--surf); }
 
 <!-- WORKOUT PAGE -->
 <div id="page-workout" style="padding:0 24px">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:22px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
     <div class="day-tabs" id="day-tabs" style="margin-bottom:0;flex:1"></div>
-    <button onclick="openSchedSheet()" style="flex-shrink:0;width:34px;height:34px;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:14px;transition:border-color .2s,color .2s" title="Weekly schedule">📅</button>
+    <button onclick="openSchedSheet()" style="flex-shrink:0;width:30px;height:30px;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:13px;transition:border-color .2s,color .2s" title="Weekly schedule">⚙</button>
   </div>
+  <div class="day-info-bar" id="day-info-bar"></div>
   <div id="done-banner" class="done-banner">
     <div class="done-banner-shimmer"></div>
     <div class="done-icon">🏆</div>
@@ -1769,6 +1812,8 @@ let weekSched=JSON.parse(localStorage.getItem('kis8_wsched')||'null')||DEF_SCHED
 const WEEK_DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 function getTodayWeekIdx(){return(new Date().getDay()+6)%7;} // JS: Sun=0 → Mon=0
 let activeDay=0,sheetCtx=null,editingEx=null,deleteConfirm=null;
+// selectedWeekIdx = which day of week tab is highlighted (0=Mon..6=Sun)
+let selectedWeekIdx=getTodayWeekIdx();
 // Set activeDay to today's workout if scheduled
 (function(){const ti=getTodayWeekIdx();const wi=weekSched[ti];if(wi!==null&&wi!==undefined&&wi<data.length)activeDay=wi;})();
 let expanded=new Set();
@@ -1903,29 +1948,60 @@ function renderTabs(){
   const c=document.getElementById('day-tabs');c.innerHTML='';
   const todayIdx=getTodayWeekIdx();
   WEEK_DAYS.forEach((dayName,wi)=>{
-    const cfgIdx=weekSched[wi]; // null = rest
+    const cfgIdx=weekSched[wi];
     const isToday=wi===todayIdx;
-    const isActive=cfgIdx!==null&&cfgIdx===activeDay&&cfgIdx!==undefined;
+    const isRest=cfgIdx===null||cfgIdx===undefined;
+    // A tab is "active" (selected) if:
+    // - it has a workout AND that workout is the currently viewed one
+    // - OR it's a rest day and it's selected (we track selected week idx separately)
+    const isActive=wi===selectedWeekIdx;
     const el=document.createElement('div');
-    el.className='dt'+(isActive?' active':'')+(isToday?' today-tab':'');
-    if(cfgIdx===null||cfgIdx===undefined){
-      el.innerHTML=`<span class="dt-day-name">${dayName}</span><span class="dt-workout-label rest-label">Rest</span>`;
-      el.onclick=()=>openSchedSheet();
-    } else {
-      const cfg=CFG[cfgIdx]||{label:'?'};
-      const vol=calcVol(cfgIdx);
-      const volStr=vol>0&&isActive?`<span class="dt-vol">${fmtVol(vol)}</span>`:'';
-      el.innerHTML=`<span class="dt-day-name">${dayName}</span><span class="dt-workout-label">${escHtml(cfg.label)}</span>${volStr}`;
-      el.onclick=e=>{saveInlineEdit();activeDay=cfgIdx;editingEx=null;deleteConfirm=null;expanded.clear();render();};
-    }
+    el.className='dt'
+      +(isActive?' active':'')
+      +(isToday?' today-tab':'')
+      +(isRest?' rest-tab':' has-workout');
+    el.innerHTML=`<span class="dt-day-name">${dayName}</span><div class="dt-dot"></div>`;
+    el.onclick=()=>{
+      selectedWeekIdx=wi;
+      if(!isRest){saveInlineEdit();activeDay=cfgIdx;editingEx=null;deleteConfirm=null;expanded.clear();}
+      render();
+    };
     c.appendChild(el);
   });
+  // Update info bar
+  renderDayInfoBar();
   // Scroll active tab into view
   setTimeout(()=>{const active=c.querySelector('.dt.active');if(active)active.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});},50);
 }
 
+function renderDayInfoBar(){
+  const bar=document.getElementById('day-info-bar');
+  if(!bar)return;
+  const todayIdx=getTodayWeekIdx();
+  const wi=selectedWeekIdx;
+  const cfgIdx=weekSched[wi];
+  const isRest=cfgIdx===null||cfgIdx===undefined;
+  const isToday=wi===todayIdx;
+  if(isRest){
+    bar.className='day-info-bar rest-bar';
+    bar.innerHTML=`<span class="day-info-name rest-name">Rest day</span>${isToday?'<span class="day-info-today">Today</span>':''}`;
+  } else {
+    const cfg=CFG[cfgIdx]||{label:'?'};
+    const vol=calcVol(cfgIdx);
+    const volStr=vol>0?`<span class="day-info-vol">${fmtVol(vol)}</span>`:'';
+    bar.className='day-info-bar';
+    bar.innerHTML=`<span class="day-info-name">${escHtml(cfg.label)}</span>${volStr}${isToday?'<span class="day-info-today">Today</span>':''}`;
+  }
+}
+
 // ── TABLE ──────────────────────────────────────────────
 function renderTable(){
+  const isRestDay=weekSched[selectedWeekIdx]===null||weekSched[selectedWeekIdx]===undefined;
+  if(isRestDay){
+    document.getElementById('done-banner').classList.remove('show');
+    document.getElementById('tbl').innerHTML='';
+    return;
+  }
   const di=activeDay,exs=data[di],allDone=isAllDone(di);
   document.getElementById('done-banner').classList.toggle('show',allDone);
   if(allDone){
@@ -2363,7 +2439,14 @@ function removeSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];if(ex.sets
 function startDeleteActive(){const di=activeDay;for(const k of expanded){const p=k.split('-').map(Number);if(p[0]===di){deleteConfirm={di:p[0],ei:p[1]};renderTable();return;}}}
 function updateDelExBtn(){const btn=document.getElementById('del-ex-btn');if(!btn)return;const di=activeDay;let has=false;for(const k of expanded){const p=k.split('-').map(Number);if(p[0]===di){has=true;break;}}btn.classList.toggle('visible',has);}
 
-function render(){renderTabs();renderTable();updateDelExBtn();updateBackupLabel();}
+function render(){
+  const isRestDay=weekSched[selectedWeekIdx]===null||weekSched[selectedWeekIdx]===undefined;
+  renderTabs();renderDayInfoBar();renderTable();updateDelExBtn();updateBackupLabel();
+  const fab=document.getElementById('fab');
+  const delBtn=document.getElementById('del-ex-btn');
+  if(fab)fab.style.display=isRestDay?'none':'';
+  if(delBtn&&isRestDay)delBtn.classList.remove('visible');
+}
 document.getElementById('fab').onclick=()=>doAdd(activeDay);
 document.addEventListener('click',e=>{if(editingEx){const t=document.getElementById('tbl');if(t&&!t.contains(e.target))saveInlineEdit();}});
 
