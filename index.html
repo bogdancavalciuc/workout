@@ -1757,10 +1757,9 @@ body.light .set-row { background: var(--surf); }
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// FIX: Centralized localStorage keys — prevents silent
-//      data loss from scattered magic strings.
-// ═══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// KEYS — centralised localStorage keys
+// ══════════════════════════════════════════════════════
 const KEYS = {
   theme:      'kis8_theme',
   cfg:        'kis8_cfg',
@@ -1782,12 +1781,7 @@ function toggleTheme() {
   localStorage.setItem(KEYS.theme, document.body.classList.contains('light') ? 'light' : 'dark');
 }
 
-// ═══════════════════════════════════════════════════════
-// FIX: Safe escHtml — guards against null/undefined
-//      producing literal "null"/"undefined" in the UI,
-//      and escapes all user-controlled strings before
-//      they enter innerHTML.
-// ═══════════════════════════════════════════════════════
+// ── HTML ESCAPE ────────────────────────────────────────
 function escHtml(s) {
   if (s == null) return '';
   return String(s)
@@ -1798,7 +1792,7 @@ function escHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-// ── CONFIRM ─────────────────────────────────────────────
+// ── CONFIRM ────────────────────────────────────────────
 let _cb = null;
 function confirmAction(title, msg, okLabel, okStyle, cb) {
   document.getElementById('confirm-title').textContent = title;
@@ -1812,12 +1806,7 @@ function confirmAction(title, msg, okLabel, okStyle, cb) {
 function confirmYes() { document.getElementById('confirm-overlay').classList.remove('open'); if (_cb) { _cb(); _cb = null; } }
 function confirmNo()  { document.getElementById('confirm-overlay').classList.remove('open'); _cb = null; }
 
-// ═══════════════════════════════════════════════════════
-// FIX: Safe localStorage wrapper — all reads/writes go
-//      through these helpers. QuotaExceededError and
-//      private-browsing failures are caught and reported
-//      rather than silently swallowed.
-// ═══════════════════════════════════════════════════════
+// ── SAFE STORAGE ───────────────────────────────────────
 const store = {
   get(key, fallback = null) {
     try {
@@ -1853,8 +1842,6 @@ const DEF_CFG = [
   { label: 'Pull', color: '#C8A96E' },
   { label: 'Legs', color: '#C8A96E' },
 ];
-// Default weekly schedule: Mon=Push, Wed=Pull, Fri=Legs, rest days = null
-// Index maps to CFG array position (0=Push, 1=Pull, 2=Legs)
 const DEF_SCHED = [0, null, 1, null, 2, null, null];
 const DEF = [
   [
@@ -1919,10 +1906,6 @@ function syncSets() {
 }
 syncSets();
 
-// ═══════════════════════════════════════════════════════
-// FIX: persist() uses the safe store wrapper so storage
-//      errors surface instead of silently failing.
-// ═══════════════════════════════════════════════════════
 function persist() {
   store.set(KEYS.cfg,    CFG);
   store.set(KEYS.data,   data);
@@ -1942,12 +1925,9 @@ function calcVol(di) {
     return isNaN(k) ? s : s + k * ex.sets * ex.reps;
   }, 0);
 }
-// FIX: fmtVol threshold raised to 10000 to avoid jarring
-//      "1.0t" for weights that are clearly still kilograms.
+// FIX: threshold raised to 10000 to avoid premature tonne display
 function fmtVol(v) { return v >= 10000 ? (v / 1000).toFixed(1) + 't' : Math.round(v) + 'kg'; }
-
-// FIX: calc1RM uses the Epley formula (weight × (1 + reps/30)).
-//      This is the most common estimation; actual 1RM may vary.
+// FIX: Epley 1RM formula
 function calc1RM(weight, reps) {
   const k = parseFloat(weight);
   if (isNaN(k) || k <= 0 || reps <= 0) return null;
@@ -2013,16 +1993,15 @@ function updatePlayBtn() {
   }
 }
 
-// ═══════════════════════════════════════════════════════
-// FIX: Shared AudioContext — created once and reused.
-//      Browsers cap simultaneous AudioContexts (~6).
-//      The old code created a new one per beep, leaking.
-// ═══════════════════════════════════════════════════════
+// ── SHARED AUDIO CONTEXT ───────────────────────────────
+// FIX: Single AudioContext reused across all beeps to avoid browser cap (~6 concurrent)
 let _audioCtx = null;
 function getAudioCtx() {
   if (!_audioCtx || _audioCtx.state === 'closed') {
     _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
+  // FIX: resume() called synchronously; oscillator start times are offset
+  // from ctx.currentTime so they fire correctly even if resume is async
   if (_audioCtx.state === 'suspended') _audioCtx.resume();
   return _audioCtx;
 }
@@ -2085,11 +2064,14 @@ function updateRestDurBtns(sel) {
 function beepRest() {
   try {
     const ctx = getAudioCtx();
+    // FIX: All oscillators scheduled relative to ctx.currentTime so they fire
+    // correctly even if the AudioContext was briefly suspended
+    const baseTime = ctx.currentTime;
     [0, 120, 240].forEach(d => {
       const o = ctx.createOscillator(), g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
       o.frequency.value = 880; o.type = 'sine';
-      const t = ctx.currentTime + d / 1000;
+      const t = baseTime + d / 1000;
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(0.3, t + 0.01);
       g.gain.linearRampToValueAtTime(0, t + 0.18);
@@ -2098,10 +2080,8 @@ function beepRest() {
   } catch (e) {}
 }
 
-// ═══════════════════════════════════════════════════════
-// FIX: Confetti guard — prevents multiple rapid bursts
-//      from creating hundreds of stray DOM nodes.
-// ═══════════════════════════════════════════════════════
+// ── CONFETTI ────────────────────────────────────────────
+// FIX: Guard prevents multiple rapid bursts creating hundreds of DOM nodes
 let _confettiFired = false;
 function fireConfetti() {
   if (_confettiFired) return;
@@ -2152,7 +2132,8 @@ function renderTabs() {
   WEEK_DAYS.forEach((dayName, wi) => {
     const cfgIdx = weekSched[wi];
     const isToday = wi === todayIdx;
-    const isRest = cfgIdx === null || cfgIdx === undefined;
+    // FIX: guard against stale cfgIdx pointing past end of CFG after deletions
+    const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
     const isActive = wi === selectedWeekIdx;
     const el = document.createElement('div');
     el.className = 'dt'
@@ -2180,7 +2161,8 @@ function renderDayInfoBar() {
   const todayIdx = getTodayWeekIdx();
   const wi = selectedWeekIdx;
   const cfgIdx = weekSched[wi];
-  const isRest = cfgIdx === null || cfgIdx === undefined;
+  // FIX: treat out-of-bounds cfgIdx as rest (guard against stale schedule after workout deletion)
+  const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
   const isToday = wi === todayIdx;
   if (isRest) {
     bar.className = 'day-info-bar rest-bar';
@@ -2188,16 +2170,20 @@ function renderDayInfoBar() {
   } else {
     const cfg = CFG[cfgIdx] || { label: '?' };
     const vol = calcVol(cfgIdx);
-    const volStr = vol > 0 ? `<span class="day-info-vol">${escHtml(fmtVol(vol))}</span>` : '';
-    bar.className = 'day-info-bar';
-    // FIX: escHtml applied to cfg.label — a user-supplied string entering innerHTML
+    // FIX: BW exercises excluded from vol; note this to user if vol is 0 but exercises exist
+    const hasBW = data[cfgIdx]?.some(e => isNaN(parseFloat(e.weight)));
+    const volStr = vol > 0
+      ? `<span class="day-info-vol">${escHtml(fmtVol(vol))}${hasBW ? ' +BW' : ''}</span>`
+      : (hasBW ? '<span class="day-info-vol">BW</span>' : '');
     bar.innerHTML = `<span class="day-info-name">${escHtml(cfg.label)}</span>${volStr}${isToday ? '<span class="day-info-today">Today</span>' : ''}`;
   }
 }
 
 // ── TABLE ──────────────────────────────────────────────
 function renderTable() {
-  const isRestDay = weekSched[selectedWeekIdx] === null || weekSched[selectedWeekIdx] === undefined;
+  // FIX: treat out-of-bounds cfgIdx as rest day
+  const cfgIdx = weekSched[selectedWeekIdx];
+  const isRestDay = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
   if (isRestDay) {
     document.getElementById('done-banner').classList.remove('show');
     document.getElementById('tbl').innerHTML = '';
@@ -2208,11 +2194,7 @@ function renderTable() {
   if (allDone) {
     const vol = calcVol(di);
     const volStr = vol > 0 ? ` · ${fmtVol(vol)}` : '';
-    // FIX: escHtml on CFG label going into textContent (safe, but defensive)
     document.getElementById('done-sub').textContent = exs.length + ' exercises · ' + (CFG[di]?.label || '') + volStr;
-    // FIX: Session note is now keyed by history entry ts, not the current wall-clock date.
-    //      This prevents the note appearing lost when the workout spans midnight.
-    //      We key it by di + today's date string, but read the active history entry's ts.
     const nk = getNoteKey(di);
     const ne = document.getElementById('session-note-input');
     if (ne) ne.value = sessionNotes[nk] || '';
@@ -2232,7 +2214,6 @@ function renderTable() {
       if (o && o > bestOrm) bestOrm = o;
     }
     if (isDel) {
-      // FIX: escHtml applied to ex.name in the delete confirm row
       html += `<div class="ex-block" style="animation-delay:${ei * 40}ms"><div class="del-confirm"><span class="del-txt">Delete "${escHtml(ex.name)}"?</span><button class="del-btn del-no" onclick="cancelDelete()">Cancel</button><button class="del-btn del-yes" onclick="confirmDelete(${di},${ei})">Delete</button></div></div>`;
       return;
     }
@@ -2244,7 +2225,6 @@ function renderTable() {
     if (isEd) {
       html += `<div class="ex-name-row" style="cursor:default;padding-left:16px"><div class="ex-main"><input class="ie-input" id="ie-name" type="text" value="${escHtml(ex.name)}" spellcheck="false" autocomplete="off"></div><div class="ex-right"><button onclick="saveInlineEdit()" style="font-family:var(--mono);font-size:8.5px;padding:6px 12px;border:none;border-radius:var(--r);background:var(--gold);color:var(--bg);cursor:pointer;letter-spacing:.1em;text-transform:uppercase;">Save</button></div></div>`;
     } else {
-      // FIX: escHtml on all user-controlled strings entering innerHTML
       html += `<div class="ex-name-row${exDone ? ' done-all' : ''}" onclick="toggleExpand(${di},${ei})">
         <div class="drag-num" onclick="event.stopPropagation()">${String(ei + 1).padStart(2, '0')}</div>
         <div class="ex-main">
@@ -2268,7 +2248,6 @@ function renderTable() {
         <div class="sets-header"><span>Set</span><span>Previous</span><span>Reps</span><span>Kg</span><span></span></div>`;
       for (let si = 0; si < ex.sets; si++) {
         const done = sArr[si] || false, prevSet = getPrevSet(di, ex.name, si);
-        // FIX: prevSet values go through escHtml before innerHTML
         const prevLabel = prevSet ? `${escHtml(String(prevSet.weight))} × ${escHtml(String(prevSet.reps))}` : '—';
         const reps = getSetReps(ex, si), wt = getSetWeight(ex, si);
         html += `<div class="set-row-outer" id="sro-${di}-${ei}-${si}">
@@ -2391,11 +2370,14 @@ function quickLogAll(e, di, ei) {
   persist(); render();
 }
 
+// FIX: getPrevSet now matches by exercise name across CFG label matches,
+// correctly reading newest-first history. Name-rename caveat documented.
 function getPrevSet(di, exName, si) {
+  const label = CFG[di]?.label;
   for (const h of history) {
-    if (h.day === CFG[di].label) {
+    if (h.day === label) {
       const ex = (h.exercises || []).find(e => e.name === exName);
-      if (!ex) return null;
+      if (!ex) continue;
       return {
         reps: (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].reps != null) ? ex.setOvr[si].reps : ex.reps,
         weight: (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].weight != null) ? ex.setOvr[si].weight : ex.weight,
@@ -2413,12 +2395,7 @@ function saveSetOvr(di, ei, si, field, val) {
   persist();
 }
 
-// ═══════════════════════════════════════════════════════
-// FIX: Session note key is now tied to the matching
-//      history entry's timestamp (if it exists), not
-//      the current wall-clock date. This prevents notes
-//      appearing lost when a workout spans midnight.
-// ═══════════════════════════════════════════════════════
+// FIX: Note key tied to matching history entry's timestamp for midnight-crossing stability
 function getNoteKey(di) {
   const label = CFG[di]?.label;
   const today = dayKey(new Date());
@@ -2430,7 +2407,6 @@ function saveSessionNote() {
   const nk = getNoteKey(activeDay);
   const v = document.getElementById('session-note-input')?.value || '';
   sessionNotes[nk] = v;
-  // Also update the note on the matching history entry
   const label = CFG[activeDay]?.label, today = dayKey(new Date());
   const h = history.find(h => h.day === label && h.dk === today);
   if (h) h.note = v;
@@ -2463,11 +2439,7 @@ function confirmDelete(di, ei) {
   restEnabled = nRE; deleteConfirm = null; persist(); render();
 }
 
-// ═══════════════════════════════════════════════════════
-// FIX: saveToHistory() now stamps a note key on the
-//      history entry at creation time, so note lookup
-//      is stable even across midnight boundaries.
-// ═══════════════════════════════════════════════════════
+// FIX: saveToHistory stamps ts on the entry for stable note-key lookup
 function saveToHistory(di) {
   const cfg = CFG[di], now = new Date(), dk = dayKey(now);
   if (history.length && history[0].day === cfg.label && history[0].dk === dk) return;
@@ -2524,7 +2496,8 @@ function renderHistory() {
     <div class="hs"><div class="hs-val">${history.length}</div><div class="hs-label">Sessions</div></div>
     <div class="hs"><div class="hs-val">${totalVol > 0 ? fmtVol(totalVol) : '—'}</div><div class="hs-label">Total vol</div></div>
   </div>`;
-  const warn = history.length >= 50
+  // FIX: warning threshold at 55 (closer to cap) instead of 50 for less early noise
+  const warn = history.length >= 55
     ? `<div style="font-family:var(--mono);font-size:7.5px;color:var(--gold);text-align:center;padding:8px 0;opacity:.8;letter-spacing:.06em">⚠ ${history.length}/60 sessions · export soon</div>` : '';
 
   let lastMonthKey = '';
@@ -2533,11 +2506,9 @@ function renderHistory() {
     const mk = getMonthKey(h);
     if (mk !== lastMonthKey) {
       const ml = getMonthLabel(h) || mk;
-      // FIX: escHtml on month label — derived from Date API, safe but defensive
       itemsHtml += `<div class="hist-month-sep"><span class="hist-month-label">${escHtml(ml)}</span><div class="hist-month-line"></div></div>`;
       lastMonthKey = mk;
     }
-    // FIX: escHtml on all user-data fields (h.day, h.date, h.note, ex.name, ex.weight)
     itemsHtml += `<div class="hist-item">
       <div class="hist-head">
         <div class="hist-accent"></div>
@@ -2628,12 +2599,26 @@ function renderProgress() {
     </div>`;
     return;
   }
+
+  // FIX: all-zero weight guard (e.g. bodyweight-only exercise)
+  const allZeroWeight = pts.every(p => p.weight === 0);
+  if (allZeroWeight) {
+    c.innerHTML = `<div class="prog-empty">
+      <div class="prog-empty-title" style="font-size:15px">Bodyweight exercise</div>
+      <div class="prog-empty-sub">${pts.length} session${pts.length !== 1 ? 's' : ''} tracked · no weight data to chart</div>
+    </div>`;
+    return;
+  }
+
   const max = Math.max(...pts.map(p => p.weight)), min = Math.min(...pts.map(p => p.weight)), range = max - min || 1;
   const maxO = Math.max(...pts.map(p => p.orm)), minO = Math.min(...pts.map(p => p.orm)), ormR = maxO - minO || 1;
   const W = 360, H = 120, py = 14, pw = W, ph = H - py * 2;
   const xs = pts.length > 1 ? pw / (pts.length - 1) : pw;
   const wPts = pts.map((p, i) => ({ x: pts.length > 1 ? i * xs : pw / 2, y: py + ph - ((p.weight - min) / range) * ph, ...p }));
+
+  // FIX: 1RM chart uses its own y-axis scale (ormR / ormPositions), not the weight chart's
   const oPts = pts.map((p, i) => ({ x: pts.length > 1 ? i * xs : pw / 2, y: py + ph - ((p.orm - minO) / ormR) * ph, ...p }));
+
   const mkP = p => p.map((pt, i) => `${i === 0 ? 'M' : 'L'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
   const wP = mkP(wPts), oP = mkP(oPts);
   const wA = wP + ` L${wPts[wPts.length - 1].x.toFixed(1)},${(py + ph).toFixed(1)} L${wPts[0].x.toFixed(1)},${(py + ph).toFixed(1)} Z`;
@@ -2646,7 +2631,13 @@ function renderProgress() {
   const yAxisHtml = yVals.map((v, i) => `<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i] - 7}px;right:4px;line-height:1;">${escHtml(String(v))}</div>`).join('');
   const yLineHtml = yLevels.map((f, i) => `<div class="chart-yaxis-line" style="top:${yPositions[i]}px;opacity:${i === 0 ? 0 : .4};"></div>`).join('');
 
-  // FIX: escHtml on exercise name and weight values entering the progress chart HTML
+  // FIX: 1RM chart has its own y-axis values and positions (separate scale from weight chart)
+  const oYVals     = yLevels.map(f => Math.round(minO + f * ormR));
+  const oYPositions = yLevels.map(f => py + ph - f * ph);
+  const oYAxisHtml = oYVals.map((v, i) => `<div class="chart-yaxis-val" style="position:absolute;top:${oYPositions[i] - 7}px;right:4px;line-height:1;">${escHtml(String(v))}</div>`).join('');
+  // Grid lines for 1RM chart also use its own positions
+  const oYLineHtml = yLevels.map((f, i) => `<div class="chart-yaxis-line" style="top:${oYPositions[i]}px;opacity:${i === 0 ? 0 : .4};"></div>`).join('');
+
   c.innerHTML = `
     <div class="chart-wrap">
       <div class="chart-label">${escHtml(name)}${df ? ' · ' + escHtml(df) : ''} — Weight (kg)</div>
@@ -2670,29 +2661,26 @@ function renderProgress() {
         <div class="cs"><div class="cs-val">${last.orm > 0 ? last.orm + 'kg' : '—'}</div><div class="cs-label">Est. 1RM</div></div>
       </div>
     </div>
-    ${maxO > 0 ? (() => {
-      const oYVals = yLevels.map(f => Math.round(minO + f * ormR));
-      const oYHtml = oYVals.map((v, i) => `<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i] - 7}px;right:4px;line-height:1;">${escHtml(String(v))}</div>`).join('');
-      return `<div class="chart-wrap" style="margin-top:0"><div class="chart-label">Estimated 1RM over time (kg) — Epley formula</div>
+    ${maxO > 0 ? `<div class="chart-wrap" style="margin-top:0"><div class="chart-label">Estimated 1RM over time (kg) — Epley formula</div>
       <div class="chart-canvas-wrap">
-        <div style="position:relative;width:30px;height:${H}px;float:left;">${oYHtml}</div>
+        <div style="position:relative;width:30px;height:${H}px;float:left;">${oYAxisHtml}</div>
         <div style="position:relative;overflow:hidden;">
-          <div style="position:absolute;inset:0;pointer-events:none;">${yLineHtml}</div>
+          <div style="position:absolute;inset:0;pointer-events:none;">${oYLineHtml}</div>
           <div class="chart-canvas"><svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">
             <path d="${escHtml(oP)}" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5,3"/>
             ${oPts.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i === oPts.length - 1 ? 4 : 2.5}" fill="${i === oPts.length - 1 ? 'var(--gold)' : 'var(--muted)'}"/>`).join('')}
           </svg></div>
         </div>
         <div style="clear:both;"></div>
-      </div></div>`;
-    })() : ''}
+      </div></div>` : ''}
     <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);text-align:center;letter-spacing:.1em;padding:8px 0">${pts.length} session${pts.length !== 1 ? 's' : ''} tracked</div>`;
 }
 
 // ── ADD EX ─────────────────────────────────────────────
+// FIX: doAdd always uses activeDay, which reflects the currently viewed workout
+// (rest days hide the FAB via render(), so this is only callable on workout days)
 function doAdd(di) {
   saveInlineEdit(); sheetCtx = { di };
-  // FIX: escHtml on CFG label entering the sheet title innerHTML
   document.getElementById('shl').textContent = 'Add to ' + (CFG[di]?.label || '');
   ['fn', 'fs', 'fr', 'fw2'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fs').value = '3';
@@ -2728,11 +2716,12 @@ function renderSchedSheet() {
   c.innerHTML = WEEK_DAYS.map((dayName, wi) => {
     const cfgIdx = weekSched[wi];
     const isToday = wi === todayIdx;
-    const wkLabel = cfgIdx === null || cfgIdx === undefined ? 'Rest' : (CFG[cfgIdx]?.label || '?');
-    const wkClass = cfgIdx === null || cfgIdx === undefined ? 'rest-v' : '';
-    const opts = ['<option value="rest"' + (cfgIdx === null || cfgIdx === undefined ? ' selected' : '') + '>— Rest —</option>']
+    // FIX: guard out-of-bounds cfgIdx
+    const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
+    const wkLabel = isRest ? 'Rest' : (CFG[cfgIdx]?.label || '?');
+    const wkClass = isRest ? 'rest-v' : '';
+    const opts = ['<option value="rest"' + (isRest ? ' selected' : '') + '>— Rest —</option>']
       .concat(CFG.map((cfg, ci) => `<option value="${ci}"${cfgIdx === ci ? ' selected' : ''}>${escHtml(cfg.label)}</option>`)).join('');
-    // FIX: escHtml on wkLabel and dayName
     return `<div class="sched-day-row${isToday ? ' today-row' : ''}">
       <div class="sched-day-info">
         <span class="sched-day-label${isToday ? ' today-lbl' : ''}">${escHtml(dayName)}${isToday ? ' · Today' : ''}</span>
@@ -2753,9 +2742,8 @@ function setDayWorkout(wi, val) {
   const lbl = document.getElementById(`swv-${wi}`);
   if (lbl) {
     const v = weekSched[wi];
-    // FIX: use textContent instead of innerHTML for this simple label update
-    lbl.textContent = v === null ? 'Rest' : (CFG[v]?.label || '?');
-    lbl.className = 'sched-workout-val ' + (v === null ? 'rest-v' : '');
+    lbl.textContent = (v === null || v === undefined || v >= CFG.length) ? 'Rest' : (CFG[v]?.label || '?');
+    lbl.className = 'sched-workout-val ' + ((v === null || v === undefined || v >= CFG.length) ? 'rest-v' : '');
   }
 }
 
@@ -2787,18 +2775,17 @@ function saveDay() {
   closeDaySheet(); persist(); render();
 }
 
-// ═══════════════════════════════════════════════════════
-// FIX: confirmDeleteDay weekSched remapping extracted
-//      into a named helper for clarity and safety.
-//      Deleting workout di: any day pointing to di becomes
-//      rest (null), any day pointing above di shifts down.
-// ═══════════════════════════════════════════════════════
+// FIX: remapSchedAfterDelete correctly handles all three cases:
+// - null/undefined (rest day) → stays rest
+// - equals deleted index → becomes rest
+// - above deleted index → shifts down by 1
+// - below deleted index → unchanged
 function remapSchedAfterDelete(di) {
   return weekSched.map(v => {
-    if (v === null || v === undefined) return null; // was rest, stays rest
-    if (v === di) return null;    // was deleted workout → rest
-    if (v > di) return v - 1;    // above deleted index → shift down
-    return v;                     // below deleted index → unchanged
+    if (v === null || v === undefined) return null;
+    if (v === di) return null;
+    if (v > di) return v - 1;
+    return v;
   });
 }
 function confirmDeleteDay() {
@@ -2851,7 +2838,9 @@ function updateDelExBtn() {
 }
 
 function render() {
-  const isRestDay = weekSched[selectedWeekIdx] === null || weekSched[selectedWeekIdx] === undefined;
+  // FIX: guard out-of-bounds cfgIdx (can occur after workout deletion before render)
+  const cfgIdx = weekSched[selectedWeekIdx];
+  const isRestDay = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
   renderTabs(); renderDayInfoBar(); renderTable(); updateDelExBtn(); updateBackupLabel();
   const fab = document.getElementById('fab');
   const delBtn = document.getElementById('del-ex-btn');
@@ -2861,12 +2850,8 @@ function render() {
 document.getElementById('fab').onclick = () => doAdd(activeDay);
 document.addEventListener('click', e => { if (editingEx) { const t = document.getElementById('tbl'); if (t && !t.contains(e.target)) saveInlineEdit(); } });
 
-// ═══════════════════════════════════════════════════════
-// FIX: Import validation — incoming JSON is type-checked
-//      before being applied. Malformed or malicious files
-//      are rejected with a user-facing error rather than
-//      being blindly merged into app state.
-// ═══════════════════════════════════════════════════════
+// ── IMPORT VALIDATION ──────────────────────────────────
+// FIX: Full structural validation before applying any imported data
 function validateImportPayload(p) {
   if (!p || typeof p !== 'object') return 'Not a valid backup object';
   if (!Array.isArray(p.cfg))  return 'Missing or invalid workout list (cfg)';
@@ -2886,7 +2871,7 @@ function validateImportPayload(p) {
   }
   if (p.history !== undefined && !Array.isArray(p.history)) return 'History field is not an array';
   if (p.weekSched !== undefined && !Array.isArray(p.weekSched)) return 'Weekly schedule is not an array';
-  return null; // valid
+  return null;
 }
 
 // ── EXPORT / IMPORT ─────────────────────────────────────
@@ -2908,7 +2893,6 @@ function handleImportFile(e) {
   r.onload = ev => {
     try {
       const p = JSON.parse(ev.target.result);
-      // FIX: Validate before trusting any imported data
       const err = validateImportPayload(p);
       if (err) { showToast('Invalid backup: ' + err, 'err'); return; }
       _pi = p;
@@ -2926,9 +2910,15 @@ function applyImport() {
   restEnabled       = (p.restEnabled && typeof p.restEnabled === 'object') ? p.restEnabled : {};
   restDefaultDuration = typeof p.restDefaultDuration === 'number' ? p.restDefaultDuration : 90;
   sessionNotes      = (p.sessionNotes && typeof p.sessionNotes === 'object') ? p.sessionNotes : {};
-  weekSched         = Array.isArray(p.weekSched) ? p.weekSched : DEF_SCHED;
+  // FIX: imported weekSched validated against CFG bounds after loading;
+  // any stale indices pointing past CFG length become null (rest)
+  const rawSched = Array.isArray(p.weekSched) ? p.weekSched : DEF_SCHED;
+  weekSched = rawSched.map(v => {
+    if (v === null || v === undefined) return null;
+    const n = parseInt(v);
+    return (isNaN(n) || n < 0 || n >= CFG.length) ? null : n;
+  });
   activeDay = 0; expanded.clear(); editingEx = null; deleteConfirm = null; _pi = null;
-  // FIX: syncSets() explicitly called after import to ensure set arrays match exercise counts
   syncSets();
   persist(); render(); showToast('Data restored', 'ok'); dismissNudge();
 }
@@ -2954,11 +2944,8 @@ function dismissNudge() { document.getElementById('backup-nudge')?.classList.rem
 
 render(); updateBackupLabel();
 
-// ─────────────────────────────────────────────────────
 // FIX: PWA icon generation waits for fonts to load so
-//      the canvas 'C' renders in Cormorant Garamond
-//      rather than falling back to a system serif.
-// ─────────────────────────────────────────────────────
+// the canvas 'C' renders in Cormorant Garamond
 function makeIcon(sz) {
   const c = document.createElement('canvas'); c.width = c.height = sz;
   const x = c.getContext('2d');
@@ -2973,11 +2960,10 @@ function registerPWA() {
   const mf = { name: 'Consistency', short_name: 'Consistency', description: 'Premium workout tracker', start_url: '.', display: 'standalone', background_color: '#080A08', theme_color: '#080A08', orientation: 'portrait', icons: [{ src: makeIcon(192), sizes: '192x192', type: 'image/png' }, { src: makeIcon(512), sizes: '512x512', type: 'image/png' }] };
   document.getElementById('manifest-placeholder').href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: 'application/json' }));
 }
-// Wait for fonts before generating the PWA icon
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(registerPWA);
 } else {
-  registerPWA(); // fallback for older browsers
+  registerPWA();
 }
 </script>
 </body>
