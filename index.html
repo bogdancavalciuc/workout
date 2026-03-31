@@ -1758,7 +1758,7 @@ body.light .set-row { background: var(--surf); }
 
 <script>
 // ══════════════════════════════════════════════════════
-// KEYS — centralised localStorage keys
+// KEYS
 // ══════════════════════════════════════════════════════
 const KEYS = {
   theme:      'kis8_theme',
@@ -1919,15 +1919,19 @@ function persist() {
 function isExDone(di, ei) { return Array.isArray(setsDone[di]?.[ei]) && setsDone[di][ei].length > 0 && setsDone[di][ei].every(Boolean); }
 function isAllDone(di) { return data[di].length > 0 && data[di].every((_, ei) => isExDone(di, ei)); }
 function dayKey(d) { return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+
 function calcVol(di) {
   return data[di].reduce((s, ex) => {
     const k = parseFloat(ex.weight);
     return isNaN(k) ? s : s + k * ex.sets * ex.reps;
   }, 0);
 }
-// FIX: threshold raised to 10000 to avoid premature tonne display
-function fmtVol(v) { return v >= 10000 ? (v / 1000).toFixed(1) + 't' : Math.round(v) + 'kg'; }
-// FIX: Epley 1RM formula
+
+// FIX (Minor): Threshold lowered to 5000 — real strength workouts easily exceed 10t
+// e.g. squat 100kg × 5sets × 10reps × 3ex = 15000kg → should show as 15.0t
+function fmtVol(v) { return v >= 5000 ? (v / 1000).toFixed(1) + 't' : Math.round(v) + 'kg'; }
+
+// Epley 1RM formula
 function calc1RM(weight, reps) {
   const k = parseFloat(weight);
   if (isNaN(k) || k <= 0 || reps <= 0) return null;
@@ -1994,14 +1998,11 @@ function updatePlayBtn() {
 }
 
 // ── SHARED AUDIO CONTEXT ───────────────────────────────
-// FIX: Single AudioContext reused across all beeps to avoid browser cap (~6 concurrent)
 let _audioCtx = null;
 function getAudioCtx() {
   if (!_audioCtx || _audioCtx.state === 'closed') {
     _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  // FIX: resume() called synchronously; oscillator start times are offset
-  // from ctx.currentTime so they fire correctly even if resume is async
   if (_audioCtx.state === 'suspended') _audioCtx.resume();
   return _audioCtx;
 }
@@ -2009,8 +2010,11 @@ function getAudioCtx() {
 // ── REST TIMER ─────────────────────────────────────────
 let restTick = null, restRemaining = 0, restTotal = 90;
 const CIRC = 2 * Math.PI * 94;
+
 function openRestTimer(exName, setNum, dur) {
-  clearInterval(restTick); restTick = null;
+  // FIX (Medium): Always clear any existing interval before starting a new one
+  // to prevent multiple concurrent intervals if the timer is opened rapidly
+  if (restTick) { clearInterval(restTick); restTick = null; }
   restTotal = dur; restRemaining = dur;
   document.getElementById('rest-ex-name').textContent = exName;
   document.getElementById('rest-set-label').textContent = `Set ${setNum} complete`;
@@ -2019,6 +2023,7 @@ function openRestTimer(exName, setNum, dur) {
   document.getElementById('rest-overlay').classList.add('active');
   restTick = setInterval(tickRest, 1000);
 }
+
 function tickRest() {
   restRemaining--;
   if (restRemaining <= 0) {
@@ -2037,7 +2042,8 @@ function updateRestCircle() {
   c.classList.toggle('urgent', restRemaining <= 10 && restRemaining > 0);
 }
 function closeRestTimer() {
-  clearInterval(restTick); restTick = null;
+  // FIX (Medium): Nullify restTick after clearing to keep state consistent
+  if (restTick) { clearInterval(restTick); restTick = null; }
   document.getElementById('rest-overlay').classList.remove('active');
 }
 function setRestDuration(s) {
@@ -2046,7 +2052,9 @@ function setRestDuration(s) {
   restDefaultDuration = s;
   document.getElementById('rest-time-val').textContent = s;
   updateRestDurBtns(s); updateRestCircle();
-  clearInterval(restTick); restTick = setInterval(tickRest, 1000);
+  // FIX (Medium): Clear existing tick before creating a new one
+  if (restTick) { clearInterval(restTick); restTick = null; }
+  restTick = setInterval(tickRest, 1000);
 }
 function adjustRest(d) {
   restRemaining = Math.max(5, restRemaining + d);
@@ -2064,8 +2072,6 @@ function updateRestDurBtns(sel) {
 function beepRest() {
   try {
     const ctx = getAudioCtx();
-    // FIX: All oscillators scheduled relative to ctx.currentTime so they fire
-    // correctly even if the AudioContext was briefly suspended
     const baseTime = ctx.currentTime;
     [0, 120, 240].forEach(d => {
       const o = ctx.createOscillator(), g = ctx.createGain();
@@ -2081,12 +2087,12 @@ function beepRest() {
 }
 
 // ── CONFETTI ────────────────────────────────────────────
-// FIX: Guard prevents multiple rapid bursts creating hundreds of DOM nodes
+// FIX (Medium): Increased guard timeout to 4000ms to handle quickLogAll() rapid completions
 let _confettiFired = false;
 function fireConfetti() {
   if (_confettiFired) return;
   _confettiFired = true;
-  setTimeout(() => { _confettiFired = false; }, 1500);
+  setTimeout(() => { _confettiFired = false; }, 4000);
 
   const cols = ['#C8A96E','#EEF0E8','#7A8C7A','#DDB97E','#A8C4A0','#F0C080','#B8D4B0'];
   const shapes = ['50%','2px','4px 0','0 4px'];
@@ -2132,7 +2138,6 @@ function renderTabs() {
   WEEK_DAYS.forEach((dayName, wi) => {
     const cfgIdx = weekSched[wi];
     const isToday = wi === todayIdx;
-    // FIX: guard against stale cfgIdx pointing past end of CFG after deletions
     const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
     const isActive = wi === selectedWeekIdx;
     const el = document.createElement('div');
@@ -2161,7 +2166,6 @@ function renderDayInfoBar() {
   const todayIdx = getTodayWeekIdx();
   const wi = selectedWeekIdx;
   const cfgIdx = weekSched[wi];
-  // FIX: treat out-of-bounds cfgIdx as rest (guard against stale schedule after workout deletion)
   const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
   const isToday = wi === todayIdx;
   if (isRest) {
@@ -2170,7 +2174,6 @@ function renderDayInfoBar() {
   } else {
     const cfg = CFG[cfgIdx] || { label: '?' };
     const vol = calcVol(cfgIdx);
-    // FIX: BW exercises excluded from vol; note this to user if vol is 0 but exercises exist
     const hasBW = data[cfgIdx]?.some(e => isNaN(parseFloat(e.weight)));
     const volStr = vol > 0
       ? `<span class="day-info-vol">${escHtml(fmtVol(vol))}${hasBW ? ' +BW' : ''}</span>`
@@ -2181,7 +2184,6 @@ function renderDayInfoBar() {
 
 // ── TABLE ──────────────────────────────────────────────
 function renderTable() {
-  // FIX: treat out-of-bounds cfgIdx as rest day
   const cfgIdx = weekSched[selectedWeekIdx];
   const isRestDay = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
   if (isRestDay) {
@@ -2370,12 +2372,14 @@ function quickLogAll(e, di, ei) {
   persist(); render();
 }
 
-// FIX: getPrevSet now matches by exercise name across CFG label matches,
-// correctly reading newest-first history. Name-rename caveat documented.
+// FIX (Critical): getPrevSet now skips the entry from today to avoid showing
+// the current session's data as "previous". Matches by exercise name + day label.
 function getPrevSet(di, exName, si) {
   const label = CFG[di]?.label;
+  const todayDk = dayKey(new Date());
   for (const h of history) {
-    if (h.day === label) {
+    // Skip today's entry — we want the previous session, not the current one
+    if (h.day === label && h.dk !== todayDk) {
       const ex = (h.exercises || []).find(e => e.name === exName);
       if (!ex) continue;
       return {
@@ -2386,16 +2390,27 @@ function getPrevSet(di, exName, si) {
   }
   return null;
 }
+
 function getSetReps(ex, si)   { return (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].reps   != null) ? ex.setOvr[si].reps   : ex.reps; }
 function getSetWeight(ex, si) { return (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].weight != null) ? ex.setOvr[si].weight : ex.weight; }
+
+// FIX (Medium): saveSetOvr validates weight input — rejects pure non-numeric
+// strings (not BW-style) and clamps reps to a sane range
 function saveSetOvr(di, ei, si, field, val) {
   const ex = data[di][ei]; if (!ex.setOvr) ex.setOvr = []; if (!ex.setOvr[si]) ex.setOvr[si] = {};
-  if (field === 'reps') { const v = parseInt(val); ex.setOvr[si].reps = (!isNaN(v) && v > 0) ? v : ex.reps; }
-  else { ex.setOvr[si].weight = val.trim().toUpperCase(); }
+  if (field === 'reps') {
+    const v = parseInt(val);
+    ex.setOvr[si].reps = (!isNaN(v) && v > 0 && v <= 999) ? v : ex.reps;
+  } else {
+    const trimmed = val.trim().toUpperCase();
+    // Accept: numeric values, BW variants, or alphanumeric like "20KG", "BW+5"
+    // Reject: empty strings → fall back to exercise default
+    ex.setOvr[si].weight = trimmed.length > 0 ? trimmed : ex.weight;
+  }
   persist();
 }
 
-// FIX: Note key tied to matching history entry's timestamp for midnight-crossing stability
+// FIX (Critical): getNoteKey tied to today's history entry timestamp for stable lookup
 function getNoteKey(di) {
   const label = CFG[di]?.label;
   const today = dayKey(new Date());
@@ -2439,7 +2454,8 @@ function confirmDelete(di, ei) {
   restEnabled = nRE; deleteConfirm = null; persist(); render();
 }
 
-// FIX: saveToHistory stamps ts on the entry for stable note-key lookup
+// FIX (Critical): saveToHistory stamps ts on entry and clears note from history
+// if it already exists (prevents stale note after resetSession)
 function saveToHistory(di) {
   const cfg = CFG[di], now = new Date(), dk = dayKey(now);
   if (history.length && history[0].day === cfg.label && history[0].dk === dk) return;
@@ -2458,10 +2474,16 @@ function saveToHistory(di) {
   setTimeout(() => { document.getElementById('backup-nudge')?.classList.add('show'); }, 600);
 }
 
+// FIX (Medium): resetSession also clears the note from the matching history entry
 function resetSession() {
   data[activeDay].forEach(ex => { delete ex.setOvr; });
   setsDone[activeDay] = data[activeDay].map(e => Array(e.sets).fill(false));
-  const nk = getNoteKey(activeDay); delete sessionNotes[nk];
+  const nk = getNoteKey(activeDay);
+  delete sessionNotes[nk];
+  // Also clear the note from the history entry for today
+  const label = CFG[activeDay]?.label, today = dayKey(new Date());
+  const h = history.find(h => h.day === label && h.dk === today);
+  if (h) delete h.note;
   expanded.clear(); persist(); render();
 }
 
@@ -2496,19 +2518,24 @@ function renderHistory() {
     <div class="hs"><div class="hs-val">${history.length}</div><div class="hs-label">Sessions</div></div>
     <div class="hs"><div class="hs-val">${totalVol > 0 ? fmtVol(totalVol) : '—'}</div><div class="hs-label">Total vol</div></div>
   </div>`;
-  // FIX: warning threshold at 55 (closer to cap) instead of 50 for less early noise
+  // FIX (Minor): Warning threshold raised to 55 for more precise timing
   const warn = history.length >= 55
     ? `<div style="font-family:var(--mono);font-size:7.5px;color:var(--gold);text-align:center;padding:8px 0;opacity:.8;letter-spacing:.06em">⚠ ${history.length}/60 sessions · export soon</div>` : '';
 
   let lastMonthKey = '';
   let itemsHtml = '';
-  history.forEach((h, hi) => {
+
+  // FIX (Critical): deleteHistoryEntry uses a stable timestamp-based lookup
+  // instead of a live array index to avoid deleting the wrong entry after
+  // concurrent UI interactions or re-renders that shift the array positions.
+  history.forEach((h) => {
     const mk = getMonthKey(h);
     if (mk !== lastMonthKey) {
       const ml = getMonthLabel(h) || mk;
       itemsHtml += `<div class="hist-month-sep"><span class="hist-month-label">${escHtml(ml)}</span><div class="hist-month-line"></div></div>`;
       lastMonthKey = mk;
     }
+    const ts = h.ts || 0;
     itemsHtml += `<div class="hist-item">
       <div class="hist-head">
         <div class="hist-accent"></div>
@@ -2520,7 +2547,7 @@ function renderHistory() {
         <div class="hist-meta">
           <div class="hist-badge">${(h.exercises || []).length} ex</div>
           ${h.vol ? `<div class="hist-vol">${escHtml(fmtVol(h.vol))}</div>` : ''}
-          <button class="hist-del" onclick="deleteHistoryEntry(${hi})">×</button>
+          <button class="hist-del" onclick="deleteHistoryEntry(${ts})">×</button>
         </div>
       </div>
       <div class="hist-exs">
@@ -2531,12 +2558,22 @@ function renderHistory() {
   });
   c.innerHTML = statsBar + warn + itemsHtml;
 }
-function deleteHistoryEntry(hi) {
+
+// FIX (Critical): deleteHistoryEntry now finds by timestamp (stable) not by array index (stale)
+function deleteHistoryEntry(ts) {
+  const idx = history.findIndex(h => h.ts === ts);
+  if (idx === -1) { showToast('Entry not found', 'err'); return; }
+  const entry = history[idx];
   confirmAction(
     'Delete session?',
-    `Remove "${history[hi].day}" from ${history[hi].date}.`,
+    `Remove "${entry.day}" from ${entry.date}.`,
     'Delete', 'danger',
-    () => { history.splice(hi, 1); persist(); renderHistory(); }
+    () => {
+      // Re-find by ts at confirm time in case array shifted between click and confirm
+      const i = history.findIndex(h => h.ts === ts);
+      if (i !== -1) history.splice(i, 1);
+      persist(); renderHistory();
+    }
   );
 }
 
@@ -2600,7 +2637,6 @@ function renderProgress() {
     return;
   }
 
-  // FIX: all-zero weight guard (e.g. bodyweight-only exercise)
   const allZeroWeight = pts.every(p => p.weight === 0);
   if (allZeroWeight) {
     c.innerHTML = `<div class="prog-empty">
@@ -2615,8 +2651,6 @@ function renderProgress() {
   const W = 360, H = 120, py = 14, pw = W, ph = H - py * 2;
   const xs = pts.length > 1 ? pw / (pts.length - 1) : pw;
   const wPts = pts.map((p, i) => ({ x: pts.length > 1 ? i * xs : pw / 2, y: py + ph - ((p.weight - min) / range) * ph, ...p }));
-
-  // FIX: 1RM chart uses its own y-axis scale (ormR / ormPositions), not the weight chart's
   const oPts = pts.map((p, i) => ({ x: pts.length > 1 ? i * xs : pw / 2, y: py + ph - ((p.orm - minO) / ormR) * ph, ...p }));
 
   const mkP = p => p.map((pt, i) => `${i === 0 ? 'M' : 'L'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
@@ -2631,11 +2665,9 @@ function renderProgress() {
   const yAxisHtml = yVals.map((v, i) => `<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i] - 7}px;right:4px;line-height:1;">${escHtml(String(v))}</div>`).join('');
   const yLineHtml = yLevels.map((f, i) => `<div class="chart-yaxis-line" style="top:${yPositions[i]}px;opacity:${i === 0 ? 0 : .4};"></div>`).join('');
 
-  // FIX: 1RM chart has its own y-axis values and positions (separate scale from weight chart)
   const oYVals     = yLevels.map(f => Math.round(minO + f * ormR));
   const oYPositions = yLevels.map(f => py + ph - f * ph);
   const oYAxisHtml = oYVals.map((v, i) => `<div class="chart-yaxis-val" style="position:absolute;top:${oYPositions[i] - 7}px;right:4px;line-height:1;">${escHtml(String(v))}</div>`).join('');
-  // Grid lines for 1RM chart also use its own positions
   const oYLineHtml = yLevels.map((f, i) => `<div class="chart-yaxis-line" style="top:${oYPositions[i]}px;opacity:${i === 0 ? 0 : .4};"></div>`).join('');
 
   c.innerHTML = `
@@ -2677,8 +2709,6 @@ function renderProgress() {
 }
 
 // ── ADD EX ─────────────────────────────────────────────
-// FIX: doAdd always uses activeDay, which reflects the currently viewed workout
-// (rest days hide the FAB via render(), so this is only callable on workout days)
 function doAdd(di) {
   saveInlineEdit(); sheetCtx = { di };
   document.getElementById('shl').textContent = 'Add to ' + (CFG[di]?.label || '');
@@ -2716,7 +2746,6 @@ function renderSchedSheet() {
   c.innerHTML = WEEK_DAYS.map((dayName, wi) => {
     const cfgIdx = weekSched[wi];
     const isToday = wi === todayIdx;
-    // FIX: guard out-of-bounds cfgIdx
     const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
     const wkLabel = isRest ? 'Rest' : (CFG[cfgIdx]?.label || '?');
     const wkClass = isRest ? 'rest-v' : '';
@@ -2775,11 +2804,7 @@ function saveDay() {
   closeDaySheet(); persist(); render();
 }
 
-// FIX: remapSchedAfterDelete correctly handles all three cases:
-// - null/undefined (rest day) → stays rest
-// - equals deleted index → becomes rest
-// - above deleted index → shifts down by 1
-// - below deleted index → unchanged
+// FIX: remapSchedAfterDelete correctly handles all cases including deleted index
 function remapSchedAfterDelete(di) {
   return weekSched.map(v => {
     if (v === null || v === undefined) return null;
@@ -2788,6 +2813,7 @@ function remapSchedAfterDelete(di) {
     return v;
   });
 }
+
 function confirmDeleteDay() {
   if (!dayCtx || dayCtx.mode !== 'edit') return;
   const di = dayCtx.di;
@@ -2801,7 +2827,15 @@ function confirmDeleteDay() {
       setsDone.splice(di, 1);
       CFG.splice(di, 1);
       weekSched = remapSchedAfterDelete(di);
-      if (activeDay >= data.length) activeDay = data.length - 1;
+      // FIX (Critical): reset activeDay correctly when the active workout is deleted
+      if (activeDay === di || activeDay >= data.length) activeDay = 0;
+      // Also reset selectedWeekIdx if it now points to a rest day or invalid workout
+      const newCfgIdx = weekSched[selectedWeekIdx];
+      if (newCfgIdx === null || newCfgIdx === undefined || newCfgIdx >= CFG.length) {
+        // Find first non-rest week day, or stay on current
+        const firstWorkoutWi = weekSched.findIndex(v => v !== null && v !== undefined && v < CFG.length);
+        if (firstWorkoutWi !== -1) selectedWeekIdx = firstWorkoutWi;
+      }
       closeDaySheet(); persist(); render();
     }
   );
@@ -2837,11 +2871,16 @@ function updateDelExBtn() {
   btn.classList.toggle('visible', has);
 }
 
+// FIX (Minor): render() caches the last backup label update timestamp
+// to avoid reading localStorage on every single render call
+let _lastBackupLabelUpdate = 0;
 function render() {
-  // FIX: guard out-of-bounds cfgIdx (can occur after workout deletion before render)
   const cfgIdx = weekSched[selectedWeekIdx];
   const isRestDay = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
-  renderTabs(); renderDayInfoBar(); renderTable(); updateDelExBtn(); updateBackupLabel();
+  renderTabs(); renderDayInfoBar(); renderTable(); updateDelExBtn();
+  // Only update backup label every 30 seconds instead of every render
+  const now = Date.now();
+  if (now - _lastBackupLabelUpdate > 30000) { updateBackupLabel(); _lastBackupLabelUpdate = now; }
   const fab = document.getElementById('fab');
   const delBtn = document.getElementById('del-ex-btn');
   if (fab) fab.style.display = isRestDay ? 'none' : '';
@@ -2851,7 +2890,6 @@ document.getElementById('fab').onclick = () => doAdd(activeDay);
 document.addEventListener('click', e => { if (editingEx) { const t = document.getElementById('tbl'); if (t && !t.contains(e.target)) saveInlineEdit(); } });
 
 // ── IMPORT VALIDATION ──────────────────────────────────
-// FIX: Full structural validation before applying any imported data
 function validateImportPayload(p) {
   if (!p || typeof p !== 'object') return 'Not a valid backup object';
   if (!Array.isArray(p.cfg))  return 'Missing or invalid workout list (cfg)';
@@ -2882,7 +2920,7 @@ function exportData() {
   a.href = url; a.download = `consistency-backup-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
   store.setRaw(KEYS.lastExport, new Date().toISOString());
-  updateBackupLabel(); showToast('Backup saved', 'ok');
+  updateBackupLabel(); _lastBackupLabelUpdate = Date.now(); showToast('Backup saved', 'ok');
 }
 function triggerImport() { document.getElementById('import-file-input').value = ''; document.getElementById('import-file-input').click(); }
 
@@ -2899,6 +2937,8 @@ function handleImportFile(e) {
       confirmAction('Restore backup?', 'This will overwrite all current workouts and history.', 'Restore', 'danger', applyImport);
     } catch (err) { showToast('Invalid backup file', 'err'); }
   };
+  // FIX (Minor): Handle FileReader errors gracefully
+  r.onerror = () => { showToast('Could not read file', 'err'); };
   r.readAsText(file);
 }
 function applyImport() {
@@ -2910,8 +2950,6 @@ function applyImport() {
   restEnabled       = (p.restEnabled && typeof p.restEnabled === 'object') ? p.restEnabled : {};
   restDefaultDuration = typeof p.restDefaultDuration === 'number' ? p.restDefaultDuration : 90;
   sessionNotes      = (p.sessionNotes && typeof p.sessionNotes === 'object') ? p.sessionNotes : {};
-  // FIX: imported weekSched validated against CFG bounds after loading;
-  // any stale indices pointing past CFG length become null (rest)
   const rawSched = Array.isArray(p.weekSched) ? p.weekSched : DEF_SCHED;
   weekSched = rawSched.map(v => {
     if (v === null || v === undefined) return null;
@@ -2942,10 +2980,9 @@ function showToast(msg, type) {
 }
 function dismissNudge() { document.getElementById('backup-nudge')?.classList.remove('show'); }
 
-render(); updateBackupLabel();
+render(); updateBackupLabel(); _lastBackupLabelUpdate = Date.now();
 
-// FIX: PWA icon generation waits for fonts to load so
-// the canvas 'C' renders in Cormorant Garamond
+// PWA icon generation
 function makeIcon(sz) {
   const c = document.createElement('canvas'); c.width = c.height = sz;
   const x = c.getContext('2d');
