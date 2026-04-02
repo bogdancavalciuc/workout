@@ -326,7 +326,6 @@ body {
 .dt.today-tab.active .dt-dot { background: var(--gold); opacity: 1; }
 .dt.rest-tab .dt-dot { display: none; }
 
-/* FIX #16: Tab completat indicator */
 .dt-done-check {
   position: absolute;
   top: 3px; right: 3px;
@@ -1762,7 +1761,7 @@ body.light .set-row { background: var(--surf); }
     <div class="r3">
       <div class="field"><label>Sets</label><input id="fs" type="number" min="1" max="20" placeholder="3" inputmode="numeric"></div>
       <div class="field"><label>Reps</label><input id="fr" type="number" min="1" max="100" placeholder="12" inputmode="numeric"></div>
-      <div class="field"><label>Weight</label><div class="kg-wrap"><input id="fw2" type="number" inputmode="decimal" placeholder="0" style="font-family:var(--mono);font-size:14px;background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r);padding:14px 32px 14px 16px;color:var(--text);outline:none;width:100%;-webkit-appearance:none;"><span class="kg-suffix">kg</span></div></div>
+      <div class="field"><label>Weight (kg)</label><div class="kg-wrap"><input id="fw2" type="number" inputmode="decimal" placeholder="0" style="font-family:var(--mono);font-size:14px;background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r);padding:14px 32px 14px 16px;color:var(--text);outline:none;width:100%;-webkit-appearance:none;"><span class="kg-suffix">kg</span></div></div>
     </div>
     <button class="bsv" onclick="saveEx()">Save exercise</button>
   </div>
@@ -1894,7 +1893,7 @@ const DEF = [
     { id:2, name:'Pronated Cable Row',         sets:3, reps:12, weight:'36KG' },
     { id:3, name:'Biceps Curls',               sets:3, reps:12, weight:'12KG' },
     { id:4, name:'Rope Trap Shrug',            sets:3, reps:15, weight:'40KG' },
-    { id:5, name:'Hyperextensions',            sets:3, reps:15, weight:'BW'   },
+    { id:5, name:'Hyperextensions',            sets:3, reps:15, weight:'0KG'  },
   ],
   [
     { id:1, name:'Barbell Back Squat',         sets:3, reps:8,  weight:'70KG' },
@@ -1913,7 +1912,38 @@ let restEnabled   = store.get(KEYS.restEn) || {};
 let restDefaultDuration = parseInt(store.getRaw(KEYS.restDur) || '90');
 let sessionNotes  = store.get(KEYS.notes)  || {};
 
-// FIX #4: ensure weekSched always has exactly 7 elements
+// Migrate old BW entries to 0KG
+function migrateBW() {
+  data.forEach(day => {
+    day.forEach(ex => {
+      if (typeof ex.weight === 'string' && ex.weight.toUpperCase() === 'BW') {
+        ex.weight = '0KG';
+      }
+      if (Array.isArray(ex.setOvr)) {
+        ex.setOvr.forEach(ovr => {
+          if (ovr && typeof ovr.weight === 'string' && ovr.weight.toUpperCase() === 'BW') {
+            ovr.weight = '0KG';
+          }
+        });
+      }
+    });
+  });
+  history.forEach(h => {
+    (h.exercises || []).forEach(ex => {
+      if (typeof ex.weight === 'string' && ex.weight.toUpperCase() === 'BW') {
+        ex.weight = '0KG';
+      }
+      if (Array.isArray(ex.setOvr)) {
+        ex.setOvr.forEach(ovr => {
+          if (ovr && typeof ovr.weight === 'string' && ovr.weight.toUpperCase() === 'BW') {
+            ovr.weight = '0KG';
+          }
+        });
+      }
+    });
+  });
+}
+
 let rawSched = store.get(KEYS.wsched);
 let weekSched;
 if (!Array.isArray(rawSched) || rawSched.length !== 7) {
@@ -1932,12 +1962,14 @@ function getTodayWeekIdx() { return (new Date().getDay() + 6) % 7; }
 let activeDay = 0, sheetCtx = null, editingEx = null, deleteConfirm = null;
 let selectedWeekIdx = getTodayWeekIdx();
 
-// Set activeDay to today's workout if scheduled
 (function () {
   const ti = getTodayWeekIdx();
   const wi = weekSched[ti];
   if (wi !== null && wi !== undefined && wi < data.length) activeDay = wi;
 })();
+
+// Run migration after data is loaded
+migrateBW();
 
 let expanded = new Set();
 
@@ -1947,7 +1979,6 @@ function syncSets() {
     if (!Array.isArray(setsDone[di])) setsDone[di] = [];
     day.forEach((ex, ei) => {
       if (!Array.isArray(setsDone[di][ei]) || setsDone[di][ei].length !== ex.sets) {
-        // FIX #3: preserve existing done state, only fill new sets with false
         const prev = Array.isArray(setsDone[di][ei]) ? setsDone[di][ei] : [];
         setsDone[di][ei] = Array.from({ length: ex.sets }, (_, i) =>
           i < prev.length ? (prev[i] || false) : false
@@ -1980,10 +2011,8 @@ function calcVol(di) {
   }, 0);
 }
 
-// FIX #15: threshold 1000 instead of 5000 — 1kg boundary = 1t
 function fmtVol(v) { return v >= 1000 ? (v / 1000).toFixed(1) + 't' : Math.round(v) + 'kg'; }
 
-// Epley 1RM formula
 function calc1RM(weight, reps) {
   const k = parseFloat(weight);
   if (isNaN(k) || k <= 0 || reps <= 0) return null;
@@ -2079,7 +2108,6 @@ function openRestTimer(exName, setNum, dur) {
 
 function tickRest() {
   restRemaining--;
-  // FIX #13: beep warning at 10 seconds remaining
   if (restRemaining === 10) beepRestWarning();
   if (restRemaining <= 0) {
     restRemaining = 0; clearInterval(restTick); restTick = null;
@@ -2123,7 +2151,6 @@ function updateRestDurBtns(sel) {
   });
 }
 
-// FIX #13: soft warning beep at 10s remaining
 function beepRestWarning() {
   try {
     const ctx = getAudioCtx();
@@ -2208,7 +2235,6 @@ function renderTabs() {
     const isToday = wi === todayIdx;
     const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
     const isActive = wi === selectedWeekIdx;
-    // FIX #16: check if this workout day is done
     const isDone = !isRest && isAllDone(cfgIdx);
     const el = document.createElement('div');
     el.className = 'dt'
@@ -2248,10 +2274,9 @@ function renderDayInfoBar() {
   } else {
     const cfg = CFG[cfgIdx] || { label: '?' };
     const vol = calcVol(cfgIdx);
-    const hasBW = data[cfgIdx]?.some(e => isNaN(parseFloat(e.weight)));
     const volStr = vol > 0
-      ? `<span class="day-info-vol">${escHtml(fmtVol(vol))}${hasBW ? ' +BW' : ''}</span>`
-      : (hasBW ? '<span class="day-info-vol">BW</span>' : '');
+      ? `<span class="day-info-vol">${escHtml(fmtVol(vol))}</span>`
+      : '';
     bar.innerHTML = `<span class="day-info-name">${escHtml(cfg.label)}</span>${volStr}${isToday ? '<span class="day-info-today">Today</span>' : ''}`;
   }
 }
@@ -2344,7 +2369,6 @@ function renderTable() {
             </div>
           </div></div>`;
       }
-      // FIX #12: quickLogAll shows confirmation only when marking all as done (not undo)
       html += `<div class="set-controls">
         <button class="set-ctrl-btn set-ctrl-add" onclick="addSet(event,${di},${ei})">+ Add</button>
         <button class="set-ctrl-btn set-ctrl-rem" onclick="removeSet(event,${di},${ei})" ${ex.sets <= 1 ? 'disabled' : ''}>− Remove</button>
@@ -2438,11 +2462,9 @@ function toggleSet(e, di, ei, si) {
   });
 }
 
-// FIX #12: quickLogAll — confirm before marking all done, undo is instant
 function quickLogAll(e, di, ei, isCurrentlyAllDone) {
   e.stopPropagation();
   if (isCurrentlyAllDone) {
-    // Undo: no confirmation needed
     setsDone[di][ei] = setsDone[di][ei].map(() => false);
     haptic([5, 30, 5]);
     persist(); render();
@@ -2463,13 +2485,11 @@ function quickLogAll(e, di, ei, isCurrentlyAllDone) {
   }
 }
 
-// FIX #2: getPrevSet — skips today's entry, also handles missing dk (old entries without ts)
 function getPrevSet(di, exName, si) {
   const label = CFG[di]?.label;
   const todayDk = dayKey(new Date());
   for (const h of history) {
     if (h.day !== label) continue;
-    // Skip today: use both dk and ts-based check for robustness
     const hDk = h.dk || (h.ts ? dayKey(new Date(h.ts)) : null);
     if (hDk === todayDk) continue;
     const ex = (h.exercises || []).find(e => e.name === exName);
@@ -2485,20 +2505,24 @@ function getPrevSet(di, exName, si) {
 function getSetReps(ex, si)   { return (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].reps   != null) ? ex.setOvr[si].reps   : ex.reps; }
 function getSetWeight(ex, si) { return (ex.setOvr && ex.setOvr[si] && ex.setOvr[si].weight != null) ? ex.setOvr[si].weight : ex.weight; }
 
-// FIX #9: saveSetOvr — validates input properly
 function saveSetOvr(di, ei, si, field, val) {
   const ex = data[di][ei]; if (!ex.setOvr) ex.setOvr = []; if (!ex.setOvr[si]) ex.setOvr[si] = {};
   if (field === 'reps') {
     const v = parseInt(val);
     ex.setOvr[si].reps = (!isNaN(v) && v > 0 && v <= 999) ? v : ex.reps;
   } else {
-    const trimmed = String(val).trim().toUpperCase();
-    ex.setOvr[si].weight = trimmed.length > 0 ? trimmed : ex.weight;
+    // Always store weight as NUMBERkg format, normalise input
+    const trimmed = String(val).trim();
+    const num = parseFloat(trimmed);
+    if (!isNaN(num)) {
+      ex.setOvr[si].weight = num + 'KG';
+    } else {
+      ex.setOvr[si].weight = trimmed.length > 0 ? trimmed.toUpperCase() : ex.weight;
+    }
   }
   persist();
 }
 
-// FIX #14 + original fix: getNoteKey tied to today's history entry timestamp
 function getNoteKey(di) {
   const label = CFG[di]?.label;
   const today = dayKey(new Date());
@@ -2526,7 +2550,6 @@ function saveInlineEdit() {
   const { di, ei } = editingEx;
   const inp = document.getElementById('ie-name');
   const n = inp ? inp.value.trim() : '';
-  // FIX #11: limit name length
   if (n && n.length <= 60) data[di][ei].name = n;
   else if (n.length > 60) { showToast('Name too long (max 60 chars)', 'err'); return; }
   persist(); editingEx = null; render();
@@ -2544,7 +2567,6 @@ function confirmDelete(di, ei) {
   restEnabled = nRE; deleteConfirm = null; persist(); render();
 }
 
-// FIX #1: saveToHistory updates the existing entry's volume if same day (after reset+redo)
 function saveToHistory(di) {
   const cfg = CFG[di], now = new Date(), dk = dayKey(now);
   const existingIdx = history.findIndex(h => h.day === cfg.label && (h.dk === dk || (h.ts && dayKey(new Date(h.ts)) === dk)));
@@ -2557,20 +2579,17 @@ function saveToHistory(di) {
     vol,
     exercises: JSON.parse(JSON.stringify(data[di])),
   };
-  // Preserve existing note if there is one
   if (existingIdx >= 0) {
     if (history[existingIdx].note) entry.note = history[existingIdx].note;
     history[existingIdx] = entry;
   } else {
     history.unshift(entry);
-    // FIX #20: warn at 50 instead of 55, keep up to 100 sessions
     if (history.length > 100) history = history.slice(0, 100);
     setTimeout(() => { document.getElementById('backup-nudge')?.classList.add('show'); }, 600);
   }
   persist();
 }
 
-// FIX: resetSession — stop timer, clear note, clear today's history entry note
 function resetSession() {
   data[activeDay].forEach(ex => { delete ex.setOvr; });
   setsDone[activeDay] = data[activeDay].map(e => Array(e.sets).fill(false));
@@ -2615,7 +2634,6 @@ function renderHistory() {
     <div class="hs"><div class="hs-val">${history.length}</div><div class="hs-label">Sessions</div></div>
     <div class="hs"><div class="hs-val">${totalVol > 0 ? fmtVol(totalVol) : '—'}</div><div class="hs-label">Total vol</div></div>
   </div>`;
-  // FIX #20: warn at 90/100
   const warn = history.length >= 90
     ? `<div style="font-family:var(--mono);font-size:7.5px;color:var(--gold);text-align:center;padding:8px 0;opacity:.8;letter-spacing:.06em">⚠ ${history.length}/100 sessions · export soon</div>` : '';
 
@@ -2653,7 +2671,6 @@ function renderHistory() {
   c.innerHTML = statsBar + warn + itemsHtml;
 }
 
-// FIX: deleteHistoryEntry uses stable ts lookup
 function deleteHistoryEntry(ts) {
   const idx = history.findIndex(h => h.ts === ts);
   if (idx === -1) { showToast('Entry not found', 'err'); return; }
@@ -2695,7 +2712,6 @@ function initProgress() {
   onProgDayChange();
 }
 
-// FIX #14: renderProgress includes current session data if workout is done today
 function renderProgress() {
   const sel = document.getElementById('prog-ex-select'), name = sel.value;
   const df = document.getElementById('prog-day-select').value;
@@ -2713,7 +2729,6 @@ function renderProgress() {
   }
   const fh = df ? history.filter(h => h.day === df) : history;
 
-  // FIX #14: include live current session if not yet in history (workout in progress or just done)
   const today = dayKey(new Date());
   const liveEntries = [];
   data.forEach((day, di) => {
@@ -2735,7 +2750,6 @@ function renderProgress() {
       pts.push({ weight: isNaN(kg) ? 0 : kg, sets: ex.sets, reps: ex.reps, raw: ex.weight, orm: calc1RM(ex.weight, ex.reps) || 0 });
     }
   }
-  // Append live session at end if present
   liveEntries.forEach(({ ex }) => {
     const kg = parseFloat(ex.weight);
     pts.push({ weight: isNaN(kg) ? 0 : kg, sets: ex.sets, reps: ex.reps, raw: ex.weight, orm: calc1RM(ex.weight, ex.reps) || 0, isLive: true });
@@ -2748,15 +2762,6 @@ function renderProgress() {
       </svg>
       <div class="prog-empty-title">No history yet</div>
       <div class="prog-empty-sub">Complete sessions with this exercise<br>to see your progress chart.</div>
-    </div>`;
-    return;
-  }
-
-  const allZeroWeight = pts.every(p => p.weight === 0);
-  if (allZeroWeight) {
-    c.innerHTML = `<div class="prog-empty">
-      <div class="prog-empty-title" style="font-size:15px">Bodyweight exercise</div>
-      <div class="prog-empty-sub">${pts.length} session${pts.length !== 1 ? 's' : ''} tracked · no weight data to chart</div>
     </div>`;
     return;
   }
@@ -2777,7 +2782,6 @@ function renderProgress() {
   const yLevels = [0, 0.5, 1.0];
   const yVals = yLevels.map(f => Math.round(min + f * range));
   const yPositions = yLevels.map(f => py + ph - f * ph);
-  // FIX #9: all values passed to escHtml
   const yAxisHtml = yVals.map((v, i) => `<div class="chart-yaxis-val" style="position:absolute;top:${yPositions[i] - 7}px;right:4px;line-height:1;">${escHtml(String(v))}</div>`).join('');
   const yLineHtml = yLevels.map((f, i) => `<div class="chart-yaxis-line" style="top:${yPositions[i]}px;opacity:${i === 0 ? 0 : .4};"></div>`).join('');
 
@@ -2786,7 +2790,6 @@ function renderProgress() {
   const oYAxisHtml = oYVals.map((v, i) => `<div class="chart-yaxis-val" style="position:absolute;top:${oYPositions[i] - 7}px;right:4px;line-height:1;">${escHtml(String(v))}</div>`).join('');
   const oYLineHtml = yLevels.map((f, i) => `<div class="chart-yaxis-line" style="top:${oYPositions[i]}px;opacity:${i === 0 ? 0 : .4};"></div>`).join('');
 
-  // FIX #14: live session dot rendered in a different color (gold2)
   c.innerHTML = `
     <div class="chart-wrap">
       <div class="chart-label">${escHtml(name)}${df ? ' · ' + escHtml(df) : ''} — Weight (kg)</div>
@@ -2843,15 +2846,19 @@ function doAdd(di) {
 }
 function saveEx() {
   const name = document.getElementById('fn').value.trim();
-  // FIX #11: enforce max name length
   if (!name) { document.getElementById('fn').focus(); return; }
   if (name.length > 60) { showToast('Name too long (max 60 chars)', 'err'); return; }
   const sets = parseInt(document.getElementById('fs').value) || 3;
   const reps = parseInt(document.getElementById('fr').value) || 12;
   const rawW = document.getElementById('fw2').value.trim();
-  const weight = (rawW !== '' && rawW !== null)
-    ? (isNaN(parseFloat(rawW)) ? rawW.toUpperCase() : parseFloat(rawW) + 'KG')
-    : 'BW';
+  // Always default to 0KG instead of BW
+  let weight;
+  if (rawW !== '' && rawW !== null) {
+    const num = parseFloat(rawW);
+    weight = isNaN(num) ? rawW.toUpperCase() : num + 'KG';
+  } else {
+    weight = '0KG';
+  }
   const { di } = sheetCtx;
   const id = data[di].length ? Math.max(...data[di].map(e => e.id)) + 1 : 1;
   data[di].push({ id, name, sets, reps, weight });
@@ -2969,10 +2976,9 @@ function addSet(e, di, ei) {
   const ex = data[di][ei]; ex.sets++;
   const lo = (ex.setOvr && ex.setOvr[ex.sets - 2]) || {};
   if (!ex.setOvr) ex.setOvr = [];
-  // FIX #3: copy last set values, explicitly mark new set as not done
   ex.setOvr[ex.sets - 1] = { reps: lo.reps ?? ex.reps, weight: lo.weight ?? ex.weight };
   if (!Array.isArray(setsDone[di][ei])) setsDone[di][ei] = Array(ex.sets).fill(false);
-  else setsDone[di][ei] = [...setsDone[di][ei], false]; // append false, don't re-sync
+  else setsDone[di][ei] = [...setsDone[di][ei], false];
   persist(); renderTable(); updateDelExBtn();
 }
 function removeSet(e, di, ei) {
@@ -3030,7 +3036,6 @@ function validateImportPayload(p) {
     }
   }
   if (p.history !== undefined && !Array.isArray(p.history)) return 'History field is not an array';
-  // FIX #4: validate weekSched length
   if (p.weekSched !== undefined && !Array.isArray(p.weekSched)) return 'Weekly schedule is not an array';
   if (p.weekSched !== undefined && p.weekSched.length !== 7) return 'Weekly schedule must have exactly 7 entries';
   return null;
@@ -3073,7 +3078,6 @@ function applyImport() {
   restEnabled       = (p.restEnabled && typeof p.restEnabled === 'object') ? p.restEnabled : {};
   restDefaultDuration = typeof p.restDefaultDuration === 'number' ? p.restDefaultDuration : 90;
   sessionNotes      = (p.sessionNotes && typeof p.sessionNotes === 'object') ? p.sessionNotes : {};
-  // FIX #4: strict 7-element weekSched on import
   const rawSched = Array.isArray(p.weekSched) && p.weekSched.length === 7 ? p.weekSched : DEF_SCHED;
   weekSched = rawSched.map(v => {
     if (v === null || v === undefined) return null;
@@ -3081,6 +3085,8 @@ function applyImport() {
     return (isNaN(n) || n < 0 || n >= CFG.length) ? null : n;
   });
   activeDay = 0; expanded.clear(); editingEx = null; deleteConfirm = null; _pi = null;
+  // Migrate BW entries from imported data too
+  migrateBW();
   syncSets();
   persist(); render(); showToast('Data restored', 'ok'); dismissNudge();
 }
