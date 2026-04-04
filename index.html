@@ -1129,7 +1129,7 @@ body.light .set-row { background: var(--surf); }
 <div id="page-program" class="hidden" style="padding:16px 24px 24px">
   <div id="pb-workout-list-main"></div>
   <button onclick="openNewWorkoutSheet();" style="width:100%;margin-top:6px;padding:13px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--muted);cursor:pointer;text-transform:uppercase;">+ New workout</button>
-  <button onclick="openTemplatesSheet();" style="width:100%;margin-top:8px;padding:13px;background:rgba(200,169,110,.07);border:1px solid rgba(200,169,110,.3);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--gold);cursor:pointer;text-transform:uppercase;">📋 Load RFK Program Template</button>
+  <div id="programs-section" style="margin-top:18px"></div>
 </div>
 
 <!-- HISTORY PAGE -->
@@ -1621,7 +1621,7 @@ function setPage(p) {
   document.getElementById('del-ex-btn').style.display = p==='workout' ? '' : 'none';
   if (p==='history')  renderHistory();
   if (p==='progress') initProgress();
-  if (p==='program')  renderPbWorkoutListMain();
+  if (p==='program')  { renderPbWorkoutListMain(); renderProgramsSection(); }
 }
 
 function renderTabs() {
@@ -2817,13 +2817,13 @@ render();updateBackupLabel();_lastBackupLabelUpdate=Date.now();
 // RFK PROGRAM TEMPLATES
 // ══════════════════════════════════════════════════════════════════════════════
 
-const RFK_PROGRAMS = {
-  "Bărbați": {
+const PROGRAMS = {
+  "Men": {
     "5 Day Split": {
-      desc: "5 zile · Spate / Piept / Brațe / Umeri+Abdomen / Picioare",
+      desc: "5 days · Back / Chest / Arms / Shoulders+Abs / Legs",
       schedule: [0,1,2,3,4,null,null],
       workouts: [
-        { label: "Spate", exercises: [
+        { label: "Back", exercises: [
           {name:"Neutral Grip Lat Pulldown",sets:3,reps:9,weight:"BW"},
           {name:"Neutral Grip One-Arm Row",sets:3,reps:11,weight:"BW"},
           {name:"T-Bar Row",sets:3,reps:9,weight:"BW"},
@@ -2831,7 +2831,7 @@ const RFK_PROGRAMS = {
           {name:"Straight Arm Pullover",sets:3,reps:13,weight:"BW"},
           {name:"DB/BB Shrug",sets:3,reps:13,weight:"BW"},
         ]},
-        { label: "Piept", exercises: [
+        { label: "Chest", exercises: [
           {name:"Horizontal DB/Machine Chest Press",sets:3,reps:9,weight:"BW"},
           {name:"Incline DB/Machine Chest Press",sets:3,reps:9,weight:"BW"},
           {name:"Cable X Crossover",sets:3,reps:13,weight:"BW"},
@@ -2839,7 +2839,7 @@ const RFK_PROGRAMS = {
           {name:"Low to High Cable Flyes",sets:3,reps:13,weight:"BW"},
           {name:"Decline Machine Press/Dip Machine",sets:3,reps:10,weight:"BW"},
         ]},
-        { label: "Brațe", exercises: [
+        { label: "Arms", exercises: [
           {name:"EZ/Straight Bar Curls",sets:3,reps:9,weight:"BW"},
           {name:"DB Incline Curls",sets:3,reps:11,weight:"BW"},
           {name:"Cable Curls",sets:3,reps:13,weight:"BW"},
@@ -2847,7 +2847,7 @@ const RFK_PROGRAMS = {
           {name:"Overhead Rope Extension",sets:3,reps:11,weight:"BW"},
           {name:"Dips/Pushdown Machine",sets:3,reps:11,weight:"BW"},
         ]},
-        { label: "Umeri - Abdomen", exercises: [
+        { label: "Shoulders - Abs", exercises: [
           {name:"Machine Overhead Press",sets:3,reps:9,weight:"BW"},
           {name:"DB Lateral Flyes",sets:3,reps:11,weight:"BW"},
           {name:"Cable Lateral Flyes",sets:2,reps:12,weight:"BW"},
@@ -2855,7 +2855,7 @@ const RFK_PROGRAMS = {
           {name:"DB High Row",sets:3,reps:11,weight:"BW"},
           {name:"Cable Rope Crunches",sets:4,reps:17,weight:"BW"},
         ]},
-        { label: "Picioare", exercises: [
+        { label: "Legs", exercises: [
           {name:"BB Squat/Hack Squat",sets:4,reps:11,weight:"BW"},
           {name:"DB Bulgarian Split Squat",sets:4,reps:11,weight:"BW"},
           {name:"DB/BB RDL",sets:3,reps:10,weight:"BW"},
@@ -2866,8 +2866,8 @@ const RFK_PROGRAMS = {
         ]},
       ]
     },
-    "PPL Split - Avansat": {
-      desc: "6 zile · Push A/B · Pull A/B · Legs A/B",
+    "PPL Split - Advanced": {
+      desc: "6 days · Push A/B · Pull A/B · Legs A/B",
       schedule: [0,1,2,null,3,4,5],
       workouts: [
         { label: "Push A", exercises: [
@@ -2926,8 +2926,8 @@ const RFK_PROGRAMS = {
         ]},
       ]
     },
-    "PPL Split - Începător/Intermediar": {
-      desc: "6 zile · Push A/B · Pull A/B · Legs A/B · intensitate mai mică",
+    "PPL Split - Beginner/Intermediate": {
+      desc: "6 days · Push A/B · Pull A/B · Legs A/B · lower intensity",
       schedule: [0,1,2,null,3,4,5],
       workouts: [
         { label: "Push A", exercises: [
@@ -2986,11 +2986,11 @@ const RFK_PROGRAMS = {
         ]},
       ]
     },
-    "Four Day Split - Avansat": {
-      desc: "4 zile · Spate+Biceps A/B · Piept+Triceps A/B · Legs A/B · Umeri A/B",
+    "Four Day Split - Advanced": {
+      desc: "4 days · Back+Biceps A/B · Chest+Triceps A/B · Legs A/B · Shoulders A/B",
       schedule: [0,1,2,3,null,null,null],
       workouts: [
-        { label: "Spate - Biceps A", exercises: [
+        { label: "Back - Biceps A", exercises: [
           {name:"Straight Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
           {name:"One Arm Pulldown",sets:4,reps:11,weight:"BW"},
           {name:"Neutral Grip Seated Row",sets:4,reps:11,weight:"BW"},
@@ -2999,7 +2999,7 @@ const RFK_PROGRAMS = {
           {name:"EZ Bar Curls",sets:3,reps:11,weight:"BW"},
           {name:"DB/EZ Bar Spider Curl",sets:3,reps:11,weight:"BW"},
         ]},
-        { label: "Piept - Triceps A", exercises: [
+        { label: "Chest - Triceps A", exercises: [
           {name:"Horizontal DB/BB Bench Press",sets:4,reps:10,weight:"BW"},
           {name:"Incline Press Machine",sets:4,reps:10,weight:"BW"},
           {name:"Cable One Arm Low to High Flyes",sets:3,reps:13,weight:"BW"},
@@ -3016,7 +3016,7 @@ const RFK_PROGRAMS = {
           {name:"Hamstring Curl Machine",sets:4,reps:13,weight:"BW"},
           {name:"Leg Press Calf Raises",sets:6,reps:13,weight:"BW"},
         ]},
-        { label: "Umeri - Rotatori A", exercises: [
+        { label: "Shoulders - Rotators A", exercises: [
           {name:"Banded/Cable External Rotations",sets:3,reps:13,weight:"BW"},
           {name:"One Arm Cable Lateral Fly",sets:4,reps:12,weight:"BW"},
           {name:"DB/BB/Machine Overhead Press",sets:4,reps:10,weight:"BW"},
@@ -3024,7 +3024,7 @@ const RFK_PROGRAMS = {
           {name:"Machine Rear Delt Reverse Fly",sets:4,reps:13,weight:"BW"},
           {name:"Cable Facepull",sets:4,reps:13,weight:"BW"},
         ]},
-        { label: "Spate - Biceps B", exercises: [
+        { label: "Back - Biceps B", exercises: [
           {name:"One Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
           {name:"Overhand Lat Pulldown",sets:4,reps:10,weight:"BW"},
           {name:"Underhand Cable/Machine Row",sets:4,reps:10,weight:"BW"},
@@ -3033,7 +3033,7 @@ const RFK_PROGRAMS = {
           {name:"DB One Arm Isometric Curl",sets:3,reps:9,weight:"BW"},
           {name:"DB Hammer Curl",sets:3,reps:11,weight:"BW"},
         ]},
-        { label: "Piept - Triceps B", exercises: [
+        { label: "Chest - Triceps B", exercises: [
           {name:"Cable X Crossover",sets:3,reps:13,weight:"BW"},
           {name:"Incline DB/Machine Press",sets:4,reps:13,weight:"BW"},
           {name:"Horizontal DB/Machine Press",sets:4,reps:13,weight:"BW"},
@@ -3051,7 +3051,7 @@ const RFK_PROGRAMS = {
           {name:"Unilateral Hamstring Curl Machine",sets:3,reps:11,weight:"BW"},
           {name:"Single Leg DB Calf Raises",sets:6,reps:13,weight:"BW"},
         ]},
-        { label: "Umeri - Rotatori B", exercises: [
+        { label: "Shoulders - Rotators B", exercises: [
           {name:"Banded Facepull",sets:3,reps:13,weight:"BW"},
           {name:"DB Lateral Fly",sets:4,reps:12,weight:"BW"},
           {name:"DB/BB/Machine Overhead Press",sets:4,reps:13,weight:"BW"},
@@ -3061,11 +3061,11 @@ const RFK_PROGRAMS = {
         ]},
       ]
     },
-    "Four Day Split - Începător/Intermediar": {
-      desc: "4 zile · Spate+Biceps A/B · Piept+Triceps A/B · Legs A/B · Umeri A/B",
+    "Four Day Split - Beginner/Intermediate": {
+      desc: "4 days · Back+Biceps A/B · Chest+Triceps A/B · Legs A/B · Shoulders A/B",
       schedule: [0,1,2,3,null,null,null],
       workouts: [
-        { label: "Spate - Biceps A", exercises: [
+        { label: "Back - Biceps A", exercises: [
           {name:"Straight Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
           {name:"One Arm Pulldown",sets:4,reps:11,weight:"BW"},
           {name:"Neutral Grip Seated Row",sets:4,reps:11,weight:"BW"},
@@ -3074,7 +3074,7 @@ const RFK_PROGRAMS = {
           {name:"EZ Bar Curls",sets:3,reps:11,weight:"BW"},
           {name:"DB/EZ Bar Spider Curl",sets:3,reps:11,weight:"BW"},
         ]},
-        { label: "Piept - Triceps A", exercises: [
+        { label: "Chest - Triceps A", exercises: [
           {name:"Horizontal DB/BB Bench Press",sets:4,reps:10,weight:"BW"},
           {name:"Incline Press Machine",sets:4,reps:10,weight:"BW"},
           {name:"Cable One Arm Low to High Flyes",sets:3,reps:13,weight:"BW"},
@@ -3091,7 +3091,7 @@ const RFK_PROGRAMS = {
           {name:"Hamstring Curl Machine",sets:4,reps:13,weight:"BW"},
           {name:"Leg Press Calf Raises",sets:6,reps:13,weight:"BW"},
         ]},
-        { label: "Umeri - Rotatori A", exercises: [
+        { label: "Shoulders - Rotators A", exercises: [
           {name:"Banded/Cable External Rotations",sets:3,reps:13,weight:"BW"},
           {name:"One Arm Cable Lateral Fly",sets:4,reps:12,weight:"BW"},
           {name:"DB/BB/Machine Overhead Press",sets:4,reps:10,weight:"BW"},
@@ -3099,7 +3099,7 @@ const RFK_PROGRAMS = {
           {name:"Machine Rear Delt Reverse Fly",sets:4,reps:13,weight:"BW"},
           {name:"Cable Facepull",sets:4,reps:13,weight:"BW"},
         ]},
-        { label: "Spate - Biceps B", exercises: [
+        { label: "Back - Biceps B", exercises: [
           {name:"One Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
           {name:"Overhand Lat Pulldown",sets:4,reps:10,weight:"BW"},
           {name:"Underhand Cable/Machine Row",sets:4,reps:10,weight:"BW"},
@@ -3108,7 +3108,7 @@ const RFK_PROGRAMS = {
           {name:"DB One Arm Isometric Curl",sets:3,reps:9,weight:"BW"},
           {name:"DB Hammer Curl",sets:3,reps:11,weight:"BW"},
         ]},
-        { label: "Piept - Triceps B", exercises: [
+        { label: "Chest - Triceps B", exercises: [
           {name:"Cable X Crossover",sets:3,reps:13,weight:"BW"},
           {name:"Incline DB/Machine Press",sets:4,reps:13,weight:"BW"},
           {name:"Horizontal DB/Machine Press",sets:4,reps:13,weight:"BW"},
@@ -3126,7 +3126,7 @@ const RFK_PROGRAMS = {
           {name:"Unilateral Hamstring Curl Machine",sets:3,reps:11,weight:"BW"},
           {name:"Single Leg DB Calf Raises",sets:6,reps:13,weight:"BW"},
         ]},
-        { label: "Umeri - Rotatori B", exercises: [
+        { label: "Shoulders - Rotators B", exercises: [
           {name:"Banded Facepull",sets:3,reps:13,weight:"BW"},
           {name:"DB Lateral Fly",sets:4,reps:12,weight:"BW"},
           {name:"DB/BB/Machine Overhead Press",sets:4,reps:13,weight:"BW"},
@@ -3137,12 +3137,12 @@ const RFK_PROGRAMS = {
       ]
     },
   },
-  "Fete": {
-    "Three Day Split - Avansat": {
-      desc: "3 zile · Coapse+Gambe A/B · Superior A/B · Fesieri+Adductori A/B",
+  "Women": {
+    "Three Day Split - Advanced": {
+      desc: "3 days · Quads+Hamstrings A/B · Upper A/B · Glutes+Adductors A/B",
       schedule: [0,null,1,null,2,null,null],
       workouts: [
-        { label: "Coapse - Gambe A", exercises: [
+        { label: "Quads - Hamstrings A", exercises: [
           {name:"BB Squat/Hack Squat",sets:5,reps:10,weight:"BW"},
           {name:"DB/BB Romanian Deadlift",sets:5,reps:11,weight:"BW"},
           {name:"DB Step Ups",sets:4,reps:11,weight:"BW"},
@@ -3150,7 +3150,7 @@ const RFK_PROGRAMS = {
           {name:"Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
           {name:"DB Unilateral Calf Raises",sets:5,reps:13,weight:"BW"},
         ]},
-        { label: "Superior A", exercises: [
+        { label: "Upper A", exercises: [
           {name:"BB/Machine Row",sets:4,reps:10,weight:"BW"},
           {name:"Straight Arm Rope Pullover",sets:3,reps:11,weight:"BW"},
           {name:"DB/Machine Horizontal Press",sets:4,reps:10,weight:"BW"},
@@ -3160,7 +3160,7 @@ const RFK_PROGRAMS = {
           {name:"Cross Cable Triceps Extensions",sets:4,reps:12,weight:"BW"},
           {name:"Lumbar Hyperextension",sets:3,reps:13,weight:"BW"},
         ]},
-        { label: "Fesieri - Adductori A", exercises: [
+        { label: "Glutes - Adductors A", exercises: [
           {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
           {name:"DB Bulgarian Split Squat",sets:5,reps:10,weight:"BW"},
           {name:"Hip Abduction Machine",sets:5,reps:13,weight:"BW"},
@@ -3168,7 +3168,7 @@ const RFK_PROGRAMS = {
           {name:"Cable Hip Extensions (Mule Kickbacks)",sets:4,reps:11,weight:"BW"},
           {name:"Banded Clamshells",sets:4,reps:13,weight:"BW"},
         ]},
-        { label: "Coapse - Gambe B", exercises: [
+        { label: "Quads - Hamstrings B", exercises: [
           {name:"BB Squat/Hack Squat",sets:5,reps:13,weight:"BW"},
           {name:"Leg Press",sets:5,reps:13,weight:"BW"},
           {name:"Goblet Squat",sets:5,reps:13,weight:"BW"},
@@ -3176,7 +3176,7 @@ const RFK_PROGRAMS = {
           {name:"Unilateral Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
           {name:"Bilateral Machine Calf Raises",sets:5,reps:13,weight:"BW"},
         ]},
-        { label: "Superior B", exercises: [
+        { label: "Upper B", exercises: [
           {name:"DB/Machine Incline Chest Press",sets:4,reps:11,weight:"BW"},
           {name:"Overhand Lat Pulldown",sets:4,reps:11,weight:"BW"},
           {name:"Overhead Rope Tricep Extensions",sets:4,reps:13,weight:"BW"},
@@ -3186,7 +3186,7 @@ const RFK_PROGRAMS = {
           {name:"Cable Facepull",sets:4,reps:13,weight:"BW"},
           {name:"Low to High Cable Flyes",sets:3,reps:13,weight:"BW"},
         ]},
-        { label: "Fesieri - Adductori B", exercises: [
+        { label: "Glutes - Adductors B", exercises: [
           {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
           {name:"DB Reverse Lunges",sets:5,reps:10,weight:"BW"},
           {name:"Cable/Banded Hip Abductions",sets:5,reps:11,weight:"BW"},
@@ -3196,11 +3196,11 @@ const RFK_PROGRAMS = {
         ]},
       ]
     },
-    "Three Day Split - Începător/Intermediar": {
-      desc: "3 zile · Coapse+Gambe A/B · Superior A/B · Fesieri+Adductori A/B",
+    "Three Day Split - Beginner/Intermediate": {
+      desc: "3 days · Quads+Hamstrings A/B · Upper A/B · Glutes+Adductors A/B",
       schedule: [0,null,1,null,2,null,null],
       workouts: [
-        { label: "Coapse - Gambe A", exercises: [
+        { label: "Quads - Hamstrings A", exercises: [
           {name:"BB Squat/Hack Squat",sets:4,reps:10,weight:"BW"},
           {name:"DB/BB Romanian Deadlift",sets:4,reps:11,weight:"BW"},
           {name:"DB Step Ups",sets:4,reps:11,weight:"BW"},
@@ -3208,7 +3208,7 @@ const RFK_PROGRAMS = {
           {name:"Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
           {name:"DB Unilateral Calf Raises",sets:5,reps:13,weight:"BW"},
         ]},
-        { label: "Superior A", exercises: [
+        { label: "Upper A", exercises: [
           {name:"BB/Machine Row",sets:5,reps:10,weight:"BW"},
           {name:"DB/Machine Horizontal Press",sets:5,reps:10,weight:"BW"},
           {name:"DB Lateral Raises",sets:5,reps:11,weight:"BW"},
@@ -3216,7 +3216,7 @@ const RFK_PROGRAMS = {
           {name:"Cross Cable Triceps Extensions",sets:4,reps:12,weight:"BW"},
           {name:"Lumbar Hyperextension",sets:4,reps:13,weight:"BW"},
         ]},
-        { label: "Fesieri - Adductori A", exercises: [
+        { label: "Glutes - Adductors A", exercises: [
           {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
           {name:"DB Bulgarian Split Squat",sets:5,reps:10,weight:"BW"},
           {name:"Hip Abduction Machine",sets:4,reps:13,weight:"BW"},
@@ -3224,7 +3224,7 @@ const RFK_PROGRAMS = {
           {name:"Cable Hip Extensions (Mule Kickbacks)",sets:4,reps:11,weight:"BW"},
           {name:"Banded Clamshells",sets:4,reps:13,weight:"BW"},
         ]},
-        { label: "Coapse - Gambe B", exercises: [
+        { label: "Quads - Hamstrings B", exercises: [
           {name:"BB Squat/Hack Squat",sets:4,reps:13,weight:"BW"},
           {name:"Leg Press",sets:4,reps:13,weight:"BW"},
           {name:"Goblet Squat",sets:4,reps:13,weight:"BW"},
@@ -3232,7 +3232,7 @@ const RFK_PROGRAMS = {
           {name:"Unilateral Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
           {name:"Bilateral Machine Calf Raises",sets:5,reps:13,weight:"BW"},
         ]},
-        { label: "Superior B", exercises: [
+        { label: "Upper B", exercises: [
           {name:"DB/Machine Incline Chest Press",sets:5,reps:11,weight:"BW"},
           {name:"Overhand Lat Pulldown",sets:5,reps:11,weight:"BW"},
           {name:"DB/Machine Overhead Press",sets:5,reps:11,weight:"BW"},
@@ -3240,7 +3240,7 @@ const RFK_PROGRAMS = {
           {name:"DB Hammer Curls",sets:4,reps:13,weight:"BW"},
           {name:"Lumbar Hyperextension",sets:4,reps:13,weight:"BW"},
         ]},
-        { label: "Fesieri - Adductori B", exercises: [
+        { label: "Glutes - Adductors B", exercises: [
           {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
           {name:"DB Reverse Lunges",sets:5,reps:10,weight:"BW"},
           {name:"Cable/Banded Hip Abductions",sets:4,reps:11,weight:"BW"},
@@ -3250,11 +3250,11 @@ const RFK_PROGRAMS = {
         ]},
       ]
     },
-    "Four Day Split - Avansat": {
-      desc: "4 zile · Coapse+Ischiogg A/B · Push A/B · Fesieri+Adductori A/B · Pull A/B",
+    "Four Day Split - Advanced": {
+      desc: "4 days · Quads+Hamstrings A/B · Push A/B · Glutes+Adductors A/B · Pull A/B",
       schedule: [0,1,2,3,null,null,null],
       workouts: [
-        { label: "Coapse - Ischiogambieri A", exercises: [
+        { label: "Quads - Hamstrings A", exercises: [
           {name:"BB Squat/Hack Squat",sets:5,reps:10,weight:"BW"},
           {name:"DB/BB Romanian Deadlift",sets:4,reps:11,weight:"BW"},
           {name:"Goblet Squat",sets:4,reps:16,weight:"BW"},
@@ -3270,7 +3270,7 @@ const RFK_PROGRAMS = {
           {name:"DB/Machine Lateral Flyes",sets:4,reps:11,weight:"BW"},
           {name:"Triceps Cross Cable Extensions",sets:5,reps:11,weight:"BW"},
         ]},
-        { label: "Fesieri - Adductori A", exercises: [
+        { label: "Glutes - Adductors A", exercises: [
           {name:"Hip Adduction Machine",sets:4,reps:13,weight:"BW"},
           {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
           {name:"DB Bulgarian Split Squat",sets:4,reps:13,weight:"BW"},
@@ -3286,7 +3286,7 @@ const RFK_PROGRAMS = {
           {name:"BB Row",sets:4,reps:13,weight:"BW"},
           {name:"DB Curls",sets:4,reps:11,weight:"BW"},
         ]},
-        { label: "Coapse - Ischiogambieri B", exercises: [
+        { label: "Quads - Hamstrings B", exercises: [
           {name:"BB Squat/Pendulum Squat",sets:5,reps:10,weight:"BW"},
           {name:"DB/BB Reverse Lunges",sets:4,reps:11,weight:"BW"},
           {name:"DB Sumo Squat",sets:4,reps:16,weight:"BW"},
@@ -3302,7 +3302,7 @@ const RFK_PROGRAMS = {
           {name:"Cable One Arm Lateral Flyes",sets:5,reps:11,weight:"BW"},
           {name:"DB Skullcrushers",sets:4,reps:11,weight:"BW"},
         ]},
-        { label: "Fesieri - Adductori B", exercises: [
+        { label: "Glutes - Adductors B", exercises: [
           {name:"Physioball Isometric Adductions",sets:4,reps:13,weight:"BW"},
           {name:"DB Bulgarian Split Squat",sets:5,reps:9,weight:"BW"},
           {name:"BB/Machine Hip Thrust",sets:4,reps:13,weight:"BW"},
@@ -3320,11 +3320,11 @@ const RFK_PROGRAMS = {
         ]},
       ]
     },
-    "Four Day Split - Începător/Intermediar": {
-      desc: "4 zile · Coapse+Ischiogg A/B · Push A/B · Fesieri+Adductori A/B · Pull A/B",
+    "Four Day Split - Beginner/Intermediate": {
+      desc: "4 days · Quads+Hamstrings A/B · Push A/B · Glutes+Adductors A/B · Pull A/B",
       schedule: [0,1,null,2,3,null,null],
       workouts: [
-        { label: "Coapse - Ischiogambieri A", exercises: [
+        { label: "Quads - Hamstrings A", exercises: [
           {name:"BB Squat/Hack Squat",sets:4,reps:10,weight:"BW"},
           {name:"DB/BB Romanian Deadlift",sets:4,reps:11,weight:"BW"},
           {name:"Goblet Squat",sets:3,reps:16,weight:"BW"},
@@ -3339,7 +3339,7 @@ const RFK_PROGRAMS = {
           {name:"DB/Machine Lateral Flyes",sets:4,reps:12,weight:"BW"},
           {name:"Rope Triceps Extensions",sets:4,reps:11,weight:"BW"},
         ]},
-        { label: "Fesieri - Adductori A", exercises: [
+        { label: "Glutes - Adductors A", exercises: [
           {name:"Hip Adduction Machine",sets:4,reps:13,weight:"BW"},
           {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
           {name:"Cable Hip Extensions (Mule Kickback)",sets:4,reps:11,weight:"BW"},
@@ -3353,7 +3353,7 @@ const RFK_PROGRAMS = {
           {name:"Machine/Cable Neutral Grip Row",sets:5,reps:11,weight:"BW"},
           {name:"DB Curls",sets:4,reps:11,weight:"BW"},
         ]},
-        { label: "Coapse - Ischiogambieri B", exercises: [
+        { label: "Quads - Hamstrings B", exercises: [
           {name:"BB Squat/Pendulum Squat",sets:4,reps:10,weight:"BW"},
           {name:"DB/BB Reverse Lunges",sets:4,reps:11,weight:"BW"},
           {name:"DB Sumo Squat",sets:3,reps:16,weight:"BW"},
@@ -3368,7 +3368,7 @@ const RFK_PROGRAMS = {
           {name:"Cable One Arm Lateral Flyes",sets:5,reps:11,weight:"BW"},
           {name:"DB Skullcrushers",sets:4,reps:11,weight:"BW"},
         ]},
-        { label: "Fesieri - Adductori B", exercises: [
+        { label: "Glutes - Adductors B", exercises: [
           {name:"Physioball Isometric Adductions",sets:4,reps:13,weight:"BW"},
           {name:"DB Split Squat",sets:5,reps:9,weight:"BW"},
           {name:"Banded Hip Abduction",sets:4,reps:13,weight:"BW"},
@@ -3385,12 +3385,12 @@ const RFK_PROGRAMS = {
       ]
     },
   },
-  "Abdomen": {
-    "Antrenament Abdomen": {
-      desc: "Exerciții abdomen · Superior / Oblic / Inferior",
+  "Abs": {
+    "Abs Workout": {
+      desc: "Abs exercises · Upper / Oblique / Lower",
       schedule: [null,null,null,null,null,null,null],
       workouts: [
-        { label: "Abdomen", exercises: [
+        { label: "Abs", exercises: [
           {name:"Rope Crunch",sets:3,reps:13,weight:"BW"},
           {name:"Rope Oblique Crunch",sets:3,reps:30,weight:"BW"},
           {name:"Captain's Chair Leg Raises",sets:3,reps:18,weight:"BW"},
@@ -3406,6 +3406,32 @@ const RFK_PROGRAMS = {
   },
 };
 
+function renderProgramsSection() {
+  const container = document.getElementById('programs-section');
+  if (!container) return;
+  let html = `<div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;padding:18px 0 12px;border-top:1px solid var(--line);margin-top:8px">Program Templates</div>`;
+  for (const [category, programs] of Object.entries(PROGRAMS)) {
+    const isAddon = category === 'Abs';
+    html += `<div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;padding:10px 0 6px;display:flex;align-items:center;gap:8px">
+      ${escHtml(category)}
+      ${isAddon ? `<span style="font-size:7px;background:rgba(200,169,110,.12);color:var(--gold3);border:1px solid rgba(200,169,110,.25);border-radius:20px;padding:2px 8px;letter-spacing:.1em">ADD-ON</span>` : ''}
+    </div>`;
+    for (const [progName, prog] of Object.entries(programs)) {
+      const wCount = prog.workouts.length;
+      const safeCategory = JSON.stringify(category).replace(/"/g,'&quot;');
+      const safeProgName = JSON.stringify(progName).replace(/"/g,'&quot;');
+      html += `
+        <button onclick="previewTemplate(${safeCategory},${safeProgName})"
+          style="width:100%;text-align:left;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,background .2s;display:block">
+          <div style="font-family:var(--serif);font-size:16px;color:var(--text);letter-spacing:.02em;margin-bottom:4px">${escHtml(progName)}</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.06em;line-height:1.6">${escHtml(prog.desc)}</div>
+          <div style="font-family:var(--mono);font-size:7.5px;color:${isAddon ? 'var(--gold)' : 'var(--gold3)'};letter-spacing:.1em;margin-top:6px">${isAddon ? '➕ ' : ''}${wCount} workout${wCount!==1?'s':''}</div>
+        </button>`;
+    }
+  }
+  container.innerHTML = html;
+}
+
 function openTemplatesSheet() {
   renderTemplatesList();
   document.getElementById('ov-templates').classList.add('open');
@@ -3420,8 +3446,8 @@ function closeTemplatesSheet() {
 function renderTemplatesList() {
   const container = document.getElementById('tpl-list');
   let html = '';
-  for (const [category, programs] of Object.entries(RFK_PROGRAMS)) {
-    const isAddon = category === 'Abdomen';
+  for (const [category, programs] of Object.entries(PROGRAMS)) {
+    const isAddon = category === 'Abs';
     html += `<div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;padding:14px 0 8px;border-bottom:1px solid var(--line);margin-bottom:8px;display:flex;align-items:center;gap:8px">
       ${escHtml(category)}
       ${isAddon ? `<span style="font-size:7px;background:rgba(200,169,110,.12);color:var(--gold3);border:1px solid rgba(200,169,110,.25);border-radius:20px;padding:2px 8px;letter-spacing:.1em">ADD-ON</span>` : ''}
@@ -3435,7 +3461,7 @@ function renderTemplatesList() {
           style="width:100%;text-align:left;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,background .2s;display:block">
           <div style="font-family:var(--serif);font-size:16px;color:var(--text);letter-spacing:.02em;margin-bottom:4px">${escHtml(progName)}</div>
           <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.06em;line-height:1.6">${escHtml(prog.desc)}</div>
-          <div style="font-family:var(--mono);font-size:7.5px;color:${isAddon ? 'var(--gold)' : 'var(--gold3)'};letter-spacing:.1em;margin-top:6px">${isAddon ? '➕ ' : ''}${wCount} antrenament${wCount!==1?'e':''}</div>
+          <div style="font-family:var(--mono);font-size:7.5px;color:${isAddon ? 'var(--gold)' : 'var(--gold3)'};letter-spacing:.1em;margin-top:6px">${isAddon ? '➕ ' : ''}${wCount} workout${wCount!==1?'s':''}</div>
         </button>`;
     }
   }
@@ -3443,9 +3469,9 @@ function renderTemplatesList() {
 }
 
 function previewTemplate(category, progName) {
-  const prog = RFK_PROGRAMS[category][progName];
+  const prog = PROGRAMS[category][progName];
   if (!prog) return;
-  const isAddon = category === 'Abdomen';
+  const isAddon = category === 'Abs';
   const preview = document.getElementById('tpl-preview');
   const list = document.getElementById('tpl-list');
   const backBtn = document.getElementById('tpl-back-btn');
@@ -3456,12 +3482,12 @@ function previewTemplate(category, progName) {
   if (isAddon) {
     html += `<div style="display:flex;align-items:center;gap:8px;background:rgba(200,169,110,.07);border:1px solid rgba(200,169,110,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:16px">
       <span style="font-size:14px">➕</span>
-      <span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.08em;line-height:1.6">Add-on · Se adaugă la programul tău curent, nu îl înlocuiește</span>
+      <span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.08em;line-height:1.6">Add-on · Appended to your current program, does not replace it</span>
     </div>`;
   } else {
     html += `<div style="display:flex;align-items:center;gap:8px;background:rgba(192,97,74,.07);border:1px solid rgba(192,97,74,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:16px">
       <span style="font-size:14px">⚠️</span>
-      <span style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.08em;line-height:1.6">Înlocuiește programul curent · Istoricul rămâne intact</span>
+      <span style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.08em;line-height:1.6">Replaces your current program · History stays intact</span>
     </div>`;
   }
 
@@ -3482,25 +3508,26 @@ function previewTemplate(category, progName) {
 
   preview.querySelector('#tpl-preview-content').innerHTML = html;
   const loadBtn = preview.querySelector('#tpl-load-btn');
-  loadBtn.textContent = isAddon ? '➕ Adaugă la programul meu →' : 'Încarcă acest program →';
+  loadBtn.textContent = isAddon ? '➕ Add to my program →' : 'Load this program →';
   loadBtn.onclick = () => loadTemplate(category, progName);
   list.style.display = 'none';
-  backBtn.style.display = '';
+  backBtn.style.display = 'none';
   preview.style.display = '';
+  document.getElementById('ov-templates').classList.add('open');
   document.getElementById('tpl-sheet-inner').scrollTop = 0;
 }
 
 function loadTemplate(category, progName) {
-  const prog = RFK_PROGRAMS[category][progName];
+  const prog = PROGRAMS[category][progName];
   if (!prog) return;
-  const isAddon = category === 'Abdomen';
+  const isAddon = category === 'Abs';
 
   if (isAddon) {
     // Add-on: append workouts to existing program
     confirmAction(
-      'Adaugi antrenament la program?',
-      `"${progName}" va fi adăugat la programul tău curent ca antrenament separat.`,
-      'Adaugă',
+      'Add workout to program?',
+      `"${progName}" will be added to your current program as a separate workout.`,
+      'Add',
       '',
       () => {
         prog.workouts.forEach(w => {
@@ -3515,15 +3542,15 @@ function loadTemplate(category, progName) {
         closeTemplatesSheet();
         render();
         setPage('program');
-        showToast(`"${progName}" adăugat la program!`, 'ok');
+        showToast(`"${progName}" added to program!`, 'ok');
       }
     );
   } else {
     // Full replacement
     confirmAction(
-      'Înlocuiești programul curent?',
-      `Toate antrenamentele curente vor fi șterse și înlocuite cu "${progName}". Istoricul rămâne intact.`,
-      'Încarcă programul',
+      'Replace current program?',
+      `All current workouts will be replaced with "${progName}". History stays intact.`,
+      'Load program',
       'danger',
       () => {
         CFG = prog.workouts.map(w => ({ label: w.label, color: '#C8A96E' }));
@@ -3538,7 +3565,8 @@ function loadTemplate(category, progName) {
         closeTemplatesSheet();
         render();
         setPage('program');
-        showToast(`Program "${progName}" încărcat!`, 'ok');
+        renderProgramsSection();
+        showToast(`Program "${progName}" loaded!`, 'ok');
       }
     );
   }
@@ -3555,10 +3583,10 @@ if(document.fonts&&document.fonts.ready){document.fonts.ready.then(registerPWA);
     <div class="shh"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
-        <div class="shl" style="margin-bottom:2px;font-size:20px">Programe RFK</div>
-        <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase">by Robert Florea · rfkinetix.ro</div>
+        <div class="shl" style="margin-bottom:2px;font-size:20px">Programs</div>
+        <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase"></div>
       </div>
-      <button onclick="closeTemplatesSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Închide</button>
+      <button onclick="closeTemplatesSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Close</button>
     </div>
 
     <!-- List view -->
@@ -3566,13 +3594,13 @@ if(document.fonts&&document.fonts.ready){document.fonts.ready.then(registerPWA);
 
     <!-- Back button (shown in preview) -->
     <button id="tpl-back-btn" onclick="document.getElementById('tpl-preview').style.display='none';document.getElementById('tpl-list').style.display='';document.getElementById('tpl-back-btn').style.display='none';document.getElementById('tpl-sheet-inner').scrollTop=0;"
-      style="display:none;width:100%;margin-bottom:14px;padding:11px;background:none;border:1px solid var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">← Înapoi la programe</button>
+      style="display:none;width:100%;margin-bottom:14px;padding:11px;background:none;border:1px solid var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">← Back to programs</button>
 
     <!-- Preview view -->
     <div id="tpl-preview" style="display:none">
       <div style="font-family:var(--serif);font-size:22px;font-weight:300;letter-spacing:.05em;color:var(--text);margin-bottom:6px" id="tpl-preview-title"></div>
       <div id="tpl-preview-content"></div>
-      <button id="tpl-load-btn" class="bsv" style="margin-top:16px;width:100%">Încarcă acest program →</button>
+      <button id="tpl-load-btn" class="bsv" style="margin-top:16px;width:100%">Load this program →</button>
     </div>
   </div>
 </div>
