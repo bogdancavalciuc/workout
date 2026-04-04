@@ -1089,6 +1089,7 @@ body.light .set-row { background: var(--surf); }
   </div>
   <div class="page-nav">
     <div class="pn active" onclick="setPage('workout')">Workout</div>
+    <div class="pn" onclick="setPage('program')">Program</div>
     <div class="pn" onclick="setPage('history')">History</div>
     <div class="pn" onclick="setPage('progress')">Progress</div>
   </div>
@@ -1122,6 +1123,12 @@ body.light .set-row { background: var(--surf); }
   </div>
   <div class="tbl-wrap" id="tbl"></div>
   <div class="hint">Swipe row to check · pencil to rename · drag to reorder</div>
+</div>
+
+<!-- PROGRAM PAGE -->
+<div id="page-program" class="hidden" style="padding:0 24px 24px">
+  <div id="pb-workout-list-main"></div>
+  <button onclick="openNewWorkoutSheet();" style="width:100%;margin-top:6px;padding:13px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--muted);cursor:pointer;text-transform:uppercase;">+ New workout</button>
 </div>
 
 <!-- HISTORY PAGE -->
@@ -1259,18 +1266,139 @@ body.light .set-row { background: var(--surf); }
   </div>
 </div>
 
-<!-- SCHEDULE SHEET -->
+<!-- SCHEDULE SHEET — full program builder -->
 <div class="ov" id="ov-sched" onclick="if(event.target===this)closeSchedSheet()">
-  <div class="sh" style="max-height:88vh;overflow-y:auto">
+  <div class="sh" style="max-height:94vh;overflow-y:auto;padding-bottom:40px" id="sched-sh">
     <div class="shh"></div>
-    <div class="shl">Weekly Schedule</div>
-    <div class="sched-day-list" id="sched-day-list"></div>
-    <div style="border-top:1px solid var(--line);padding-top:16px;margin-bottom:16px">
-      <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Manage Workouts</div>
-      <div id="sched-workout-list" style="display:flex;flex-direction:column;gap:6px"></div>
-      <button onclick="closeSchedSheet();openDayAdd();" style="width:100%;margin-top:8px;padding:12px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--muted);cursor:pointer;text-transform:uppercase;">+ Add workout type</button>
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="shl" style="margin-bottom:0">Schedule</div>
+      <button onclick="closeSchedSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Done</button>
     </div>
-    <button class="bsv" onclick="closeSchedSheet()">Done</button>
+
+    <!-- Schedule only -->
+    <div>
+      <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;opacity:.7">Assign a workout to each day</div>
+      <div class="sched-day-list" id="sched-day-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NEW WORKOUT CREATOR SHEET -->
+<div class="ov" id="ov-new-workout" onclick="if(event.target===this)closeNewWorkoutSheet()">
+  <div class="sh" style="max-height:94vh;overflow-y:auto;padding-bottom:40px" id="new-workout-sh">
+    <div class="shh"></div>
+
+    <!-- Step 1: Name -->
+    <div id="nw-step-name">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div class="shl" style="margin-bottom:0">New Workout</div>
+        <button onclick="closeNewWorkoutSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
+      </div>
+      <div class="field">
+        <label>Workout name</label>
+        <input id="nw-name-input" type="text" placeholder="e.g. Push, Pull, Upper…" autocomplete="off" spellcheck="false" maxlength="40" oninput="nwUpdateNameBtn()">
+      </div>
+      <button class="bsv" id="nw-name-btn" onclick="nwGoToExercises()" style="opacity:.4;pointer-events:none">Continue → Add Exercises</button>
+    </div>
+
+    <!-- Step 2: Build exercises (shown after name) -->
+    <div id="nw-step-exercises" style="display:none">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div>
+          <div class="shl" style="margin-bottom:0;font-size:18px" id="nw-exercises-title">Push</div>
+          <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Build your exercise list</div>
+        </div>
+        <button onclick="closeNewWorkoutSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
+      </div>
+
+      <!-- Added exercises list -->
+      <div id="nw-added-list" style="margin-bottom:12px"></div>
+
+      <!-- Save button -->
+      <button class="bsv" id="nw-save-btn" onclick="saveNewWorkout()" style="margin-bottom:16px">Create Workout</button>
+
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="flex:1;height:1px;background:var(--line)"></div>
+        <span style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase">Add exercises</span>
+        <div style="flex:1;height:1px;background:var(--line)"></div>
+      </div>
+
+      <!-- Search -->
+      <input id="nw-search" type="text" placeholder="Search exercises…" autocomplete="off" spellcheck="false"
+        style="width:100%;background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r);padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;-webkit-appearance:none;transition:border-color .2s;margin-bottom:4px;"
+        oninput="nwFilterList(this.value)">
+      <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.06em;padding:6px 2px 10px;opacity:.6">Tap an exercise to configure and add it</div>
+
+      <!-- Exercise library list -->
+      <div id="nw-lib-list"></div>
+
+      <!-- Custom exercise row -->
+      <div id="nw-custom-row" style="display:none;padding-top:8px">
+        <button id="nw-custom-btn" class="replace-ex-btn" style="border-color:var(--gold3);color:var(--gold3)" onclick="nwOpenConfig(document.getElementById('nw-search').value.trim())"></button>
+      </div>
+    </div>
+
+    <!-- Step 3: Configure a single exercise (inline panel) -->
+    <div id="nw-step-config" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <button onclick="nwBackToExercises()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 14px;font-family:var(--mono);font-size:11px;color:var(--muted2);cursor:pointer;">←</button>
+        <div class="shl" style="margin-bottom:0;font-size:18px;flex:1" id="nw-config-name">Bench Press</div>
+      </div>
+      <div class="add-lib-selected-wrap">
+        <div class="add-lib-config">
+          <div class="add-lib-field">
+            <span class="add-lib-label">Sets</span>
+            <input class="add-lib-input" type="number" id="nw-sets" min="1" max="20" value="3" inputmode="numeric">
+          </div>
+          <div class="add-lib-field">
+            <span class="add-lib-label">Reps</span>
+            <input class="add-lib-input" type="number" id="nw-reps" min="1" max="100" value="12" inputmode="numeric">
+          </div>
+          <div class="add-lib-field">
+            <span class="add-lib-label">Weight</span>
+            <input class="add-lib-input" type="text" id="nw-weight" value="BW" inputmode="decimal" style="text-align:center">
+          </div>
+        </div>
+      </div>
+      <button class="bsv" onclick="nwConfirmAdd()" style="margin-top:16px">+ Add to Workout</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRAM BUILDER: exercise picker for a workout -->
+<div class="ov" id="ov-pb-exadd" onclick="if(event.target===this)closePbExAdd()">
+  <div class="sh" style="max-height:92vh;overflow-y:auto;padding-bottom:32px">
+    <div class="shh"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div class="shl" style="margin-bottom:0" id="pb-exadd-title">Add Exercise</div>
+      <button onclick="closePbExAdd()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
+    </div>
+    <!-- selected config -->
+    <div id="pb-exadd-selected" style="display:none">
+      <div class="add-lib-selected-wrap">
+        <div class="add-lib-selected-name" id="pb-exadd-name">—</div>
+        <div class="add-lib-config">
+          <div class="add-lib-field"><span class="add-lib-label">Sets</span><input class="add-lib-input" type="number" id="pb-exadd-sets" min="1" max="20" value="3" inputmode="numeric"></div>
+          <div class="add-lib-field"><span class="add-lib-label">Reps</span><input class="add-lib-input" type="number" id="pb-exadd-reps" min="1" max="100" value="12" inputmode="numeric"></div>
+          <div class="add-lib-field"><span class="add-lib-label">Weight</span><input class="add-lib-input" type="text" id="pb-exadd-weight" value="BW" inputmode="decimal" style="text-align:center"></div>
+        </div>
+      </div>
+      <button class="bsv" onclick="confirmPbExAdd()" style="margin-bottom:18px">Add to workout</button>
+      <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;opacity:.7">Or pick a different exercise</div>
+    </div>
+    <input id="pb-exadd-search" type="text" placeholder="Search exercises..." autocomplete="off" spellcheck="false"
+      style="width:100%;background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r);padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;-webkit-appearance:none;transition:border-color .2s;margin-bottom:4px;"
+      oninput="filterPbExList(this.value)">
+    <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.06em;padding:6px 2px 10px;opacity:.6">Type a custom name or choose from the list</div>
+    <div id="pb-exadd-list"></div>
+    <div id="pb-exadd-custom-row" style="display:none;padding-top:8px">
+      <button id="pb-exadd-custom-btn" class="replace-ex-btn" style="border-color:var(--gold3);color:var(--gold3)" onclick="selectPbEx(document.getElementById('pb-exadd-search').value.trim())"></button>
+    </div>
   </div>
 </div>
 
@@ -1454,11 +1582,14 @@ function fireConfetti() {
 function setPage(p) {
   document.querySelectorAll('.pn').forEach(el=>el.classList.toggle('active',el.textContent.toLowerCase()===p));
   document.getElementById('page-workout').classList.toggle('hidden',p!=='workout');
+  document.getElementById('page-program').classList.toggle('hidden',p!=='program');
   document.getElementById('page-history').classList.toggle('hidden',p!=='history');
   document.getElementById('page-progress').classList.toggle('hidden',p!=='progress');
   document.getElementById('fab').style.display = p==='workout' ? '' : 'none';
+  document.getElementById('del-ex-btn').style.display = p==='workout' ? '' : 'none';
   if (p==='history')  renderHistory();
   if (p==='progress') initProgress();
+  if (p==='program')  renderPbWorkoutListMain();
 }
 
 function renderTabs() {
@@ -2030,7 +2161,21 @@ function confirmAddFromLib() {
 // ══════════════════════════════════════════════════════════════════════════════
 function saveEx(){const name=document.getElementById('fn').value.trim();if(!name){document.getElementById('fn').focus();return;}if(name.length>60){showToast('Name too long (max 60 chars)','err');return;}const sets=parseInt(document.getElementById('fs').value)||3,reps=parseInt(document.getElementById('fr').value)||12,rawW=document.getElementById('fw2').value.trim(),weight=(rawW!==''&&rawW!==null)?(isNaN(parseFloat(rawW))?rawW.toUpperCase():parseFloat(rawW)+'KG'):'BW';const{di}=sheetCtx,id=data[di].length?Math.max(...data[di].map(e=>e.id))+1:1;data[di].push({id,name,sets,reps,weight});expanded.add(`${di}-${data[di].length-1}`);syncSets();document.getElementById('ov').classList.remove('open');persist();render();}
 function maybeClose(e){if(e.target===document.getElementById('ov'))document.getElementById('ov').classList.remove('open');}
-function openSchedSheet(){renderSchedSheet();document.getElementById('ov-sched').classList.add('open');}
+let _schedTab = 'schedule';
+function switchSchedTab(tab) {
+  _schedTab = tab;
+  ['schedule','workouts'].forEach(t => {
+    document.getElementById('stab-content-'+t).style.display = t===tab ? '' : 'none';
+    const btn = document.getElementById('stab-'+t);
+    btn.style.color = t===tab ? 'var(--gold)' : 'var(--muted)';
+    btn.style.borderBottomColor = t===tab ? 'var(--gold)' : 'transparent';
+  });
+  if (tab==='workouts') renderPbWorkoutList();
+}
+function openSchedSheet(){
+  renderSchedSheet();
+  document.getElementById('ov-sched').classList.add('open');
+}
 function closeSchedSheet(){document.getElementById('ov-sched').classList.remove('open');}
 function renderSchedSheet(){
   const c=document.getElementById('sched-day-list'),todayIdx=getTodayWeekIdx();
@@ -2038,15 +2183,250 @@ function renderSchedSheet(){
   const wl=document.getElementById('sched-workout-list');
   if(wl)wl.innerHTML=CFG.map((cfg,ci)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf2);border:1px solid var(--line);border-radius:var(--r);gap:8px"><span style="font-family:var(--serif);font-size:14px;color:var(--text)">${escHtml(cfg.label)}</span><button onclick="closeSchedSheet();openDayEdit(null,${ci});" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 12px;color:var(--muted2);cursor:pointer;">Rename</button></div>`).join('');
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PROGRAM BUILDER — Workouts tab
+// ══════════════════════════════════════════════════════════════════════════════
+let _pbExpanded = new Set(); // set of expanded workout indices in builder
+
+function renderPbWorkoutList() {
+  const c = document.getElementById('pb-workout-list');
+  if (!c) return;
+  if (!CFG.length) { c.innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No workouts yet</div>'; return; }
+  c.innerHTML = CFG.map((cfg, ci) => {
+    const exs = data[ci] || [];
+    const isExp = _pbExpanded.has(ci);
+    const exCount = exs.length;
+    const exList = isExp ? exs.map((ex, ei) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg2);">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px">${String(ei+1).padStart(2,'0')}</span>
+        <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px">${escHtml(ex.weight)}</span>
+        <button onclick="pbDeleteEx(${ci},${ei})" style="background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:0 2px;line-height:1;margin-left:4px">×</button>
+      </div>`).join('') : '';
+    return `
+    <div style="background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;margin-bottom:10px">
+      <div onclick="pbToggle(${ci})" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;">
+        <div style="flex:1">
+          <div style="font-family:var(--serif);font-size:17px;color:var(--text)">${escHtml(cfg.label)}</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:3px;letter-spacing:.06em">${exCount} exercise${exCount!==1?'s':''}</div>
+        </div>
+        <div style="display:flex;gap:7px;align-items:center">
+          <button onclick="event.stopPropagation();pbRenameWorkout(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Rename</button>
+          ${CFG.length>1?`<button onclick="event.stopPropagation();pbDeleteWorkout(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Delete</button>`:''}
+          <span style="font-family:var(--mono);font-size:14px;color:var(--muted);transition:transform .2s;display:inline-block;transform:rotate(${isExp?'180':'0'}deg)">▾</span>
+        </div>
+      </div>
+      ${isExp ? `
+      <div style="border-top:1px solid var(--line)">
+        ${exList}
+        <div style="padding:10px 14px;background:var(--bg2)">
+          <button onclick="openPbExAdd(${ci})" style="width:100%;padding:11px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;">+ Add exercise</button>
+        </div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderPbWorkoutListMain() {
+  const c = document.getElementById('pb-workout-list-main');
+  if (!c) return;
+  if (!CFG.length) { c.innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No workouts yet</div>'; return; }
+  c.innerHTML = CFG.map((cfg, ci) => {
+    const exs = data[ci] || [];
+    const isExp = _pbExpanded.has(ci);
+    const exCount = exs.length;
+    const exList = isExp ? exs.map((ex, ei) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg2);">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px">${String(ei+1).padStart(2,'0')}</span>
+        <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px">${escHtml(ex.weight)}</span>
+        <button onclick="pbDeleteExMain(${ci},${ei})" style="background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:0 2px;line-height:1;margin-left:4px">×</button>
+      </div>`).join('') : '';
+    return `
+    <div style="background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;margin-bottom:10px">
+      <div onclick="pbToggleMain(${ci})" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;">
+        <div style="flex:1">
+          <div style="font-family:var(--serif);font-size:17px;color:var(--text)">${escHtml(cfg.label)}</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:3px;letter-spacing:.06em">${exCount} exercise${exCount!==1?'s':''}</div>
+        </div>
+        <div style="display:flex;gap:7px;align-items:center">
+          <button onclick="event.stopPropagation();pbRenameWorkoutMain(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Rename</button>
+          ${CFG.length>1?`<button onclick="event.stopPropagation();pbDeleteWorkoutMain(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Delete</button>`:''}
+          <span style="font-family:var(--mono);font-size:14px;color:var(--muted);transition:transform .2s;display:inline-block;transform:rotate(${isExp?'180':'0'}deg)">▾</span>
+        </div>
+      </div>
+      ${isExp ? `
+      <div style="border-top:1px solid var(--line)">
+        ${exList}
+        <div style="padding:10px 14px;background:var(--bg2)">
+          <button onclick="openPbExAddMain(${ci})" style="width:100%;padding:11px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;">+ Add exercise</button>
+        </div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function pbToggleMain(ci) {
+  if (_pbExpanded.has(ci)) _pbExpanded.delete(ci);
+  else { _pbExpanded.clear(); _pbExpanded.add(ci); }
+  renderPbWorkoutListMain();
+}
+
+function pbRenameWorkoutMain(ci) {
+  openDayEdit(null, ci);
+}
+
+function pbDeleteWorkoutMain(ci) {
+  if (data.length <= 1) { showToast('Cannot delete the last workout','err'); return; }
+  confirmAction(`Delete "${CFG[ci].label}"?`, 'All exercises and history for this workout will be removed.', 'Delete', 'danger', () => {
+    data.splice(ci,1); setsDone.splice(ci,1); CFG.splice(ci,1);
+    weekSched = remapSchedAfterDelete(ci);
+    if (activeDay===ci||activeDay>=data.length) activeDay=0;
+    _pbExpanded.delete(ci); persist(); render(); renderPbWorkoutListMain();
+  });
+}
+
+function pbDeleteExMain(ci, ei) {
+  confirmAction(`Remove "${data[ci][ei]?.name}"?`, 'This exercise will be removed from the workout.', 'Remove', 'danger', () => {
+    data[ci].splice(ei,1); setsDone[ci].splice(ei,1);
+    persist(); render(); renderPbWorkoutListMain();
+  });
+}
+
+function openPbExAddMain(ci) {
+  _pbAddCtx = { ci };
+  _pbAddSelected = null;
+  document.getElementById('pb-exadd-title').textContent = 'Add to ' + (CFG[ci]?.label || '');
+  document.getElementById('pb-exadd-search').value = '';
+  document.getElementById('pb-exadd-selected').style.display = 'none';
+  document.getElementById('pb-exadd-custom-row').style.display = 'none';
+  renderPbExList('');
+  document.getElementById('ov-pb-exadd').classList.add('open');
+  setTimeout(() => document.getElementById('pb-exadd-search').focus(), 300);
+}
+
+
+
+function pbRenameWorkout(ci) {
+  openDayEdit(null, ci);
+}
+
+function pbDeleteWorkout(ci) {
+  if (data.length <= 1) { showToast('Cannot delete the last workout','err'); return; }
+  confirmAction(`Delete "${CFG[ci].label}"?`, 'All exercises and history for this workout will be removed.', 'Delete', 'danger', () => {
+    data.splice(ci,1); setsDone.splice(ci,1); CFG.splice(ci,1);
+    weekSched = remapSchedAfterDelete(ci);
+    if (activeDay===ci||activeDay>=data.length) activeDay=0;
+    _pbExpanded.delete(ci); persist(); render(); renderPbWorkoutList();
+  });
+}
+
+function pbDeleteEx(ci, ei) {
+  confirmAction(`Remove "${data[ci][ei]?.name}"?`, 'This exercise will be removed from the workout.', 'Remove', 'danger', () => {
+    data[ci].splice(ei,1); setsDone[ci].splice(ei,1);
+    persist(); render(); renderPbWorkoutList();
+  });
+}
+
+// ── PB exercise add sheet ────────────────────────────────────────────────────
+let _pbAddCtx = null;
+let _pbAddSelected = null;
+
+function openPbExAdd(ci) {
+  _pbAddCtx = { ci };
+  _pbAddSelected = null;
+  document.getElementById('pb-exadd-title').textContent = 'Add to ' + (CFG[ci]?.label || '');
+  document.getElementById('pb-exadd-search').value = '';
+  document.getElementById('pb-exadd-selected').style.display = 'none';
+  document.getElementById('pb-exadd-custom-row').style.display = 'none';
+  renderPbExList('');
+  document.getElementById('ov-pb-exadd').classList.add('open');
+  setTimeout(() => document.getElementById('pb-exadd-search').focus(), 300);
+}
+
+function closePbExAdd() {
+  document.getElementById('ov-pb-exadd').classList.remove('open');
+  _pbAddCtx = null; _pbAddSelected = null;
+}
+
+function renderPbExList(query) {
+  const container = document.getElementById('pb-exadd-list');
+  const q = query.trim().toLowerCase();
+  let html = '', anyResults = false;
+  for (const [group, exercises] of Object.entries(EXERCISE_LIBRARY)) {
+    const filtered = q ? exercises.filter(ex => ex.toLowerCase().includes(q)) : exercises;
+    if (!filtered.length) continue;
+    anyResults = true;
+    html += `<div class="replace-group-label">${escHtml(group)}</div>`;
+    filtered.forEach(ex => {
+      const isSel = ex === _pbAddSelected;
+      html += `<button class="replace-ex-btn${isSel?' current-ex':''}" onclick="selectPbEx(${JSON.stringify(ex)})">${escHtml(ex)}${isSel?' ✓':''}</button>`;
+    });
+  }
+  if (!anyResults && !q) html = '';
+  else if (!anyResults) html = `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No exercises found</div>`;
+  container.innerHTML = html;
+  const customRow = document.getElementById('pb-exadd-custom-row');
+  const customBtn = document.getElementById('pb-exadd-custom-btn');
+  const trimmed = query.trim();
+  const inLib = trimmed && Object.values(EXERCISE_LIBRARY).flat().some(e => e.toLowerCase() === trimmed.toLowerCase());
+  if (trimmed && !inLib) { customBtn.textContent = `+ Add "${trimmed}" as custom`; customRow.style.display = 'block'; }
+  else customRow.style.display = 'none';
+}
+
+function filterPbExList(q) { renderPbExList(q); }
+
+function selectPbEx(name) {
+  _pbAddSelected = name;
+  document.getElementById('pb-exadd-name').textContent = name;
+  document.getElementById('pb-exadd-sets').value = '3';
+  document.getElementById('pb-exadd-reps').value = '12';
+  document.getElementById('pb-exadd-weight').value = 'BW';
+  document.getElementById('pb-exadd-selected').style.display = 'block';
+  renderPbExList(document.getElementById('pb-exadd-search').value);
+  document.querySelector('#ov-pb-exadd .sh').scrollTop = 0;
+}
+
+function confirmPbExAdd() {
+  if (!_pbAddCtx || !_pbAddSelected) return;
+  const name = _pbAddSelected.trim(); if (!name) return;
+  const sets = parseInt(document.getElementById('pb-exadd-sets').value) || 3;
+  const reps = parseInt(document.getElementById('pb-exadd-reps').value) || 12;
+  const rawW = document.getElementById('pb-exadd-weight').value.trim();
+  const weight = rawW !== '' ? (isNaN(parseFloat(rawW)) ? rawW.toUpperCase() : parseFloat(rawW)+'KG') : 'BW';
+  const ci = _pbAddCtx.ci;
+  const id = data[ci].length ? Math.max(...data[ci].map(e=>e.id))+1 : 1;
+  data[ci].push({ id, name, sets, reps, weight });
+  syncSets(); persist(); render();
+  closePbExAdd();
+  renderPbWorkoutList();
+  renderPbWorkoutListMain();
+  showToast('Exercise added','ok');
+}
 function setDayWorkout(wi,val){weekSched[wi]=val==='rest'?null:parseInt(val);persist();renderTabs();const lbl=document.getElementById(`swv-${wi}`);if(lbl){const v=weekSched[wi];lbl.textContent=(v===null||v===undefined||v>=CFG.length)?'Rest':(CFG[v]?.label||'?');lbl.className='sched-workout-val '+((v===null||v===undefined||v>=CFG.length)?'rest-v':'');}}
 
 let dayCtx=null;
 function openDayEdit(e,di){if(e)e.stopPropagation();dayCtx={mode:'edit',di};document.getElementById('day-sheet-title').textContent='Edit Workout';document.getElementById('day-name-input').value=CFG[di].label;document.getElementById('day-del-btn').style.display=data.length>1?'':'none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
 function openDayAdd(){dayCtx={mode:'add'};document.getElementById('day-sheet-title').textContent='Add Workout';document.getElementById('day-name-input').value='';document.getElementById('day-del-btn').style.display='none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
 function closeDaySheet(){document.getElementById('ov-day').classList.remove('open');dayCtx=null;}
-function saveDay(){const name=document.getElementById('day-name-input').value.trim();if(!name){document.getElementById('day-name-input').focus();return;}if(name.length>40){showToast('Name too long (max 40 chars)','err');return;}if(dayCtx.mode==='edit'){CFG[dayCtx.di].label=name;}else{CFG.push({label:name,color:'#C8A96E'});data.push([]);setsDone.push([]);activeDay=CFG.length-1;}closeDaySheet();persist();render();}
+function saveDay(){
+  const name=document.getElementById('day-name-input').value.trim();
+  if(!name){document.getElementById('day-name-input').focus();return;}
+  if(name.length>40){showToast('Name too long (max 40 chars)','err');return;}
+  let newIdx = null;
+  if(dayCtx.mode==='edit'){CFG[dayCtx.di].label=name;}
+  else{CFG.push({label:name,color:'#C8A96E'});data.push([]);setsDone.push([]);activeDay=CFG.length-1;newIdx=CFG.length-1;}
+  closeDaySheet();persist();render();
+  // Navigate to Program tab and expand new workout
+  setPage('program');
+  if(newIdx!==null){_pbExpanded.clear();_pbExpanded.add(newIdx);}
+  renderPbWorkoutListMain();
+}
 function remapSchedAfterDelete(di){return weekSched.map(v=>{if(v===null||v===undefined)return null;if(v===di)return null;if(v>di)return v-1;return v;});}
-function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);weekSched=remapSchedAfterDelete(di);if(activeDay===di||activeDay>=data.length)activeDay=0;const newCfgIdx=weekSched[selectedWeekIdx];if(newCfgIdx===null||newCfgIdx===undefined||newCfgIdx>=CFG.length){const firstWorkoutWi=weekSched.findIndex(v=>v!==null&&v!==undefined&&v<CFG.length);if(firstWorkoutWi!==-1)selectedWeekIdx=firstWorkoutWi;}closeDaySheet();persist();render();});}
+function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);weekSched=remapSchedAfterDelete(di);if(activeDay===di||activeDay>=data.length)activeDay=0;const newCfgIdx=weekSched[selectedWeekIdx];if(newCfgIdx===null||newCfgIdx===undefined||newCfgIdx>=CFG.length){const firstWorkoutWi=weekSched.findIndex(v=>v!==null&&v!==undefined&&v<CFG.length);if(firstWorkoutWi!==-1)selectedWeekIdx=firstWorkoutWi;}closeDaySheet();persist();render();setPage('program');renderPbWorkoutListMain();});}
 
 function addSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];ex.sets++;const lo=(ex.setOvr&&ex.setOvr[ex.sets-2])||{};if(!ex.setOvr)ex.setOvr=[];ex.setOvr[ex.sets-1]={reps:lo.reps??ex.reps,weight:lo.weight??ex.weight};if(!Array.isArray(setsDone[di][ei]))setsDone[di][ei]=Array(ex.sets).fill(false);else setsDone[di][ei]=[...setsDone[di][ei],false];persist();renderTable();updateDelExBtn();}
 function removeSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];if(ex.sets<=1)return;ex.sets--;if(ex.setOvr)ex.setOvr=ex.setOvr.slice(0,ex.sets);if(Array.isArray(setsDone[di]?.[ei]))setsDone[di][ei]=setsDone[di][ei].slice(0,ex.sets);persist();renderTable();updateDelExBtn();}
@@ -2129,6 +2509,181 @@ function selectReplaceEx(name) {
   persist();
   closeReplaceSheet();
   render();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NEW WORKOUT CREATOR
+// ══════════════════════════════════════════════════════════════════════════════
+let _nwExercises = []; // [{name, sets, reps, weight}]
+let _nwPendingEx = null; // exercise being configured
+
+function openNewWorkoutSheet() {
+  _nwExercises = [];
+  _nwPendingEx = null;
+  document.getElementById('nw-name-input').value = '';
+  document.getElementById('nw-name-btn').style.opacity = '.4';
+  document.getElementById('nw-name-btn').style.pointerEvents = 'none';
+  document.getElementById('nw-step-name').style.display = '';
+  document.getElementById('nw-step-exercises').style.display = 'none';
+  document.getElementById('nw-step-config').style.display = 'none';
+  document.getElementById('ov-new-workout').classList.add('open');
+  setTimeout(() => document.getElementById('nw-name-input').focus(), 300);
+}
+
+function closeNewWorkoutSheet() {
+  document.getElementById('ov-new-workout').classList.remove('open');
+  _nwExercises = [];
+  _nwPendingEx = null;
+}
+
+function nwUpdateNameBtn() {
+  const val = document.getElementById('nw-name-input').value.trim();
+  const btn = document.getElementById('nw-name-btn');
+  if (val.length > 0) {
+    btn.style.opacity = '1'; btn.style.pointerEvents = '';
+  } else {
+    btn.style.opacity = '.4'; btn.style.pointerEvents = 'none';
+  }
+}
+
+function nwGoToExercises() {
+  const name = document.getElementById('nw-name-input').value.trim();
+  if (!name) return;
+  document.getElementById('nw-exercises-title').textContent = name;
+  document.getElementById('nw-step-name').style.display = 'none';
+  document.getElementById('nw-step-exercises').style.display = '';
+  document.getElementById('nw-step-config').style.display = 'none';
+  document.getElementById('nw-search').value = '';
+  nwRenderAdded();
+  nwRenderLib('');
+  document.getElementById('new-workout-sh').scrollTop = 0;
+}
+
+function nwRenderAdded() {
+  const c = document.getElementById('nw-added-list');
+  if (!_nwExercises.length) {
+    c.innerHTML = `<div style="font-family:var(--mono);font-size:8.5px;color:var(--muted);letter-spacing:.1em;padding:12px 0 4px;text-align:center;opacity:.6">No exercises yet — add from the list below</div>`;
+    return;
+  }
+  c.innerHTML = `
+    <div style="background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;margin-bottom:4px">
+      ${_nwExercises.map((ex, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;${i>0?'border-top:1px solid var(--line)':''}">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px">${String(i+1).padStart(2,'0')}</span>
+          <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px">${escHtml(ex.weight)}</span>
+          <button onclick="nwRemoveEx(${i})" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;margin-left:4px">×</button>
+        </div>`).join('')}
+    </div>`;
+}
+
+function nwRemoveEx(i) {
+  _nwExercises.splice(i, 1);
+  nwRenderAdded();
+}
+
+function nwRenderLib(query) {
+  const container = document.getElementById('nw-lib-list');
+  const q = query.trim().toLowerCase();
+  let html = '', anyResults = false;
+  for (const [group, exercises] of Object.entries(EXERCISE_LIBRARY)) {
+    const filtered = q ? exercises.filter(ex => ex.toLowerCase().includes(q)) : exercises;
+    if (!filtered.length) continue;
+    anyResults = true;
+    html += `<div class="replace-group-label">${escHtml(group)}</div>`;
+    filtered.forEach(ex => {
+      const already = _nwExercises.some(e => e.name === ex);
+      const safeEx = ex.replace(/'/g, "\\'");
+      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick="nwOpenConfig('${safeEx}')">${escHtml(ex)}${already?' ✓':''}</button>`;
+    });
+  }
+  if (!anyResults && q) {
+    html = `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No exercises found</div>`;
+  }
+  container.innerHTML = html;
+
+  const customRow = document.getElementById('nw-custom-row');
+  const customBtn = document.getElementById('nw-custom-btn');
+  const trimmed = query.trim();
+  const inLib = trimmed && Object.values(EXERCISE_LIBRARY).flat().some(e => e.toLowerCase() === trimmed.toLowerCase());
+  if (trimmed && !inLib) {
+    customBtn.textContent = `+ Add "${trimmed}" as custom`;
+    customBtn.onclick = () => nwOpenConfig(trimmed);
+    customRow.style.display = 'block';
+  } else {
+    customRow.style.display = 'none';
+  }
+}
+
+function nwFilterList(q) { nwRenderLib(q); }
+
+function nwOpenConfig(name) {
+  if (!name) return;
+  _nwPendingEx = name;
+  document.getElementById('nw-config-name').textContent = name;
+  // pre-fill with last used values if exercise already in list
+  const prev = _nwExercises.find(e => e.name === name);
+  document.getElementById('nw-sets').value = prev ? prev.sets : 3;
+  document.getElementById('nw-reps').value = prev ? prev.reps : 12;
+  document.getElementById('nw-weight').value = prev ? prev.weight : 'BW';
+  document.getElementById('nw-step-exercises').style.display = 'none';
+  document.getElementById('nw-step-config').style.display = '';
+  document.getElementById('new-workout-sh').scrollTop = 0;
+}
+
+function nwBackToExercises() {
+  _nwPendingEx = null;
+  document.getElementById('nw-step-config').style.display = 'none';
+  document.getElementById('nw-step-exercises').style.display = '';
+  nwRenderAdded();
+  nwRenderLib(document.getElementById('nw-search').value);
+  document.getElementById('new-workout-sh').scrollTop = 0;
+}
+
+function nwConfirmAdd() {
+  if (!_nwPendingEx) return;
+  const name = _nwPendingEx.trim();
+  if (!name) return;
+  const sets = parseInt(document.getElementById('nw-sets').value) || 3;
+  const reps = parseInt(document.getElementById('nw-reps').value) || 12;
+  const rawW = document.getElementById('nw-weight').value.trim();
+  const weight = rawW !== '' ? (isNaN(parseFloat(rawW)) ? rawW.toUpperCase() : parseFloat(rawW)+'KG') : 'BW';
+  // replace if already exists, else add
+  const idx = _nwExercises.findIndex(e => e.name === name);
+  if (idx >= 0) _nwExercises[idx] = { name, sets, reps, weight };
+  else _nwExercises.push({ name, sets, reps, weight });
+  showToast(idx >= 0 ? 'Exercise updated' : 'Exercise added', 'ok');
+  nwBackToExercises();
+}
+
+function saveNewWorkout() {
+  const name = document.getElementById('nw-exercises-title').textContent.trim();
+  if (!name) return;
+  if (name.length > 40) { showToast('Name too long (max 40 chars)', 'err'); return; }
+  // Create workout
+  const ci = CFG.length;
+  CFG.push({ label: name, color: '#C8A96E' });
+  const exercises = _nwExercises.map((ex, i) => ({
+    id: i + 1,
+    name: ex.name,
+    sets: ex.sets,
+    reps: ex.reps,
+    weight: ex.weight,
+  }));
+  data.push(exercises);
+  setsDone.push([]);
+  syncSets();
+  activeDay = ci;
+  persist();
+  closeNewWorkoutSheet();
+  // Switch to Program tab and expand new workout
+  render();
+  setPage('program');
+  _pbExpanded.clear();
+  _pbExpanded.add(ci);
+  renderPbWorkoutListMain();
+  showToast('Workout created', 'ok');
 }
 
 render();updateBackupLabel();_lastBackupLabelUpdate=Date.now();
