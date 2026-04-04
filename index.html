@@ -1535,8 +1535,19 @@ function persist() {
 
 function isExDone(di, ei) { return Array.isArray(setsDone[di]?.[ei]) && setsDone[di][ei].length > 0 && setsDone[di][ei].every(Boolean); }
 function isAllDone(di) { return data[di].length > 0 && data[di].every((_,ei) => isExDone(di,ei)); }
-function dayKey(d) { return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
-function calcVol(di) { return data[di].reduce((s,ex) => { const k=parseFloat(ex.weight); return isNaN(k)?s:s+k*ex.sets*ex.reps; }, 0); }
+function dayKey(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function calcVol(di) {
+  return data[di].reduce((s, ex) => {
+    let exVol = 0;
+    for (let si = 0; si < ex.sets; si++) {
+      const wRaw = (ex.setOvr && ex.setOvr[si]?.weight != null) ? ex.setOvr[si].weight : ex.weight;
+      const reps  = (ex.setOvr && ex.setOvr[si]?.reps  != null) ? ex.setOvr[si].reps  : ex.reps;
+      const k = parseFloat(wRaw);
+      if (!isNaN(k)) exVol += k * reps;
+    }
+    return s + exVol;
+  }, 0);
+}
 function fmtVol(v) { return v >= 1000 ? (v/1000).toFixed(1)+'t' : Math.round(v)+'kg'; }
 function calc1RM(weight, reps) { const k=parseFloat(weight); if (isNaN(k)||k<=0||reps<=0) return null; if (reps===1) return k; return Math.round(k*(1+reps/30)); }
 
@@ -2397,70 +2408,39 @@ function _pbMoveEx(ci, ei, dir, isMain) {
   if (isMain) renderPbWorkoutListMain(); else renderPbWorkoutList();
 }
 
-function pbRenameWorkoutMain(ci) {
-  openDayEdit(null, ci);
-}
+function pbRenameWorkoutMain(ci) { openDayEdit(null, ci); }
+function pbRenameWorkout(ci)     { openDayEdit(null, ci); }
 
-function pbDeleteWorkoutMain(ci) {
+function _pbDeleteWorkout(ci, isMain) {
   if (data.length <= 1) { showToast('Cannot delete the last workout','err'); return; }
   confirmAction(`Delete "${CFG[ci].label}"?`, 'All exercises and history for this workout will be removed.', 'Delete', 'danger', () => {
     data.splice(ci,1); setsDone.splice(ci,1); CFG.splice(ci,1);
     weekSched = remapSchedAfterDelete(ci);
     if (activeDay===ci||activeDay>=data.length) activeDay=0;
-    _pbExpanded.delete(ci); persist(); render(); renderPbWorkoutListMain();
+    _pbExpanded.delete(ci); persist(); render();
+    if (isMain) renderPbWorkoutListMain(); else renderPbWorkoutList();
   });
 }
+function pbDeleteWorkoutMain(ci) { _pbDeleteWorkout(ci, true); }
+function pbDeleteWorkout(ci)     { _pbDeleteWorkout(ci, false); }
 
-function pbDeleteExMain(ci, ei) {
+function _pbDeleteEx(ci, ei, isMain) {
   if (data[ci].length <= 1) { showToast('Cannot remove the last exercise','err'); return; }
   confirmAction(`Remove "${data[ci][ei]?.name}"?`, 'This exercise will be removed from the workout.', 'Remove', 'danger', () => {
     data[ci].splice(ei,1); setsDone[ci].splice(ei,1);
-    persist(); render(); renderPbWorkoutListMain();
+    persist(); render();
+    if (isMain) renderPbWorkoutListMain(); else renderPbWorkoutList();
   });
 }
-
-function openPbExAddMain(ci) {
-  _pbAddCtx = { ci };
-  _pbAddSelected = null;
-  document.getElementById('pb-exadd-title').textContent = 'Add to ' + (CFG[ci]?.label || '');
-  document.getElementById('pb-exadd-search').value = '';
-  document.getElementById('pb-exadd-selected').style.display = 'none';
-  document.getElementById('pb-exadd-custom-row').style.display = 'none';
-  renderPbExList('');
-  document.getElementById('ov-pb-exadd').classList.add('open');
-  setTimeout(() => document.getElementById('pb-exadd-search').focus(), 300);
-}
-
-
-
-function pbRenameWorkout(ci) {
-  openDayEdit(null, ci);
-}
-
-function pbDeleteWorkout(ci) {
-  if (data.length <= 1) { showToast('Cannot delete the last workout','err'); return; }
-  confirmAction(`Delete "${CFG[ci].label}"?`, 'All exercises and history for this workout will be removed.', 'Delete', 'danger', () => {
-    data.splice(ci,1); setsDone.splice(ci,1); CFG.splice(ci,1);
-    weekSched = remapSchedAfterDelete(ci);
-    if (activeDay===ci||activeDay>=data.length) activeDay=0;
-    _pbExpanded.delete(ci); persist(); render(); renderPbWorkoutList();
-  });
-}
-
-function pbDeleteEx(ci, ei) {
-  if (data[ci].length <= 1) { showToast('Cannot remove the last exercise','err'); return; }
-  confirmAction(`Remove "${data[ci][ei]?.name}"?`, 'This exercise will be removed from the workout.', 'Remove', 'danger', () => {
-    data[ci].splice(ei,1); setsDone[ci].splice(ei,1);
-    persist(); render(); renderPbWorkoutList();
-  });
-}
+function pbDeleteExMain(ci, ei) { _pbDeleteEx(ci, ei, true); }
+function pbDeleteEx(ci, ei)     { _pbDeleteEx(ci, ei, false); }
 
 // ── PB exercise add sheet ────────────────────────────────────────────────────
 let _pbAddCtx = null;
 let _pbAddSelected = null;
 
-function openPbExAdd(ci) {
-  _pbAddCtx = { ci };
+function _openPbExAdd(ci, isMain) {
+  _pbAddCtx = { ci, isMain };
   _pbAddSelected = null;
   document.getElementById('pb-exadd-title').textContent = 'Add to ' + (CFG[ci]?.label || '');
   document.getElementById('pb-exadd-search').value = '';
@@ -2470,6 +2450,8 @@ function openPbExAdd(ci) {
   document.getElementById('ov-pb-exadd').classList.add('open');
   setTimeout(() => document.getElementById('pb-exadd-search').focus(), 300);
 }
+function openPbExAddMain(ci) { _openPbExAdd(ci, true); }
+function openPbExAdd(ci)     { _openPbExAdd(ci, false); }
 
 function closePbExAdd() {
   document.getElementById('ov-pb-exadd').classList.remove('open');
@@ -2640,10 +2622,12 @@ function selectReplaceEx(name) {
 // ══════════════════════════════════════════════════════════════════════════════
 let _nwExercises = []; // [{name, sets, reps, weight}]
 let _nwPendingEx = null; // exercise being configured
+let _nwWorkoutName = ''; // workout name saved at step 1
 
 function openNewWorkoutSheet() {
   _nwExercises = [];
   _nwPendingEx = null;
+  _nwWorkoutName = '';
   document.getElementById('nw-name-input').value = '';
   document.getElementById('nw-name-btn').style.opacity = '.4';
   document.getElementById('nw-name-btn').style.pointerEvents = 'none';
@@ -2658,6 +2642,7 @@ function closeNewWorkoutSheet() {
   document.getElementById('ov-new-workout').classList.remove('open');
   _nwExercises = [];
   _nwPendingEx = null;
+  _nwWorkoutName = '';
 }
 
 function nwUpdateNameBtn() {
@@ -2673,6 +2658,7 @@ function nwUpdateNameBtn() {
 function nwGoToExercises() {
   const name = document.getElementById('nw-name-input').value.trim();
   if (!name) return;
+  _nwWorkoutName = name;
   document.getElementById('nw-exercises-title').textContent = name;
   document.getElementById('nw-step-name').style.display = 'none';
   document.getElementById('nw-step-exercises').style.display = '';
@@ -2718,8 +2704,7 @@ function nwRenderLib(query) {
     html += `<div class="replace-group-label">${escHtml(group)}</div>`;
     filtered.forEach(ex => {
       const already = _nwExercises.some(e => e.name === ex);
-      const safeEx = ex.replace(/'/g, "\\'");
-      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick="nwOpenConfig('${safeEx}')">${escHtml(ex)}${already?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick="nwOpenConfig(${JSON.stringify(ex)})">${escHtml(ex)}${already?' ✓':''}</button>`;
     });
   }
   if (!anyResults && q) {
@@ -2782,7 +2767,7 @@ function nwConfirmAdd() {
 }
 
 function saveNewWorkout() {
-  const name = document.getElementById('nw-exercises-title').textContent.trim();
+  const name = (_nwWorkoutName || document.getElementById('nw-exercises-title').textContent).trim();
   if (!name) return;
   if (name.length > 40) { showToast('Name too long (max 40 chars)', 'err'); return; }
   // Create workout
@@ -3541,7 +3526,7 @@ function previewTemplate(category, progName) {
   loadBtn.textContent = isAddon ? '➕ Add to my program →' : 'Load this program →';
   loadBtn.onclick = () => loadTemplate(category, progName);
   list.style.display = 'none';
-  backBtn.style.display = 'none';
+  backBtn.style.display = '';
   preview.style.display = '';
   document.getElementById('ov-templates').classList.add('open');
   document.getElementById('tpl-sheet-inner').scrollTop = 0;
@@ -3587,7 +3572,7 @@ function loadTemplate(category, progName) {
         data = prog.workouts.map(w => w.exercises.map((ex, i) => ({
           id: i+1, name: ex.name, sets: ex.sets, reps: ex.reps, weight: ex.weight
         })));
-        setsDone = null;
+        setsDone = [];
         weekSched = prog.schedule ? [...prog.schedule] : [0,null,1,null,2,null,null];
         activeDay = 0;
         syncSets();
@@ -3603,7 +3588,7 @@ function loadTemplate(category, progName) {
 }
 
 function makeIcon(sz){const c=document.createElement('canvas');c.width=c.height=sz;const x=c.getContext('2d');x.fillStyle='#080A08';x.fillRect(0,0,sz,sz);x.fillStyle='#C8A96E';x.font=`${sz*.42}px 'Cormorant Garamond', Georgia, serif`;x.textAlign='center';x.textBaseline='middle';x.fillText('C',sz/2,sz/2);return c.toDataURL('image/png');}
-function registerPWA(){const mf={name:'Consistency',short_name:'Consistency',description:'Premium workout tracker',start_url:'.',display:'standalone',background_color:'#080A08',theme_color:'#080A08',orientation:'portrait',icons:[{src:makeIcon(192),sizes:'192x192',type:'image/png'},{src:makeIcon(512),sizes:'512x512',type:'image/png'}]};document.getElementById('manifest-placeholder').href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/json'}));}
+function registerPWA(){try{const mf={name:'Consistency',short_name:'Consistency',description:'Premium workout tracker',start_url:'.',display:'standalone',background_color:'#080A08',theme_color:'#080A08',orientation:'portrait',icons:[{src:makeIcon(192),sizes:'192x192',type:'image/png'},{src:makeIcon(512),sizes:'512x512',type:'image/png'}]};document.getElementById('manifest-placeholder').href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/json'}));}catch(e){console.warn('PWA manifest registration failed:',e);}}
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(registerPWA);}else{registerPWA();}
 </script>
 
