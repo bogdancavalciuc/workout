@@ -2818,6 +2818,35 @@ render();updateBackupLabel();_lastBackupLabelUpdate=Date.now();
 // ══════════════════════════════════════════════════════════════════════════════
 
 const PROGRAMS = {
+  "Custom": {
+    "PPL Three Day Split": {
+      desc: "3 days · Chest+Shoulders+Triceps / Back+Biceps / Legs",
+      schedule: [0, null, 1, null, 2, null, null],
+      workouts: [
+        { label: "Chest", exercises: [
+          {name:"Incline Bench Press",sets:3,reps:12,weight:"50KG"},
+          {name:"Machine Chest Fly",sets:3,reps:12,weight:"45KG"},
+          {name:"Barbell Overhead Press",sets:3,reps:12,weight:"30KG"},
+          {name:"DB Lateral Raises",sets:3,reps:12,weight:"6KG"},
+          {name:"Triceps Push Down",sets:3,reps:12,weight:"36KG"},
+        ]},
+        { label: "Back", exercises: [
+          {name:"Supinated Lat Pulldown",sets:3,reps:12,weight:"40KG"},
+          {name:"Pronated Cable Row",sets:3,reps:12,weight:"36KG"},
+          {name:"Machine Biceps Curls",sets:3,reps:12,weight:"12KG"},
+          {name:"Rope Trap Shrug",sets:3,reps:15,weight:"40KG"},
+          {name:"Hyperextensions (Back Extensions)",sets:3,reps:15,weight:"10KG"},
+        ]},
+        { label: "Legs", exercises: [
+          {name:"Barbell Back Squat",sets:3,reps:12,weight:"50KG"},
+          {name:"DB Bulgarian Split Squat",sets:3,reps:12,weight:"6KG"},
+          {name:"Romanian Deadlift",sets:3,reps:12,weight:"50KG"},
+          {name:"Smith Calf Raise",sets:3,reps:20,weight:"30KG"},
+          {name:"Leg Press",sets:3,reps:12,weight:"110KG"},
+        ]},
+      ]
+    },
+  },
   "Men": {
     "5 Day Split": {
       desc: "5 days · Back / Chest / Arms / Shoulders+Abs / Legs",
