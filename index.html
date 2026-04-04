@@ -1127,9 +1127,8 @@ body.light .set-row { background: var(--surf); }
 
 <!-- PROGRAM PAGE -->
 <div id="page-program" class="hidden" style="padding:16px 24px 24px">
-  <div id="pb-workout-list-main"></div>
-  <button onclick="openNewWorkoutSheet();" style="width:100%;margin-top:6px;padding:13px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--muted);cursor:pointer;text-transform:uppercase;">+ New workout</button>
-  <div id="programs-section" style="margin-top:18px"></div>
+  <div id="pb-workout-list-main" style="display:none"></div>
+  <div id="programs-section"></div>
 </div>
 
 <!-- HISTORY PAGE -->
@@ -3438,7 +3437,9 @@ const PROGRAMS = {
 function renderProgramsSection() {
   const container = document.getElementById('programs-section');
   if (!container) return;
-  let html = `<div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;padding:18px 0 12px;border-top:1px solid var(--line);margin-top:8px">Program Templates</div>`;
+  let html = `
+    <button onclick="openNewWorkoutSheet();" style="width:100%;padding:13px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--muted);cursor:pointer;text-transform:uppercase;margin-bottom:18px">+ New workout</button>
+    <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:4px">Program Templates</div>`;
   for (const [category, programs] of Object.entries(PROGRAMS)) {
     const isAddon = category === 'Abs';
     html += `<div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;padding:10px 0 6px;display:flex;align-items:center;gap:8px">
