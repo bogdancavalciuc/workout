@@ -1129,6 +1129,7 @@ body.light .set-row { background: var(--surf); }
 <div id="page-program" class="hidden" style="padding:16px 24px 24px">
   <div id="pb-workout-list-main"></div>
   <button onclick="openNewWorkoutSheet();" style="width:100%;margin-top:6px;padding:13px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--muted);cursor:pointer;text-transform:uppercase;">+ New workout</button>
+  <button onclick="openTemplatesSheet();" style="width:100%;margin-top:8px;padding:13px;background:rgba(200,169,110,.07);border:1px solid rgba(200,169,110,.3);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--gold);cursor:pointer;text-transform:uppercase;">📋 Load RFK Program Template</button>
 </div>
 
 <!-- HISTORY PAGE -->
@@ -1475,159 +1476,12 @@ const store = {
   setRaw(key, value) { try { localStorage.setItem(key, value); return true; } catch { return false; } },
 };
 
-// ── PROGRAMS FROM RFKINETIX ──────────────────────────────────────────────────
-// 5 DAY SPLIT (Băieți)
-const P_5DAY = [
-  // Ziua I: Spate
-  [{id:1,name:'Neutral Grip Lat Pulldown',sets:3,reps:12,weight:'BW'},{id:2,name:'Neutral Grip One-Arm Row',sets:3,reps:12,weight:'BW'},{id:3,name:'T-Bar Row',sets:3,reps:12,weight:'BW'},{id:4,name:'Machine/Cable High Row',sets:3,reps:12,weight:'BW'},{id:5,name:'Straight Arm Pullover',sets:3,reps:15,weight:'BW'},{id:6,name:'DB/BB Shrug',sets:3,reps:15,weight:'BW'}],
-  // Ziua II: Piept
-  [{id:1,name:'Horizontal DB/Machine Chest Press',sets:3,reps:12,weight:'BW'},{id:2,name:'Incline DB/Machine Chest Press',sets:3,reps:12,weight:'BW'},{id:3,name:'Cable X Crossover',sets:3,reps:15,weight:'BW'},{id:4,name:'Machine Fly',sets:3,reps:15,weight:'BW'},{id:5,name:'Cable Low-to-High Fly',sets:3,reps:15,weight:'BW'},{id:6,name:'Decline Machine Press / Dips',sets:3,reps:12,weight:'BW'}],
-  // Ziua III: Brațe
-  [{id:1,name:'EZ Bar Curls',sets:3,reps:12,weight:'BW'},{id:2,name:'DB Incline Curls',sets:3,reps:12,weight:'BW'},{id:3,name:'Cable Curls',sets:3,reps:15,weight:'BW'},{id:4,name:'Rope Triceps Pushdown',sets:3,reps:12,weight:'BW'},{id:5,name:'Cable Overhead Triceps Extension',sets:3,reps:12,weight:'BW'},{id:6,name:'Dips / Pushdown Machine',sets:3,reps:12,weight:'BW'}],
-  // Ziua IV: Umeri + Abdomen
-  [{id:1,name:'DB/Machine Overhead Press',sets:3,reps:12,weight:'BW'},{id:2,name:'DB Lateral Raises',sets:3,reps:12,weight:'BW'},{id:3,name:'Cable Lateral Fly',sets:2,reps:15,weight:'BW'},{id:4,name:'Cable/Machine Rear Delt Fly',sets:3,reps:12,weight:'BW'},{id:5,name:'DB High Row',sets:3,reps:12,weight:'BW'},{id:6,name:'Rope crunch',sets:4,reps:20,weight:'BW'}],
-  // Ziua V: Picioare
-  [{id:1,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'DB/BB Romanian deadlift',sets:3,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:3,reps:12,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:3,reps:12,weight:'BW'},{id:6,name:'Machine adductions',sets:3,reps:15,weight:'BW'},{id:7,name:'Machine Calf Raises/Smith Calf Raises',sets:4,reps:15,weight:'BW'}],
-];
-const P_5DAY_CFG = [
-  {label:'5DS — Spate',color:'#C8A96E'},
-  {label:'5DS — Piept',color:'#C8A96E'},
-  {label:'5DS — Brațe',color:'#C8A96E'},
-  {label:'5DS — Umeri+Abs',color:'#C8A96E'},
-  {label:'5DS — Picioare',color:'#C8A96E'},
-];
-
-// PPL SPLIT Băieți — Incepător/Intermediar  (A+B)
-const P_PPL = [
-  // Push A
-  [{id:1,name:'Flat DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:2,name:'Incline DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:3,name:'Cable Low-to-High Fly',sets:3,reps:12,weight:'BW'},{id:4,name:'Pushups',sets:3,reps:12,weight:'BW'},{id:5,name:'Cable Lateral Fly',sets:4,reps:12,weight:'BW'},{id:6,name:'DB/Machine Overhead Press',sets:4,reps:12,weight:'BW'},{id:7,name:'Cable Overhead Triceps Extension',sets:4,reps:12,weight:'BW'},{id:8,name:'Rope Triceps Pushdown',sets:4,reps:12,weight:'BW'}],
-  // Pull A
-  [{id:1,name:'Straight-Arm Cable Pullover',sets:3,reps:15,weight:'BW'},{id:2,name:'Overhand Lat Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'Neutral Grip Cable Row',sets:4,reps:12,weight:'BW'},{id:4,name:'One-Arm Cable Row',sets:4,reps:12,weight:'BW'},{id:5,name:'DB/BB Shrug',sets:4,reps:15,weight:'BW'},{id:6,name:'EZ Bar Reverse Grip Curls',sets:4,reps:12,weight:'BW'},{id:7,name:'EZ Bar Curls',sets:4,reps:12,weight:'BW'}],
-  // Legs A
-  [{id:1,name:'Machine adductions',sets:4,reps:15,weight:'BW'},{id:2,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'DB Reverse Lunge',sets:4,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:6,name:'Machine Calf Raises/Smith Calf Raises',sets:6,reps:15,weight:'BW'}],
-  // Push B
-  [{id:1,name:'Incline DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:2,name:'Flat DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:3,name:'Cable X Crossover',sets:3,reps:15,weight:'BW'},{id:4,name:'Pushups',sets:3,reps:12,weight:'BW'},{id:5,name:'Cable/Machine Rear Delt Fly',sets:4,reps:12,weight:'BW'},{id:6,name:'DB/Machine Overhead Press',sets:4,reps:12,weight:'BW'},{id:7,name:'DB Skullcrushers',sets:4,reps:12,weight:'BW'},{id:8,name:'DB Kickbacks',sets:4,reps:12,weight:'BW'}],
-  // Pull B
-  [{id:1,name:'BB Row',sets:4,reps:12,weight:'BW'},{id:2,name:'Underhand Lat Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'DB High Row',sets:4,reps:12,weight:'BW'},{id:4,name:'One-Arm Cable Row',sets:3,reps:15,weight:'BW'},{id:5,name:'DB/BB Shrug',sets:4,reps:15,weight:'BW'},{id:6,name:'DB Curls',sets:4,reps:12,weight:'BW'},{id:7,name:'DB Hammer Curl',sets:4,reps:12,weight:'BW'}],
-  // Legs B
-  [{id:1,name:'Machine adductions',sets:4,reps:15,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'Leg Press',sets:4,reps:12,weight:'BW'},{id:4,name:'Unilateral hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:6,name:'DB calf raises',sets:6,reps:15,weight:'BW'}],
-];
-const P_PPL_CFG = [
-  {label:'PPL — Push A',color:'#C8A96E'},
-  {label:'PPL — Pull A',color:'#C8A96E'},
-  {label:'PPL — Legs A',color:'#C8A96E'},
-  {label:'PPL — Push B',color:'#C8A96E'},
-  {label:'PPL — Pull B',color:'#C8A96E'},
-  {label:'PPL — Legs B',color:'#C8A96E'},
-];
-
-// FOUR DAY SPLIT Băieți — Incepător/Intermediar
-const P_4DAY = [
-  // Spate - Biceps A
-  [{id:1,name:'Straight-Arm Cable Pullover',sets:3,reps:15,weight:'BW'},{id:2,name:'One-Arm Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'Neutral Grip Cable Row',sets:4,reps:12,weight:'BW'},{id:4,name:'Underhand Lat Pulldown',sets:3,reps:12,weight:'BW'},{id:5,name:'Lumbar Hyperextension',sets:4,reps:15,weight:'BW'},{id:6,name:'EZ Bar Curls',sets:3,reps:12,weight:'BW'},{id:7,name:'DB Spider Curl',sets:3,reps:12,weight:'BW'}],
-  // Piept - Triceps A
-  [{id:1,name:'Flat DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:2,name:'Incline DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:3,name:'Cable Low-to-High Fly',sets:3,reps:15,weight:'BW'},{id:4,name:'Chest Fly Machine',sets:3,reps:15,weight:'BW'},{id:5,name:'Pushups',sets:3,reps:12,weight:'BW'},{id:6,name:'DB Skullcrushers',sets:3,reps:12,weight:'BW'},{id:7,name:'Cross-Body Cable Triceps Extension',sets:3,reps:15,weight:'BW'}],
-  // Legs A
-  [{id:1,name:'Machine adductions',sets:3,reps:15,weight:'BW'},{id:2,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'DB/BB Romanian deadlift',sets:4,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:15,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:4,reps:15,weight:'BW'},{id:6,name:'Leg Press',sets:6,reps:15,weight:'BW'}],
-  // Umeri - Rotatori A
-  [{id:1,name:'Banded External Rotation',sets:3,reps:15,weight:'BW'},{id:2,name:'Cable Lateral Fly',sets:4,reps:15,weight:'BW'},{id:3,name:'DB/Machine Overhead Press',sets:4,reps:12,weight:'BW'},{id:4,name:'DB/BB Shrug',sets:4,reps:15,weight:'BW'},{id:5,name:'Cable/Machine Rear Delt Fly',sets:4,reps:15,weight:'BW'},{id:6,name:'Cable Facepull',sets:4,reps:15,weight:'BW'}],
-  // Spate - Biceps B
-  [{id:1,name:'Straight-Arm Cable Pullover',sets:3,reps:15,weight:'BW'},{id:2,name:'Overhand Lat Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'Underhand Cable Row',sets:4,reps:12,weight:'BW'},{id:4,name:'Underhand Lat Pulldown',sets:3,reps:12,weight:'BW'},{id:5,name:'Lumbar Hyperextension',sets:4,reps:15,weight:'BW'},{id:6,name:'DB One-Arm Isometric Curl',sets:3,reps:10,weight:'BW'},{id:7,name:'DB Hammer Curl',sets:3,reps:12,weight:'BW'}],
-  // Piept - Triceps B
-  [{id:1,name:'Flat DB/Machine Press',sets:4,reps:15,weight:'BW'},{id:2,name:'Incline DB/Machine Press',sets:4,reps:15,weight:'BW'},{id:3,name:'Cable X Crossover',sets:3,reps:15,weight:'BW'},{id:4,name:'Cable Low-to-High Fly',sets:3,reps:15,weight:'BW'},{id:5,name:'Pushups',sets:3,reps:12,weight:'BW'},{id:6,name:'Cable Overhead Triceps Extension',sets:3,reps:12,weight:'BW'},{id:7,name:'Katana Cable Extension',sets:3,reps:15,weight:'BW'}],
-  // Legs B
-  [{id:1,name:'Machine abductions',sets:3,reps:15,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'BB/Machine hip thrust',sets:4,reps:15,weight:'BW'},{id:4,name:'DB Reverse Lunge',sets:3,reps:12,weight:'BW'},{id:5,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:6,name:'Unilateral hamstring curl machine',sets:3,reps:12,weight:'BW'},{id:7,name:'Single leg DB calf raises',sets:6,reps:15,weight:'BW'}],
-  // Umeri - Rotatori B
-  [{id:1,name:'Cable Facepull',sets:3,reps:15,weight:'BW'},{id:2,name:'DB Lateral Raises',sets:4,reps:15,weight:'BW'},{id:3,name:'DB/Machine Overhead Press',sets:4,reps:15,weight:'BW'},{id:4,name:'DB/BB Shrug',sets:4,reps:12,weight:'BW'},{id:5,name:'DB/Cable Y Raises',sets:4,reps:15,weight:'BW'},{id:6,name:'Cable/Machine Rear Delt Fly',sets:4,reps:15,weight:'BW'}],
-];
-const P_4DAY_CFG = [
-  {label:'4DS — Spate+Bi A',color:'#C8A96E'},
-  {label:'4DS — Piept+Tri A',color:'#C8A96E'},
-  {label:'4DS — Legs A',color:'#C8A96E'},
-  {label:'4DS — Umeri A',color:'#C8A96E'},
-  {label:'4DS — Spate+Bi B',color:'#C8A96E'},
-  {label:'4DS — Piept+Tri B',color:'#C8A96E'},
-  {label:'4DS — Legs B',color:'#C8A96E'},
-  {label:'4DS — Umeri B',color:'#C8A96E'},
-];
-
-// THREE DAY SPLIT Fete — Incepătoare/Intermediar
-const P_3DAY_FETE = [
-  // Coapse - Gambe A
-  [{id:1,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:2,name:'DB/BB Romanian deadlift',sets:4,reps:12,weight:'BW'},{id:3,name:'DB Step Ups',sets:4,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:6,name:'DB unilateral calf raises',sets:5,reps:15,weight:'BW'}],
-  // Superior A
-  [{id:1,name:'BB Row',sets:5,reps:12,weight:'BW'},{id:2,name:'Flat DB/Machine Press',sets:5,reps:12,weight:'BW'},{id:3,name:'DB Lateral Raises',sets:5,reps:12,weight:'BW'},{id:4,name:'EZ Bar Curls',sets:4,reps:15,weight:'BW'},{id:5,name:'Cross-Body Cable Triceps Extension',sets:4,reps:15,weight:'BW'},{id:6,name:'Lumbar Hyperextension',sets:4,reps:15,weight:'BW'}],
-  // Fesieri - Adductori A
-  [{id:1,name:'BB/Machine hip thrust',sets:5,reps:12,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:5,reps:12,weight:'BW'},{id:3,name:'Hip abduction machine',sets:4,reps:15,weight:'BW'},{id:4,name:'Hip adduction machine',sets:4,reps:15,weight:'BW'},{id:5,name:'Cable hip extensions (mule kickback)',sets:4,reps:12,weight:'BW'},{id:6,name:'Banded clamshells',sets:4,reps:15,weight:'BW'}],
-  // Coapse - Gambe B
-  [{id:1,name:'BB Squat',sets:4,reps:15,weight:'BW'},{id:2,name:'Leg Press',sets:4,reps:15,weight:'BW'},{id:3,name:'Goblet Squat',sets:4,reps:15,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Unilateral hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:6,name:'Machine/Leg press bilateral calf raises',sets:5,reps:15,weight:'BW'}],
-  // Superior B
-  [{id:1,name:'Incline DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:2,name:'Overhand Lat Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'DB/Machine Overhead Press',sets:3,reps:12,weight:'BW'},{id:4,name:'Cable Facepull',sets:4,reps:15,weight:'BW'},{id:5,name:'Cable Overhead Triceps Extension',sets:4,reps:15,weight:'BW'},{id:6,name:'DB Curls',sets:4,reps:15,weight:'BW'},{id:7,name:'Lumbar Hyperextension',sets:3,reps:15,weight:'BW'}],
-  // Fesieri - Adductori B
-  [{id:1,name:'BB/Machine hip thrust',sets:5,reps:12,weight:'BW'},{id:2,name:'DB Reverse Lunge',sets:5,reps:12,weight:'BW'},{id:3,name:'Cable/Banded hip abductions',sets:4,reps:12,weight:'BW'},{id:4,name:'Physioball isometric adductions',sets:4,reps:15,weight:'BW'},{id:5,name:'One leg hip bridge',sets:4,reps:12,weight:'BW'},{id:6,name:'Banded crab walk',sets:4,reps:12,weight:'BW'}],
-];
-const P_3DAY_FETE_CFG = [
-  {label:'3DS-F — Coapse A',color:'#9B7BB8'},
-  {label:'3DS-F — Superior A',color:'#9B7BB8'},
-  {label:'3DS-F — Fesieri A',color:'#9B7BB8'},
-  {label:'3DS-F — Coapse B',color:'#9B7BB8'},
-  {label:'3DS-F — Superior B',color:'#9B7BB8'},
-  {label:'3DS-F — Fesieri B',color:'#9B7BB8'},
-];
-
-// FOUR DAY SPLIT Fete — Incepătoare/Intermediar
-const P_4DAY_FETE = [
-  // Coapse - Ischogambieri A
-  [{id:1,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:2,name:'DB/BB Romanian deadlift',sets:4,reps:12,weight:'BW'},{id:3,name:'Goblet Squat',sets:3,reps:18,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:15,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:4,reps:15,weight:'BW'},{id:6,name:'DB unilateral calf raises',sets:4,reps:15,weight:'BW'}],
-  // Push A
-  [{id:1,name:'Flat DB/Machine Press',sets:5,reps:12,weight:'BW'},{id:2,name:'Cable Low-to-High Fly',sets:4,reps:12,weight:'BW'},{id:3,name:'Cable X Crossover',sets:4,reps:15,weight:'BW'},{id:4,name:'DB/Machine Overhead Press',sets:5,reps:12,weight:'BW'},{id:5,name:'DB Lateral Raises',sets:4,reps:12,weight:'BW'},{id:6,name:'Cross-Body Cable Triceps Extension',sets:5,reps:12,weight:'BW'}],
-  // Fesieri - Adductori A
-  [{id:1,name:'Hip adduction machine',sets:4,reps:15,weight:'BW'},{id:2,name:'BB/Machine hip thrust',sets:5,reps:12,weight:'BW'},{id:3,name:'DB Bulgarian Split Squat',sets:4,reps:15,weight:'BW'},{id:4,name:'Cable hip extensions (mule kickback)',sets:4,reps:12,weight:'BW'},{id:5,name:'Hip abduction machine',sets:4,reps:15,weight:'BW'},{id:6,name:'Banded clamshells',sets:4,reps:15,weight:'BW'}],
-  // Pull A
-  [{id:1,name:'Straight-Arm Cable Pullover',sets:4,reps:15,weight:'BW'},{id:2,name:'Overhand Lat Pulldown',sets:5,reps:12,weight:'BW'},{id:3,name:'One-Arm Cable Row',sets:4,reps:12,weight:'BW'},{id:4,name:'Neutral Grip Cable Row',sets:5,reps:12,weight:'BW'},{id:5,name:'BB Row',sets:4,reps:15,weight:'BW'},{id:6,name:'DB Curls',sets:4,reps:12,weight:'BW'}],
-  // Coapse - Ischiogambieri B
-  [{id:1,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:2,name:'DB/BB Romanian deadlift',sets:4,reps:12,weight:'BW'},{id:3,name:'DB Reverse Lunge',sets:4,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Unilateral hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:6,name:'Machine/Leg press bilateral calf raises',sets:4,reps:15,weight:'BW'}],
-  // Push B
-  [{id:1,name:'Incline DB/Machine Press',sets:5,reps:12,weight:'BW'},{id:2,name:'Chest Fly Machine',sets:4,reps:15,weight:'BW'},{id:3,name:'Cable High-to-Low Fly',sets:4,reps:12,weight:'BW'},{id:4,name:'Cable/Machine Rear Delt Fly',sets:4,reps:12,weight:'BW'},{id:5,name:'Cable Lateral Fly',sets:5,reps:12,weight:'BW'},{id:6,name:'DB Skullcrushers',sets:4,reps:12,weight:'BW'}],
-  // Fesieri - Adductori B
-  [{id:1,name:'Physioball isometric adductions',sets:4,reps:15,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:5,reps:10,weight:'BW'},{id:3,name:'BB/Machine hip thrust',sets:4,reps:15,weight:'BW'},{id:4,name:'Banded hip abduction',sets:4,reps:15,weight:'BW'},{id:5,name:'Alternative unilateral glute bridges',sets:4,reps:12,weight:'BW'},{id:6,name:'Glute hip hyperextension',sets:4,reps:15,weight:'BW'}],
-  // Pull B
-  [{id:1,name:'One-Arm Pulldown',sets:4,reps:12,weight:'BW'},{id:2,name:'Underhand Lat Pulldown',sets:5,reps:12,weight:'BW'},{id:3,name:'Unilateral hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:4,name:'DB High Row',sets:5,reps:15,weight:'BW'},{id:5,name:'Lumbar Hyperextension',sets:4,reps:12,weight:'BW'},{id:6,name:'EZ Bar Curls',sets:4,reps:12,weight:'BW'}],
-];
-const P_4DAY_FETE_CFG = [
-  {label:'4DS-F — Coapse A',color:'#9B7BB8'},
-  {label:'4DS-F — Push A',color:'#9B7BB8'},
-  {label:'4DS-F — Fesieri A',color:'#9B7BB8'},
-  {label:'4DS-F — Pull A',color:'#9B7BB8'},
-  {label:'4DS-F — Coapse B',color:'#9B7BB8'},
-  {label:'4DS-F — Push B',color:'#9B7BB8'},
-  {label:'4DS-F — Fesieri B',color:'#9B7BB8'},
-  {label:'4DS-F — Pull B',color:'#9B7BB8'},
-];
-
-// ABDOMEN (standalone)
-const P_ABS = [
-  [{id:1,name:'Rope crunch',sets:4,reps:15,weight:'BW'},{id:2,name:'Rope oblique crunch',sets:4,reps:30,weight:'BW'},{id:3,name:"Captain's chair leg raises",sets:4,reps:20,weight:'BW'},{id:4,name:'Side plank crunch',sets:4,reps:20,weight:'BW'},{id:5,name:'Rotation mountain climbers',sets:4,reps:30,weight:'BW'},{id:6,name:'Woodcutters',sets:4,reps:15,weight:'BW'}],
-];
-const P_ABS_CFG = [{label:'Abdomen',color:'#C8A96E'}];
-
-// ── DEFAULT config: merge all programs ───────────────────────────────────────
-const DEF_CFG = [
-  ...P_5DAY_CFG,
-  ...P_PPL_CFG,
-  ...P_4DAY_CFG,
-  ...P_3DAY_FETE_CFG,
-  ...P_4DAY_FETE_CFG,
-  ...P_ABS_CFG,
-];
+const DEF_CFG = [{label:'Push',color:'#C8A96E'},{label:'Pull',color:'#C8A96E'},{label:'Legs',color:'#C8A96E'}];
 const DEF_SCHED = [0, null, 1, null, 2, null, null];
 const DEF = [
-  ...P_5DAY,
-  ...P_PPL,
-  ...P_4DAY,
-  ...P_3DAY_FETE,
-  ...P_4DAY_FETE,
-  ...P_ABS,
+  [{id:1,name:'Incline Bench Press',sets:3,reps:12,weight:'25KG'},{id:2,name:'Machine Chest Fly',sets:3,reps:12,weight:'45KG'},{id:3,name:'Barbell Overhead Press',sets:3,reps:12,weight:'30KG'},{id:4,name:'DB Lateral Raises',sets:3,reps:12,weight:'6KG'},{id:5,name:'Triceps Push Down',sets:3,reps:12,weight:'36KG'}],
+  [{id:1,name:'Supinated Lat Pulldown',sets:3,reps:12,weight:'40KG'},{id:2,name:'Pronated Cable Row',sets:3,reps:12,weight:'36KG'},{id:3,name:'Biceps Curls',sets:3,reps:12,weight:'12KG'},{id:4,name:'Rope Trap Shrug',sets:3,reps:15,weight:'40KG'},{id:5,name:'Hyperextensions',sets:3,reps:15,weight:'BW'}],
+  [{id:1,name:'Barbell Back Squat',sets:3,reps:8,weight:'70KG'},{id:2,name:'Deadlift',sets:3,reps:8,weight:'70KG'},{id:3,name:'Standing Calf Raise',sets:3,reps:20,weight:'150KG'},{id:4,name:'Incline Bench Press',sets:3,reps:12,weight:'25KG'},{id:5,name:'Machine Chest Fly',sets:3,reps:12,weight:'45KG'}],
 ];
 
 let CFG           = store.get(KEYS.cfg)    || DEF_CFG;
@@ -2175,21 +2029,16 @@ const EXERCISE_LIBRARY = {
   "Chest": [
     "Flat DB/Machine Press",
     "Incline DB/Machine Press",
-    "Horizontal DB/Machine Chest Press",
-    "Incline DB/Machine Chest Press",
     "Cable Low-to-High Fly",
     "Cable High-to-Low Fly",
     "Cable Crossover",
-    "Cable X Crossover",
     "Chest Fly Machine",
-    "Decline Machine Press",
     "Pushups",
   ],
   "Back": [
     "Overhand Lat Pulldown",
     "Underhand Lat Pulldown",
     "Neutral Grip Lat Pulldown",
-    "Short Grip Pulldown",
     "One-Arm Pulldown",
     "Neutral Grip Cable Row",
     "Underhand Cable Row",
@@ -2199,7 +2048,6 @@ const EXERCISE_LIBRARY = {
     "Machine High Row",
     "DB High Row",
     "Straight-Arm Cable Pullover",
-    "One-Arm Cable Pullover",
     "DB/BB Shrug",
     "Lumbar Hyperextension",
   ],
@@ -2211,7 +2059,6 @@ const EXERCISE_LIBRARY = {
     "Cable Facepull",
     "Banded External Rotation",
     "DB/Cable Y Raises",
-    "Banded Facepull",
   ],
   "Biceps": [
     "EZ Bar Curls",
@@ -2232,62 +2079,38 @@ const EXERCISE_LIBRARY = {
     "DB Kickbacks",
     "Dips",
     "Triceps Pushdown Machine",
-    "Rope Overhead Cable Extensions",
   ],
   "Quads": [
     "BB Squat",
     "Hack Squat / Pendulum Squat",
     "Goblet Squat",
-    "DB Sumo Squat",
     "DB Split Squat",
     "DB Bulgarian Split Squat",
     "DB Reverse Lunge",
     "DB Step Ups",
     "Leg Extension Machine",
-    "Unilateral Leg Extension Machine",
     "Leg Press",
   ],
   "Hamstrings": [
-    "DB/BB Romanian deadlift",
-    "Hamstring curl machine",
-    "Unilateral hamstring curl machine",
+    "DB/BB Romanian deadlift","BB/DB Romanian deadlift",
+    "Hamstring curl machine","Unilateral hamstring curl machine",
   ],
-  "Glutes & Adductori": [
-    "BB/Machine hip thrust",
-    "Alternative unilateral glute bridges",
-    "One leg hip bridge",
-    "Glute hip hyperextension",
-    "Hip adduction machine",
-    "Hip abduction machine",
-    "Banded clamshells",
-    "Banded hip abduction",
-    "Cable/Banded hip abductions",
-    "Cable hip extensions (mule kickback)",
-    "Physioball isometric adductions",
-    "Banded crab walk",
-    "Machine adductions",
-    "Machine abductions",
+  "Glutes & Adductors": [
+    "BB/Machine hip thrust","Alternative unilateral glute bridges","One leg hip bridge",
+    "Glute hip hyperextension","Hip adduction machine","Hip abduction machine",
+    "Banded clamshells","Banded hip abduction","Cable/Banded hip abductions",
+    "Cable hip extensions (mule kickback)","Physioball isometric adductions",
+    "Banded crab walk","Machine adductions","Machine abductions",
   ],
   "Calves": [
-    "DB unilateral calf raises",
-    "Machine/Leg press bilateral calf raises",
-    "DB calf raises",
-    "Single leg DB calf raises",
-    "Leg press calf raises",
+    "DB unilateral calf raises","Machine/Leg press bilateral calf raises",
+    "DB calf raises","Single leg DB calf raises","Leg press calf raises",
     "Machine Calf Raises/Smith Calf Raises",
   ],
   "Core": [
-    "Rope crunch",
-    "Rope oblique crunch",
-    "Captain's chair leg raises",
-    "Physioball stirs",
-    "Medicine ball/sandbag transfers",
-    "Side plank crunch",
-    "Rotation mountain climbers",
-    "Starfish crunch",
-    "Two up one down",
-    "Woodcutters",
-    "Cable Rope Crunches",
+    "Rope crunch","Rope oblique crunch","Captain's chair leg raises",
+    "Physioball stirs","Medicine ball/sandbag transfers","Side plank crunch",
+    "Rotation mountain climbers","Starfish crunch","Two up one down","Woodcutters","Cable Rope Crunches",
   ],
 };
 
@@ -2990,9 +2813,768 @@ function saveNewWorkout() {
 
 render();updateBackupLabel();_lastBackupLabelUpdate=Date.now();
 
+// ══════════════════════════════════════════════════════════════════════════════
+// RFK PROGRAM TEMPLATES
+// ══════════════════════════════════════════════════════════════════════════════
+
+const RFK_PROGRAMS = {
+  "Bărbați": {
+    "5 Day Split": {
+      desc: "5 zile · Spate / Piept / Brațe / Umeri+Abdomen / Picioare",
+      schedule: [0,1,2,3,4,null,null],
+      workouts: [
+        { label: "Spate", exercises: [
+          {name:"Neutral Grip Lat Pulldown",sets:3,reps:9,weight:"BW"},
+          {name:"Neutral Grip One-Arm Row",sets:3,reps:11,weight:"BW"},
+          {name:"T-Bar Row",sets:3,reps:9,weight:"BW"},
+          {name:"Machine/Cable High Row",sets:3,reps:9,weight:"BW"},
+          {name:"Straight Arm Pullover",sets:3,reps:13,weight:"BW"},
+          {name:"DB/BB Shrug",sets:3,reps:13,weight:"BW"},
+        ]},
+        { label: "Piept", exercises: [
+          {name:"Horizontal DB/Machine Chest Press",sets:3,reps:9,weight:"BW"},
+          {name:"Incline DB/Machine Chest Press",sets:3,reps:9,weight:"BW"},
+          {name:"Cable X Crossover",sets:3,reps:13,weight:"BW"},
+          {name:"Machine Fly",sets:3,reps:13,weight:"BW"},
+          {name:"Low to High Cable Flyes",sets:3,reps:13,weight:"BW"},
+          {name:"Decline Machine Press/Dip Machine",sets:3,reps:10,weight:"BW"},
+        ]},
+        { label: "Brațe", exercises: [
+          {name:"EZ/Straight Bar Curls",sets:3,reps:9,weight:"BW"},
+          {name:"DB Incline Curls",sets:3,reps:11,weight:"BW"},
+          {name:"Cable Curls",sets:3,reps:13,weight:"BW"},
+          {name:"Ninja Cable Extension",sets:3,reps:11,weight:"BW"},
+          {name:"Overhead Rope Extension",sets:3,reps:11,weight:"BW"},
+          {name:"Dips/Pushdown Machine",sets:3,reps:11,weight:"BW"},
+        ]},
+        { label: "Umeri - Abdomen", exercises: [
+          {name:"Machine Overhead Press",sets:3,reps:9,weight:"BW"},
+          {name:"DB Lateral Flyes",sets:3,reps:11,weight:"BW"},
+          {name:"Cable Lateral Flyes",sets:2,reps:12,weight:"BW"},
+          {name:"Rear Delt Cable Flyes",sets:3,reps:11,weight:"BW"},
+          {name:"DB High Row",sets:3,reps:11,weight:"BW"},
+          {name:"Cable Rope Crunches",sets:4,reps:17,weight:"BW"},
+        ]},
+        { label: "Picioare", exercises: [
+          {name:"BB Squat/Hack Squat",sets:4,reps:11,weight:"BW"},
+          {name:"DB Bulgarian Split Squat",sets:4,reps:11,weight:"BW"},
+          {name:"DB/BB RDL",sets:3,reps:10,weight:"BW"},
+          {name:"Machine Leg Extensions",sets:3,reps:11,weight:"BW"},
+          {name:"Machine Hamstring Curls",sets:3,reps:11,weight:"BW"},
+          {name:"Machine Adductions",sets:3,reps:13,weight:"BW"},
+          {name:"Machine Calf Raises",sets:4,reps:13,weight:"BW"},
+        ]},
+      ]
+    },
+    "PPL Split - Avansat": {
+      desc: "6 zile · Push A/B · Pull A/B · Legs A/B",
+      schedule: [0,1,2,null,3,4,5],
+      workouts: [
+        { label: "Push A", exercises: [
+          {name:"DB Horizontal Bench Press",sets:4,reps:9,weight:"BW"},
+          {name:"Incline Machine Press",sets:4,reps:11,weight:"BW"},
+          {name:"Low to High Cable Flyes",sets:3,reps:12,weight:"BW"},
+          {name:"Pushups",sets:3,reps:12,weight:"BW"},
+          {name:"One Arm Cable Lateral Flyes",sets:4,reps:11,weight:"BW"},
+          {name:"DB/Machine Overhead Press",sets:4,reps:10,weight:"BW"},
+          {name:"Cable Overhead Extension",sets:4,reps:12,weight:"BW"},
+          {name:"Cable Triceps Extension",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Pull A", exercises: [
+          {name:"Straight Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
+          {name:"Lat Pulldown",sets:4,reps:10,weight:"BW"},
+          {name:"Neutral Grip Row",sets:4,reps:10,weight:"BW"},
+          {name:"One Arm High Row",sets:4,reps:11,weight:"BW"},
+          {name:"DB Shrugs",sets:4,reps:13,weight:"BW"},
+          {name:"EZ Bar Reverse Grip Curls",sets:4,reps:12,weight:"BW"},
+          {name:"EZ Bar Curls",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Legs A", exercises: [
+          {name:"Machine Adductions",sets:4,reps:13,weight:"BW"},
+          {name:"BB Squat/Hack Squat",sets:4,reps:10,weight:"BW"},
+          {name:"Reverse DB Lunges",sets:4,reps:11,weight:"BW"},
+          {name:"Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Machine Calf Raises",sets:6,reps:13,weight:"BW"},
+        ]},
+        { label: "Push B", exercises: [
+          {name:"DB Incline Bench Press",sets:4,reps:9,weight:"BW"},
+          {name:"Horizontal Machine Press",sets:4,reps:11,weight:"BW"},
+          {name:"Cable X Crossovers",sets:3,reps:13,weight:"BW"},
+          {name:"Pushups",sets:3,reps:12,weight:"BW"},
+          {name:"Cable/Machine Rear Delt Reverse Flyes",sets:4,reps:11,weight:"BW"},
+          {name:"DB/Machine Overhead Press",sets:4,reps:10,weight:"BW"},
+          {name:"DB Skullcrushers",sets:4,reps:11,weight:"BW"},
+          {name:"DB Kickbacks",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Pull B", exercises: [
+          {name:"BB Row",sets:4,reps:10,weight:"BW"},
+          {name:"Short Grip Pulldown",sets:4,reps:11,weight:"BW"},
+          {name:"Straight Bar Cable High Row",sets:4,reps:11,weight:"BW"},
+          {name:"One Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
+          {name:"DB Shrugs",sets:4,reps:13,weight:"BW"},
+          {name:"DB Curls",sets:4,reps:11,weight:"BW"},
+          {name:"DB Hammer Curls",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Legs B", exercises: [
+          {name:"Machine Adductions",sets:4,reps:13,weight:"BW"},
+          {name:"DB Bulgarian Split Squat",sets:4,reps:10,weight:"BW"},
+          {name:"Leg Press",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"DB Calf Raises",sets:6,reps:13,weight:"BW"},
+        ]},
+      ]
+    },
+    "PPL Split - Începător/Intermediar": {
+      desc: "6 zile · Push A/B · Pull A/B · Legs A/B · intensitate mai mică",
+      schedule: [0,1,2,null,3,4,5],
+      workouts: [
+        { label: "Push A", exercises: [
+          {name:"DB Horizontal Bench Press",sets:4,reps:9,weight:"BW"},
+          {name:"Incline Machine Press",sets:4,reps:11,weight:"BW"},
+          {name:"Low to High Cable Flyes",sets:3,reps:12,weight:"BW"},
+          {name:"Pushups",sets:3,reps:12,weight:"BW"},
+          {name:"One Arm Cable Lateral Flyes",sets:4,reps:11,weight:"BW"},
+          {name:"DB/Machine Overhead Press",sets:4,reps:10,weight:"BW"},
+          {name:"Cable Overhead Extension",sets:4,reps:12,weight:"BW"},
+          {name:"Cable Triceps Extension",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Pull A", exercises: [
+          {name:"Straight Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
+          {name:"Lat Pulldown",sets:4,reps:10,weight:"BW"},
+          {name:"Neutral Grip Row",sets:4,reps:10,weight:"BW"},
+          {name:"One Arm High Row",sets:4,reps:11,weight:"BW"},
+          {name:"DB Shrugs",sets:4,reps:13,weight:"BW"},
+          {name:"EZ Bar Reverse Grip Curls",sets:4,reps:12,weight:"BW"},
+          {name:"EZ Bar Curls",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Legs A", exercises: [
+          {name:"Machine Adductions",sets:4,reps:13,weight:"BW"},
+          {name:"BB Squat/Hack Squat",sets:4,reps:10,weight:"BW"},
+          {name:"Reverse DB Lunges",sets:4,reps:11,weight:"BW"},
+          {name:"Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Machine Calf Raises",sets:6,reps:13,weight:"BW"},
+        ]},
+        { label: "Push B", exercises: [
+          {name:"DB Incline Bench Press",sets:4,reps:9,weight:"BW"},
+          {name:"Horizontal Machine Press",sets:4,reps:11,weight:"BW"},
+          {name:"Cable X Crossovers",sets:3,reps:13,weight:"BW"},
+          {name:"Pushups",sets:3,reps:12,weight:"BW"},
+          {name:"Cable/Machine Rear Delt Reverse Flyes",sets:4,reps:11,weight:"BW"},
+          {name:"DB/Machine Overhead Press",sets:4,reps:10,weight:"BW"},
+          {name:"DB Skullcrushers",sets:4,reps:11,weight:"BW"},
+          {name:"DB Kickbacks",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Pull B", exercises: [
+          {name:"BB Row",sets:4,reps:10,weight:"BW"},
+          {name:"Short Grip Pulldown",sets:4,reps:11,weight:"BW"},
+          {name:"Straight Bar Cable High Row",sets:4,reps:11,weight:"BW"},
+          {name:"One Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
+          {name:"DB Shrugs",sets:4,reps:13,weight:"BW"},
+          {name:"DB Curls",sets:4,reps:11,weight:"BW"},
+          {name:"DB Hammer Curls",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Legs B", exercises: [
+          {name:"Machine Adductions",sets:4,reps:13,weight:"BW"},
+          {name:"DB Bulgarian Split Squat",sets:4,reps:10,weight:"BW"},
+          {name:"Leg Press",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"DB Calf Raises",sets:6,reps:13,weight:"BW"},
+        ]},
+      ]
+    },
+    "Four Day Split - Avansat": {
+      desc: "4 zile · Spate+Biceps A/B · Piept+Triceps A/B · Legs A/B · Umeri A/B",
+      schedule: [0,1,2,3,null,null,null],
+      workouts: [
+        { label: "Spate - Biceps A", exercises: [
+          {name:"Straight Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
+          {name:"One Arm Pulldown",sets:4,reps:11,weight:"BW"},
+          {name:"Neutral Grip Seated Row",sets:4,reps:11,weight:"BW"},
+          {name:"Underhand Pullups/Pulldowns",sets:3,reps:11,weight:"BW"},
+          {name:"Lumbar Hyperextension",sets:4,reps:13,weight:"BW"},
+          {name:"EZ Bar Curls",sets:3,reps:11,weight:"BW"},
+          {name:"DB/EZ Bar Spider Curl",sets:3,reps:11,weight:"BW"},
+        ]},
+        { label: "Piept - Triceps A", exercises: [
+          {name:"Horizontal DB/BB Bench Press",sets:4,reps:10,weight:"BW"},
+          {name:"Incline Press Machine",sets:4,reps:10,weight:"BW"},
+          {name:"Cable One Arm Low to High Flyes",sets:3,reps:13,weight:"BW"},
+          {name:"Chest Fly Machine",sets:3,reps:13,weight:"BW"},
+          {name:"Pushups",sets:3,reps:12,weight:"BW"},
+          {name:"DB Skullcrushers",sets:3,reps:11,weight:"BW"},
+          {name:"Cable Triceps Extensions",sets:3,reps:13,weight:"BW"},
+        ]},
+        { label: "Legs A", exercises: [
+          {name:"Machine Adductions",sets:3,reps:13,weight:"BW"},
+          {name:"BB Squat/Hack Squat",sets:4,reps:10,weight:"BW"},
+          {name:"BB/DB Romanian Deadlift",sets:4,reps:11,weight:"BW"},
+          {name:"Leg Extension Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Hamstring Curl Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Leg Press Calf Raises",sets:6,reps:13,weight:"BW"},
+        ]},
+        { label: "Umeri - Rotatori A", exercises: [
+          {name:"Banded/Cable External Rotations",sets:3,reps:13,weight:"BW"},
+          {name:"One Arm Cable Lateral Fly",sets:4,reps:12,weight:"BW"},
+          {name:"DB/BB/Machine Overhead Press",sets:4,reps:10,weight:"BW"},
+          {name:"DB Shrugs",sets:4,reps:13,weight:"BW"},
+          {name:"Machine Rear Delt Reverse Fly",sets:4,reps:13,weight:"BW"},
+          {name:"Cable Facepull",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Spate - Biceps B", exercises: [
+          {name:"One Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
+          {name:"Overhand Lat Pulldown",sets:4,reps:10,weight:"BW"},
+          {name:"Underhand Cable/Machine Row",sets:4,reps:10,weight:"BW"},
+          {name:"Underhand Pullups/Pulldowns",sets:3,reps:11,weight:"BW"},
+          {name:"Lumbar Hyperextension",sets:4,reps:13,weight:"BW"},
+          {name:"DB One Arm Isometric Curl",sets:3,reps:9,weight:"BW"},
+          {name:"DB Hammer Curl",sets:3,reps:11,weight:"BW"},
+        ]},
+        { label: "Piept - Triceps B", exercises: [
+          {name:"Cable X Crossover",sets:3,reps:13,weight:"BW"},
+          {name:"Incline DB/Machine Press",sets:4,reps:13,weight:"BW"},
+          {name:"Horizontal DB/Machine Press",sets:4,reps:13,weight:"BW"},
+          {name:"Low to High Cable Flyes",sets:3,reps:13,weight:"BW"},
+          {name:"Pushups",sets:3,reps:12,weight:"BW"},
+          {name:"Rope Overhead Cable Extensions",sets:3,reps:11,weight:"BW"},
+          {name:"Katana Cable Extensions",sets:3,reps:13,weight:"BW"},
+        ]},
+        { label: "Legs B", exercises: [
+          {name:"Machine Abductions",sets:3,reps:13,weight:"BW"},
+          {name:"DB/BB Bulgarian Split Squat",sets:4,reps:10,weight:"BW"},
+          {name:"BB Hip Thrust",sets:4,reps:12,weight:"BW"},
+          {name:"DB Reverse Lunges",sets:3,reps:10,weight:"BW"},
+          {name:"Unilateral Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Hamstring Curl Machine",sets:3,reps:11,weight:"BW"},
+          {name:"Single Leg DB Calf Raises",sets:6,reps:13,weight:"BW"},
+        ]},
+        { label: "Umeri - Rotatori B", exercises: [
+          {name:"Banded Facepull",sets:3,reps:13,weight:"BW"},
+          {name:"DB Lateral Fly",sets:4,reps:12,weight:"BW"},
+          {name:"DB/BB/Machine Overhead Press",sets:4,reps:13,weight:"BW"},
+          {name:"DB Shrugs",sets:4,reps:10,weight:"BW"},
+          {name:"DB/Cable Y Raises",sets:4,reps:13,weight:"BW"},
+          {name:"Chest Supported Cable Rear Delt Fly",sets:4,reps:12,weight:"BW"},
+        ]},
+      ]
+    },
+    "Four Day Split - Începător/Intermediar": {
+      desc: "4 zile · Spate+Biceps A/B · Piept+Triceps A/B · Legs A/B · Umeri A/B",
+      schedule: [0,1,2,3,null,null,null],
+      workouts: [
+        { label: "Spate - Biceps A", exercises: [
+          {name:"Straight Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
+          {name:"One Arm Pulldown",sets:4,reps:11,weight:"BW"},
+          {name:"Neutral Grip Seated Row",sets:4,reps:11,weight:"BW"},
+          {name:"Underhand Pullups/Pulldowns",sets:3,reps:11,weight:"BW"},
+          {name:"Lumbar Hyperextension",sets:4,reps:13,weight:"BW"},
+          {name:"EZ Bar Curls",sets:3,reps:11,weight:"BW"},
+          {name:"DB/EZ Bar Spider Curl",sets:3,reps:11,weight:"BW"},
+        ]},
+        { label: "Piept - Triceps A", exercises: [
+          {name:"Horizontal DB/BB Bench Press",sets:4,reps:10,weight:"BW"},
+          {name:"Incline Press Machine",sets:4,reps:10,weight:"BW"},
+          {name:"Cable One Arm Low to High Flyes",sets:3,reps:13,weight:"BW"},
+          {name:"Chest Fly Machine",sets:3,reps:13,weight:"BW"},
+          {name:"Pushups",sets:3,reps:12,weight:"BW"},
+          {name:"DB Skullcrushers",sets:3,reps:11,weight:"BW"},
+          {name:"Cable Triceps Extensions",sets:3,reps:13,weight:"BW"},
+        ]},
+        { label: "Legs A", exercises: [
+          {name:"Machine Adductions",sets:3,reps:13,weight:"BW"},
+          {name:"BB Squat/Hack Squat",sets:4,reps:10,weight:"BW"},
+          {name:"BB/DB Romanian Deadlift",sets:4,reps:11,weight:"BW"},
+          {name:"Leg Extension Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Hamstring Curl Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Leg Press Calf Raises",sets:6,reps:13,weight:"BW"},
+        ]},
+        { label: "Umeri - Rotatori A", exercises: [
+          {name:"Banded/Cable External Rotations",sets:3,reps:13,weight:"BW"},
+          {name:"One Arm Cable Lateral Fly",sets:4,reps:12,weight:"BW"},
+          {name:"DB/BB/Machine Overhead Press",sets:4,reps:10,weight:"BW"},
+          {name:"DB Shrugs",sets:4,reps:13,weight:"BW"},
+          {name:"Machine Rear Delt Reverse Fly",sets:4,reps:13,weight:"BW"},
+          {name:"Cable Facepull",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Spate - Biceps B", exercises: [
+          {name:"One Arm Cable Pullover",sets:3,reps:13,weight:"BW"},
+          {name:"Overhand Lat Pulldown",sets:4,reps:10,weight:"BW"},
+          {name:"Underhand Cable/Machine Row",sets:4,reps:10,weight:"BW"},
+          {name:"Underhand Pullups/Pulldowns",sets:3,reps:11,weight:"BW"},
+          {name:"Lumbar Hyperextension",sets:4,reps:13,weight:"BW"},
+          {name:"DB One Arm Isometric Curl",sets:3,reps:9,weight:"BW"},
+          {name:"DB Hammer Curl",sets:3,reps:11,weight:"BW"},
+        ]},
+        { label: "Piept - Triceps B", exercises: [
+          {name:"Cable X Crossover",sets:3,reps:13,weight:"BW"},
+          {name:"Incline DB/Machine Press",sets:4,reps:13,weight:"BW"},
+          {name:"Horizontal DB/Machine Press",sets:4,reps:13,weight:"BW"},
+          {name:"Low to High Cable Flyes",sets:3,reps:13,weight:"BW"},
+          {name:"Pushups",sets:3,reps:12,weight:"BW"},
+          {name:"Rope Overhead Cable Extensions",sets:3,reps:11,weight:"BW"},
+          {name:"Katana Cable Extensions",sets:3,reps:13,weight:"BW"},
+        ]},
+        { label: "Legs B", exercises: [
+          {name:"Machine Abductions",sets:3,reps:13,weight:"BW"},
+          {name:"DB/BB Bulgarian Split Squat",sets:4,reps:10,weight:"BW"},
+          {name:"BB Hip Thrust",sets:4,reps:12,weight:"BW"},
+          {name:"DB Reverse Lunges",sets:3,reps:10,weight:"BW"},
+          {name:"Unilateral Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Hamstring Curl Machine",sets:3,reps:11,weight:"BW"},
+          {name:"Single Leg DB Calf Raises",sets:6,reps:13,weight:"BW"},
+        ]},
+        { label: "Umeri - Rotatori B", exercises: [
+          {name:"Banded Facepull",sets:3,reps:13,weight:"BW"},
+          {name:"DB Lateral Fly",sets:4,reps:12,weight:"BW"},
+          {name:"DB/BB/Machine Overhead Press",sets:4,reps:13,weight:"BW"},
+          {name:"DB Shrugs",sets:4,reps:10,weight:"BW"},
+          {name:"DB/Cable Y Raises",sets:4,reps:13,weight:"BW"},
+          {name:"Chest Supported Cable Rear Delt Fly",sets:4,reps:12,weight:"BW"},
+        ]},
+      ]
+    },
+  },
+  "Fete": {
+    "Three Day Split - Avansat": {
+      desc: "3 zile · Coapse+Gambe A/B · Superior A/B · Fesieri+Adductori A/B",
+      schedule: [0,null,1,null,2,null,null],
+      workouts: [
+        { label: "Coapse - Gambe A", exercises: [
+          {name:"BB Squat/Hack Squat",sets:5,reps:10,weight:"BW"},
+          {name:"DB/BB Romanian Deadlift",sets:5,reps:11,weight:"BW"},
+          {name:"DB Step Ups",sets:4,reps:11,weight:"BW"},
+          {name:"Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"DB Unilateral Calf Raises",sets:5,reps:13,weight:"BW"},
+        ]},
+        { label: "Superior A", exercises: [
+          {name:"BB/Machine Row",sets:4,reps:10,weight:"BW"},
+          {name:"Straight Arm Rope Pullover",sets:3,reps:11,weight:"BW"},
+          {name:"DB/Machine Horizontal Press",sets:4,reps:10,weight:"BW"},
+          {name:"Cable X Crossover",sets:3,reps:11,weight:"BW"},
+          {name:"DB Lateral Raises",sets:3,reps:11,weight:"BW"},
+          {name:"EZ Bar Curls",sets:4,reps:12,weight:"BW"},
+          {name:"Cross Cable Triceps Extensions",sets:4,reps:12,weight:"BW"},
+          {name:"Lumbar Hyperextension",sets:3,reps:13,weight:"BW"},
+        ]},
+        { label: "Fesieri - Adductori A", exercises: [
+          {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
+          {name:"DB Bulgarian Split Squat",sets:5,reps:10,weight:"BW"},
+          {name:"Hip Abduction Machine",sets:5,reps:13,weight:"BW"},
+          {name:"Hip Adduction Machine",sets:5,reps:13,weight:"BW"},
+          {name:"Cable Hip Extensions (Mule Kickbacks)",sets:4,reps:11,weight:"BW"},
+          {name:"Banded Clamshells",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Coapse - Gambe B", exercises: [
+          {name:"BB Squat/Hack Squat",sets:5,reps:13,weight:"BW"},
+          {name:"Leg Press",sets:5,reps:13,weight:"BW"},
+          {name:"Goblet Squat",sets:5,reps:13,weight:"BW"},
+          {name:"Unilateral Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Bilateral Machine Calf Raises",sets:5,reps:13,weight:"BW"},
+        ]},
+        { label: "Superior B", exercises: [
+          {name:"DB/Machine Incline Chest Press",sets:4,reps:11,weight:"BW"},
+          {name:"Overhand Lat Pulldown",sets:4,reps:11,weight:"BW"},
+          {name:"Overhead Rope Tricep Extensions",sets:4,reps:13,weight:"BW"},
+          {name:"DB Curls",sets:4,reps:13,weight:"BW"},
+          {name:"Lumbar Hyperextension",sets:3,reps:13,weight:"BW"},
+          {name:"DB/Machine Overhead Press",sets:3,reps:11,weight:"BW"},
+          {name:"Cable Facepull",sets:4,reps:13,weight:"BW"},
+          {name:"Low to High Cable Flyes",sets:3,reps:13,weight:"BW"},
+        ]},
+        { label: "Fesieri - Adductori B", exercises: [
+          {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
+          {name:"DB Reverse Lunges",sets:5,reps:10,weight:"BW"},
+          {name:"Cable/Banded Hip Abductions",sets:5,reps:11,weight:"BW"},
+          {name:"Physioball Isometric Adductions",sets:5,reps:13,weight:"BW"},
+          {name:"One Leg Hip Bridge",sets:5,reps:11,weight:"BW"},
+          {name:"Banded Crab Walk",sets:4,reps:11,weight:"BW"},
+        ]},
+      ]
+    },
+    "Three Day Split - Începător/Intermediar": {
+      desc: "3 zile · Coapse+Gambe A/B · Superior A/B · Fesieri+Adductori A/B",
+      schedule: [0,null,1,null,2,null,null],
+      workouts: [
+        { label: "Coapse - Gambe A", exercises: [
+          {name:"BB Squat/Hack Squat",sets:4,reps:10,weight:"BW"},
+          {name:"DB/BB Romanian Deadlift",sets:4,reps:11,weight:"BW"},
+          {name:"DB Step Ups",sets:4,reps:11,weight:"BW"},
+          {name:"Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"DB Unilateral Calf Raises",sets:5,reps:13,weight:"BW"},
+        ]},
+        { label: "Superior A", exercises: [
+          {name:"BB/Machine Row",sets:5,reps:10,weight:"BW"},
+          {name:"DB/Machine Horizontal Press",sets:5,reps:10,weight:"BW"},
+          {name:"DB Lateral Raises",sets:5,reps:11,weight:"BW"},
+          {name:"EZ Bar Curls",sets:4,reps:12,weight:"BW"},
+          {name:"Cross Cable Triceps Extensions",sets:4,reps:12,weight:"BW"},
+          {name:"Lumbar Hyperextension",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Fesieri - Adductori A", exercises: [
+          {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
+          {name:"DB Bulgarian Split Squat",sets:5,reps:10,weight:"BW"},
+          {name:"Hip Abduction Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Hip Adduction Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Cable Hip Extensions (Mule Kickbacks)",sets:4,reps:11,weight:"BW"},
+          {name:"Banded Clamshells",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Coapse - Gambe B", exercises: [
+          {name:"BB Squat/Hack Squat",sets:4,reps:13,weight:"BW"},
+          {name:"Leg Press",sets:4,reps:13,weight:"BW"},
+          {name:"Goblet Squat",sets:4,reps:13,weight:"BW"},
+          {name:"Unilateral Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Bilateral Machine Calf Raises",sets:5,reps:13,weight:"BW"},
+        ]},
+        { label: "Superior B", exercises: [
+          {name:"DB/Machine Incline Chest Press",sets:5,reps:11,weight:"BW"},
+          {name:"Overhand Lat Pulldown",sets:5,reps:11,weight:"BW"},
+          {name:"DB/Machine Overhead Press",sets:5,reps:11,weight:"BW"},
+          {name:"Overhead Rope Tricep Extensions",sets:4,reps:13,weight:"BW"},
+          {name:"DB Hammer Curls",sets:4,reps:13,weight:"BW"},
+          {name:"Lumbar Hyperextension",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Fesieri - Adductori B", exercises: [
+          {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
+          {name:"DB Reverse Lunges",sets:5,reps:10,weight:"BW"},
+          {name:"Cable/Banded Hip Abductions",sets:4,reps:11,weight:"BW"},
+          {name:"Physioball Isometric Adductions",sets:4,reps:13,weight:"BW"},
+          {name:"One Leg Hip Bridge",sets:4,reps:11,weight:"BW"},
+          {name:"Banded Crab Walk",sets:4,reps:11,weight:"BW"},
+        ]},
+      ]
+    },
+    "Four Day Split - Avansat": {
+      desc: "4 zile · Coapse+Ischiogg A/B · Push A/B · Fesieri+Adductori A/B · Pull A/B",
+      schedule: [0,1,2,3,null,null,null],
+      workouts: [
+        { label: "Coapse - Ischiogambieri A", exercises: [
+          {name:"BB Squat/Hack Squat",sets:5,reps:10,weight:"BW"},
+          {name:"DB/BB Romanian Deadlift",sets:4,reps:11,weight:"BW"},
+          {name:"Goblet Squat",sets:4,reps:16,weight:"BW"},
+          {name:"Leg Extension Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Hamstring Curl Machine",sets:4,reps:13,weight:"BW"},
+          {name:"DB Unilateral Calf Raises",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Push A", exercises: [
+          {name:"DB/Machine Horizontal Press",sets:5,reps:10,weight:"BW"},
+          {name:"Low to High Cable Flyes",sets:4,reps:11,weight:"BW"},
+          {name:"Cable X Crossover",sets:4,reps:13,weight:"BW"},
+          {name:"DB/Machine Overhead Press",sets:5,reps:10,weight:"BW"},
+          {name:"DB/Machine Lateral Flyes",sets:4,reps:11,weight:"BW"},
+          {name:"Triceps Cross Cable Extensions",sets:5,reps:11,weight:"BW"},
+        ]},
+        { label: "Fesieri - Adductori A", exercises: [
+          {name:"Hip Adduction Machine",sets:4,reps:13,weight:"BW"},
+          {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
+          {name:"DB Bulgarian Split Squat",sets:4,reps:13,weight:"BW"},
+          {name:"Cable Hip Extensions (Mule Kickback)",sets:4,reps:11,weight:"BW"},
+          {name:"Hip Abduction Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Banded Clamshells",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Pull A", exercises: [
+          {name:"Straight Bar/Rope Cable Pullover",sets:4,reps:13,weight:"BW"},
+          {name:"Overhand Lat Pulldown",sets:5,reps:11,weight:"BW"},
+          {name:"One Arm High Row",sets:4,reps:11,weight:"BW"},
+          {name:"Machine/Cable Neutral Grip Row",sets:5,reps:11,weight:"BW"},
+          {name:"BB Row",sets:4,reps:13,weight:"BW"},
+          {name:"DB Curls",sets:4,reps:11,weight:"BW"},
+        ]},
+        { label: "Coapse - Ischiogambieri B", exercises: [
+          {name:"BB Squat/Pendulum Squat",sets:5,reps:10,weight:"BW"},
+          {name:"DB/BB Reverse Lunges",sets:4,reps:11,weight:"BW"},
+          {name:"DB Sumo Squat",sets:4,reps:16,weight:"BW"},
+          {name:"Unilateral Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Machine Calf Raises",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Push B", exercises: [
+          {name:"DB/Machine Incline Press",sets:5,reps:10,weight:"BW"},
+          {name:"Machine/Horizontal Cable Flyes",sets:4,reps:13,weight:"BW"},
+          {name:"High to Low Cable Flyes",sets:4,reps:11,weight:"BW"},
+          {name:"Rear Delt Cable/Machine Flyes",sets:4,reps:11,weight:"BW"},
+          {name:"Cable One Arm Lateral Flyes",sets:5,reps:11,weight:"BW"},
+          {name:"DB Skullcrushers",sets:4,reps:11,weight:"BW"},
+        ]},
+        { label: "Fesieri - Adductori B", exercises: [
+          {name:"Physioball Isometric Adductions",sets:4,reps:13,weight:"BW"},
+          {name:"DB Bulgarian Split Squat",sets:5,reps:9,weight:"BW"},
+          {name:"BB/Machine Hip Thrust",sets:4,reps:13,weight:"BW"},
+          {name:"Banded Hip Abduction",sets:4,reps:13,weight:"BW"},
+          {name:"Alternative Unilateral Glute Bridges",sets:4,reps:11,weight:"BW"},
+          {name:"Glute Hip Hyperextension",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Pull B", exercises: [
+          {name:"Unilateral Cable Pullover",sets:4,reps:11,weight:"BW"},
+          {name:"Underhand Lat Pulldown",sets:5,reps:10,weight:"BW"},
+          {name:"Unilateral Machine/DB Row",sets:4,reps:11,weight:"BW"},
+          {name:"Cable/Machine/DB High Row",sets:5,reps:13,weight:"BW"},
+          {name:"Lumbar Hyperextension",sets:4,reps:11,weight:"BW"},
+          {name:"EZ Bar Curls",sets:4,reps:11,weight:"BW"},
+        ]},
+      ]
+    },
+    "Four Day Split - Începător/Intermediar": {
+      desc: "4 zile · Coapse+Ischiogg A/B · Push A/B · Fesieri+Adductori A/B · Pull A/B",
+      schedule: [0,1,null,2,3,null,null],
+      workouts: [
+        { label: "Coapse - Ischiogambieri A", exercises: [
+          {name:"BB Squat/Hack Squat",sets:4,reps:10,weight:"BW"},
+          {name:"DB/BB Romanian Deadlift",sets:4,reps:11,weight:"BW"},
+          {name:"Goblet Squat",sets:3,reps:16,weight:"BW"},
+          {name:"Leg Extension Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Hamstring Curl Machine",sets:4,reps:13,weight:"BW"},
+          {name:"DB Unilateral Calf Raises",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Push A", exercises: [
+          {name:"DB/Machine Horizontal Press",sets:5,reps:10,weight:"BW"},
+          {name:"Cable X Crossover",sets:4,reps:13,weight:"BW"},
+          {name:"DB/Machine Overhead Press",sets:5,reps:10,weight:"BW"},
+          {name:"DB/Machine Lateral Flyes",sets:4,reps:12,weight:"BW"},
+          {name:"Rope Triceps Extensions",sets:4,reps:11,weight:"BW"},
+        ]},
+        { label: "Fesieri - Adductori A", exercises: [
+          {name:"Hip Adduction Machine",sets:4,reps:13,weight:"BW"},
+          {name:"BB/Machine Hip Thrust",sets:5,reps:10,weight:"BW"},
+          {name:"Cable Hip Extensions (Mule Kickback)",sets:4,reps:11,weight:"BW"},
+          {name:"Hip Abduction Machine",sets:4,reps:13,weight:"BW"},
+          {name:"Banded Clamshells",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Pull A", exercises: [
+          {name:"Straight Bar/Rope Cable Pullover",sets:4,reps:13,weight:"BW"},
+          {name:"Overhand Lat Pulldown",sets:5,reps:11,weight:"BW"},
+          {name:"One Arm High Row",sets:4,reps:11,weight:"BW"},
+          {name:"Machine/Cable Neutral Grip Row",sets:5,reps:11,weight:"BW"},
+          {name:"DB Curls",sets:4,reps:11,weight:"BW"},
+        ]},
+        { label: "Coapse - Ischiogambieri B", exercises: [
+          {name:"BB Squat/Pendulum Squat",sets:4,reps:10,weight:"BW"},
+          {name:"DB/BB Reverse Lunges",sets:4,reps:11,weight:"BW"},
+          {name:"DB Sumo Squat",sets:3,reps:16,weight:"BW"},
+          {name:"Unilateral Leg Extension Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Unilateral Hamstring Curl Machine",sets:4,reps:11,weight:"BW"},
+          {name:"Machine Calf Raises",sets:4,reps:13,weight:"BW"},
+        ]},
+        { label: "Push B", exercises: [
+          {name:"DB/Machine Incline Press",sets:5,reps:10,weight:"BW"},
+          {name:"Machine/Horizontal Cable Flyes",sets:4,reps:13,weight:"BW"},
+          {name:"Rear Delt Cable/Machine Flyes",sets:4,reps:11,weight:"BW"},
+          {name:"Cable One Arm Lateral Flyes",sets:5,reps:11,weight:"BW"},
+          {name:"DB Skullcrushers",sets:4,reps:11,weight:"BW"},
+        ]},
+        { label: "Fesieri - Adductori B", exercises: [
+          {name:"Physioball Isometric Adductions",sets:4,reps:13,weight:"BW"},
+          {name:"DB Split Squat",sets:5,reps:9,weight:"BW"},
+          {name:"Banded Hip Abduction",sets:4,reps:13,weight:"BW"},
+          {name:"Alternative Unilateral Glute Bridges",sets:4,reps:11,weight:"BW"},
+          {name:"Glute Hip Hyperextension",sets:4,reps:12,weight:"BW"},
+        ]},
+        { label: "Pull B", exercises: [
+          {name:"Unilateral Cable Pullover",sets:4,reps:11,weight:"BW"},
+          {name:"Underhand Lat Pulldown",sets:5,reps:10,weight:"BW"},
+          {name:"Unilateral Machine/DB Row",sets:4,reps:11,weight:"BW"},
+          {name:"Cable/Machine/DB High Row",sets:5,reps:13,weight:"BW"},
+          {name:"EZ Bar Curls",sets:4,reps:11,weight:"BW"},
+        ]},
+      ]
+    },
+  },
+  "Abdomen": {
+    "Antrenament Abdomen": {
+      desc: "Exerciții abdomen · Superior / Oblic / Inferior",
+      schedule: [null,null,null,null,null,null,null],
+      workouts: [
+        { label: "Abdomen", exercises: [
+          {name:"Rope Crunch",sets:3,reps:13,weight:"BW"},
+          {name:"Rope Oblique Crunch",sets:3,reps:30,weight:"BW"},
+          {name:"Captain's Chair Leg Raises",sets:3,reps:18,weight:"BW"},
+          {name:"Physioball Stirs",sets:3,reps:12,weight:"BW"},
+          {name:"Side Plank Crunch",sets:3,reps:21,weight:"BW"},
+          {name:"Rotation Mountain Climbers",sets:3,reps:30,weight:"BW"},
+          {name:"Starfish Crunch",sets:3,reps:30,weight:"BW"},
+          {name:"Two Up One Down",sets:3,reps:30,weight:"BW"},
+          {name:"Woodcutters",sets:3,reps:13,weight:"BW"},
+        ]},
+      ]
+    },
+  },
+};
+
+function openTemplatesSheet() {
+  renderTemplatesList();
+  document.getElementById('ov-templates').classList.add('open');
+}
+function closeTemplatesSheet() {
+  document.getElementById('ov-templates').classList.remove('open');
+  document.getElementById('tpl-preview').style.display = 'none';
+  document.getElementById('tpl-list').style.display = '';
+  document.getElementById('tpl-back-btn').style.display = 'none';
+}
+
+function renderTemplatesList() {
+  const container = document.getElementById('tpl-list');
+  let html = '';
+  for (const [category, programs] of Object.entries(RFK_PROGRAMS)) {
+    const isAddon = category === 'Abdomen';
+    html += `<div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;padding:14px 0 8px;border-bottom:1px solid var(--line);margin-bottom:8px;display:flex;align-items:center;gap:8px">
+      ${escHtml(category)}
+      ${isAddon ? `<span style="font-size:7px;background:rgba(200,169,110,.12);color:var(--gold3);border:1px solid rgba(200,169,110,.25);border-radius:20px;padding:2px 8px;letter-spacing:.1em">ADD-ON</span>` : ''}
+    </div>`;
+    for (const [progName, prog] of Object.entries(programs)) {
+      const wCount = prog.workouts.length;
+      const safeCategory = JSON.stringify(category).replace(/"/g,'&quot;');
+      const safeProgName = JSON.stringify(progName).replace(/"/g,'&quot;');
+      html += `
+        <button onclick="previewTemplate(${safeCategory},${safeProgName})"
+          style="width:100%;text-align:left;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,background .2s;display:block">
+          <div style="font-family:var(--serif);font-size:16px;color:var(--text);letter-spacing:.02em;margin-bottom:4px">${escHtml(progName)}</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.06em;line-height:1.6">${escHtml(prog.desc)}</div>
+          <div style="font-family:var(--mono);font-size:7.5px;color:${isAddon ? 'var(--gold)' : 'var(--gold3)'};letter-spacing:.1em;margin-top:6px">${isAddon ? '➕ ' : ''}${wCount} antrenament${wCount!==1?'e':''}</div>
+        </button>`;
+    }
+  }
+  container.innerHTML = html;
+}
+
+function previewTemplate(category, progName) {
+  const prog = RFK_PROGRAMS[category][progName];
+  if (!prog) return;
+  const isAddon = category === 'Abdomen';
+  const preview = document.getElementById('tpl-preview');
+  const list = document.getElementById('tpl-list');
+  const backBtn = document.getElementById('tpl-back-btn');
+  document.getElementById('tpl-preview-title').textContent = progName;
+
+  let html = `<div style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.06em;margin-bottom:12px;line-height:1.7">${escHtml(prog.desc)}</div>`;
+
+  if (isAddon) {
+    html += `<div style="display:flex;align-items:center;gap:8px;background:rgba(200,169,110,.07);border:1px solid rgba(200,169,110,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:16px">
+      <span style="font-size:14px">➕</span>
+      <span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.08em;line-height:1.6">Add-on · Se adaugă la programul tău curent, nu îl înlocuiește</span>
+    </div>`;
+  } else {
+    html += `<div style="display:flex;align-items:center;gap:8px;background:rgba(192,97,74,.07);border:1px solid rgba(192,97,74,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:16px">
+      <span style="font-size:14px">⚠️</span>
+      <span style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.08em;line-height:1.6">Înlocuiește programul curent · Istoricul rămâne intact</span>
+    </div>`;
+  }
+
+  prog.workouts.forEach((w) => {
+    html += `<div style="background:var(--surf);border:1px solid var(--line);border-radius:var(--r2);margin-bottom:10px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surf2)">
+        <span style="font-family:var(--serif);font-size:15px;color:var(--text)">${escHtml(w.label)}</span>
+        <span style="font-family:var(--mono);font-size:8px;color:var(--muted)">${w.exercises.length} ex.</span>
+      </div>`;
+    w.exercises.forEach(ex => {
+      html += `<div style="display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);gap:10px">
+        <span style="font-family:var(--serif);font-size:13px;color:var(--text2);flex:1">${escHtml(ex.name)}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2);flex-shrink:0">${ex.sets}×${ex.reps}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  preview.querySelector('#tpl-preview-content').innerHTML = html;
+  const loadBtn = preview.querySelector('#tpl-load-btn');
+  loadBtn.textContent = isAddon ? '➕ Adaugă la programul meu →' : 'Încarcă acest program →';
+  loadBtn.onclick = () => loadTemplate(category, progName);
+  list.style.display = 'none';
+  backBtn.style.display = '';
+  preview.style.display = '';
+  document.getElementById('tpl-sheet-inner').scrollTop = 0;
+}
+
+function loadTemplate(category, progName) {
+  const prog = RFK_PROGRAMS[category][progName];
+  if (!prog) return;
+  const isAddon = category === 'Abdomen';
+
+  if (isAddon) {
+    // Add-on: append workouts to existing program
+    confirmAction(
+      'Adaugi antrenament la program?',
+      `"${progName}" va fi adăugat la programul tău curent ca antrenament separat.`,
+      'Adaugă',
+      '',
+      () => {
+        prog.workouts.forEach(w => {
+          CFG.push({ label: w.label, color: '#8A9E8A' });
+          data.push(w.exercises.map((ex, i) => ({
+            id: i+1, name: ex.name, sets: ex.sets, reps: ex.reps, weight: ex.weight
+          })));
+          setsDone.push([]);
+        });
+        syncSets();
+        persist();
+        closeTemplatesSheet();
+        render();
+        setPage('program');
+        showToast(`"${progName}" adăugat la program!`, 'ok');
+      }
+    );
+  } else {
+    // Full replacement
+    confirmAction(
+      'Înlocuiești programul curent?',
+      `Toate antrenamentele curente vor fi șterse și înlocuite cu "${progName}". Istoricul rămâne intact.`,
+      'Încarcă programul',
+      'danger',
+      () => {
+        CFG = prog.workouts.map(w => ({ label: w.label, color: '#C8A96E' }));
+        data = prog.workouts.map(w => w.exercises.map((ex, i) => ({
+          id: i+1, name: ex.name, sets: ex.sets, reps: ex.reps, weight: ex.weight
+        })));
+        setsDone = null;
+        weekSched = prog.schedule ? [...prog.schedule] : [0,null,1,null,2,null,null];
+        activeDay = 0;
+        syncSets();
+        persist();
+        closeTemplatesSheet();
+        render();
+        setPage('program');
+        showToast(`Program "${progName}" încărcat!`, 'ok');
+      }
+    );
+  }
+}
+
 function makeIcon(sz){const c=document.createElement('canvas');c.width=c.height=sz;const x=c.getContext('2d');x.fillStyle='#080A08';x.fillRect(0,0,sz,sz);x.fillStyle='#C8A96E';x.font=`${sz*.42}px 'Cormorant Garamond', Georgia, serif`;x.textAlign='center';x.textBaseline='middle';x.fillText('C',sz/2,sz/2);return c.toDataURL('image/png');}
 function registerPWA(){const mf={name:'Consistency',short_name:'Consistency',description:'Premium workout tracker',start_url:'.',display:'standalone',background_color:'#080A08',theme_color:'#080A08',orientation:'portrait',icons:[{src:makeIcon(192),sizes:'192x192',type:'image/png'},{src:makeIcon(512),sizes:'512x512',type:'image/png'}]};document.getElementById('manifest-placeholder').href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/json'}));}
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(registerPWA);}else{registerPWA();}
 </script>
+
+<!-- TEMPLATES OVERLAY -->
+<div class="ov" id="ov-templates" onclick="if(event.target===this)closeTemplatesSheet()" style="z-index:200">
+  <div class="sh" id="tpl-sheet-inner" style="max-height:92vh;overflow-y:auto;padding-bottom:40px">
+    <div class="shh"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div class="shl" style="margin-bottom:2px;font-size:20px">Programe RFK</div>
+        <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase">by Robert Florea · rfkinetix.ro</div>
+      </div>
+      <button onclick="closeTemplatesSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Închide</button>
+    </div>
+
+    <!-- List view -->
+    <div id="tpl-list"></div>
+
+    <!-- Back button (shown in preview) -->
+    <button id="tpl-back-btn" onclick="document.getElementById('tpl-preview').style.display='none';document.getElementById('tpl-list').style.display='';document.getElementById('tpl-back-btn').style.display='none';document.getElementById('tpl-sheet-inner').scrollTop=0;"
+      style="display:none;width:100%;margin-bottom:14px;padding:11px;background:none;border:1px solid var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">← Înapoi la programe</button>
+
+    <!-- Preview view -->
+    <div id="tpl-preview" style="display:none">
+      <div style="font-family:var(--serif);font-size:22px;font-weight:300;letter-spacing:.05em;color:var(--text);margin-bottom:6px" id="tpl-preview-title"></div>
+      <div id="tpl-preview-content"></div>
+      <button id="tpl-load-btn" class="bsv" style="margin-top:16px;width:100%">Încarcă acest program →</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
