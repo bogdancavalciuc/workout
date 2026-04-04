@@ -1126,7 +1126,7 @@ body.light .set-row { background: var(--surf); }
 </div>
 
 <!-- PROGRAM PAGE -->
-<div id="page-program" class="hidden" style="padding:0 24px 24px">
+<div id="page-program" class="hidden" style="padding:16px 24px 24px">
   <div id="pb-workout-list-main"></div>
   <button onclick="openNewWorkoutSheet();" style="width:100%;margin-top:6px;padding:13px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--muted);cursor:pointer;text-transform:uppercase;">+ New workout</button>
 </div>
@@ -1367,6 +1367,37 @@ body.light .set-row { background: var(--surf); }
       </div>
       <button class="bsv" onclick="nwConfirmAdd()" style="margin-top:16px">+ Add to Workout</button>
     </div>
+  </div>
+</div>
+
+<!-- PROGRAM BUILDER: edit exercise overlay (Fix #1) -->
+<div class="ov" id="ov-pb-edit" onclick="if(event.target===this)closePbEditSheet()">
+  <div class="sh" style="padding-bottom:40px">
+    <div class="shh"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div class="shl" style="margin-bottom:2px;font-size:20px" id="pb-edit-ex-name">Exercise</div>
+        <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase">Edit sets · reps · weight</div>
+      </div>
+      <button onclick="closePbEditSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
+    </div>
+    <div class="add-lib-selected-wrap">
+      <div class="add-lib-config">
+        <div class="add-lib-field">
+          <span class="add-lib-label">Sets</span>
+          <input class="add-lib-input" type="number" id="pb-edit-sets" min="1" max="20" value="3" inputmode="numeric">
+        </div>
+        <div class="add-lib-field">
+          <span class="add-lib-label">Reps</span>
+          <input class="add-lib-input" type="number" id="pb-edit-reps" min="1" max="100" value="12" inputmode="numeric">
+        </div>
+        <div class="add-lib-field">
+          <span class="add-lib-label">Weight</span>
+          <input class="add-lib-input" type="text" id="pb-edit-weight" value="BW" inputmode="decimal" style="text-align:center">
+        </div>
+      </div>
+    </div>
+    <button class="bsv" onclick="savePbEditEx()" style="margin-top:16px">Save changes</button>
   </div>
 </div>
 
@@ -1995,45 +2026,69 @@ function renderProgress() {
 // ══════════════════════════════════════════════════════════════════════════════
 const EXERCISE_LIBRARY = {
   "Chest": [
-    "DB/Machine horizontal press","DB horizontal bench press","Horizontal DB/BB bench press",
-    "DB/Machine incline press","DB incline bench press","Incline machine press","Incline DB/machine press",
-    "Cable X crossover","Cable X crossovers","Cable one arm low to high flyes",
-    "Low to high cable flyes","High to low cable flyes","Machine/Horizontal cable flyes",
-    "Chest fly machine","Machine Fly","Orice variatie de pushups",
+    "Flat DB/Machine Press",
+    "Incline DB/Machine Press",
+    "Cable Low-to-High Fly",
+    "Cable High-to-Low Fly",
+    "Cable Crossover",
+    "Chest Fly Machine",
+    "Pushups",
   ],
   "Back": [
-    "Overhand lat pulldown","Underhand lat pulldown","Neutral grip lat pulldown",
-    "One arm pulldown","Short grip pulldown","Underhand pullups/pulldowns","Lat pulldown",
-    "Machine/Cable neutral grip row","Neutral grip seated machine/cable row","Neutral grip one-arm row",
-    "One arm high row","BB/Machine row","BB row","T-Bar Row","Machine/Cable high row",
-    "Cable/Machine/DB high row","Straight bar cable/machine/BB/DB high row","DB High Row",
-    "Underhand cable/machine row","Unilateral machine/DB row",
-    "Straight arm rope/straight bar cable pullover","One arm rope/straight bar cable pullover",
-    "Unilateral cable pullover","DB shrugs","DB/BB Shrug",
-    "Lumbar hyperextension/machine",
+    "Overhand Lat Pulldown",
+    "Underhand Lat Pulldown",
+    "Neutral Grip Lat Pulldown",
+    "One-Arm Pulldown",
+    "Neutral Grip Cable Row",
+    "Underhand Cable Row",
+    "One-Arm Cable Row",
+    "BB Row",
+    "T-Bar Row",
+    "Machine High Row",
+    "DB High Row",
+    "Straight-Arm Cable Pullover",
+    "DB/BB Shrug",
+    "Lumbar Hyperextension",
   ],
   "Shoulders": [
-    "DB/Machine overhead press","DB/BB/Machine overhead press","Machine Overhead Press",
-    "DB lateral raises","DB/Machine lateral flyes","One arm cable lateral fly","Cable lateral flyes",
-    "Cable/Machine rear delt reverse flyes","Machine/DB chest supported rear delt reverse fly",
-    "Chest supported cable rear delt reverse fly","Rear delt cable/machine flyes","Rear Delt Cable Flyes",
-    "Cable facepull","Banded facepull","Banded/Cable external rotations","DB/Cable Y raises",
+    "DB/Machine Overhead Press",
+    "DB Lateral Raises",
+    "Cable Lateral Fly",
+    "Cable/Machine Rear Delt Fly",
+    "Cable Facepull",
+    "Banded External Rotation",
+    "DB/Cable Y Raises",
   ],
   "Biceps": [
-    "EZ bar curls","DB curls","DB/EZ bar spider curl","EZ bar reverse grip curls",
-    "DB one arm isometric curl","DB hammer curl","Cable curls","DB Incline Curls","EZ/Straight Bar Curls",
+    "EZ Bar Curls",
+    "DB Curls",
+    "DB Incline Curls",
+    "DB Hammer Curl",
+    "DB Spider Curl",
+    "EZ Bar Reverse Grip Curls",
+    "DB One-Arm Isometric Curl",
+    "Cable Curls",
   ],
   "Triceps": [
-    "Rope triceps extensions","Cable overhead extension","Cable triceps extension",
-    "DB skullcrushers","Cross cable triceps extensions","Overhead rope tricep extensions",
-    "Katana cable extensions","Rope overhead cable extensions","DB kickbacks",
-    "Ninja Cable Extension","Dips/Pushdown Machine",
+    "Rope Triceps Pushdown",
+    "Cable Overhead Triceps Extension",
+    "DB Skullcrushers",
+    "Cross-Body Cable Triceps Extension",
+    "Katana Cable Extension",
+    "DB Kickbacks",
+    "Dips",
+    "Triceps Pushdown Machine",
   ],
   "Quads": [
-    "BB squat/Hack squat/Pendulum squat","BB Squat/Smith Squat/Pendulum Squat/Hack Squat",
-    "Goblet squat","DB sumo squat","DB split squat","DB step ups",
-    "DB/BB reverse lunges","DB Bulgarian split squat","DB/BB Bulgarian split squat",
-    "Leg extension machine","Unilateral leg extension machine","Leg press",
+    "BB Squat",
+    "Hack Squat / Pendulum Squat",
+    "Goblet Squat",
+    "DB Split Squat",
+    "DB Bulgarian Split Squat",
+    "DB Reverse Lunge",
+    "DB Step Ups",
+    "Leg Extension Machine",
+    "Leg Press",
   ],
   "Hamstrings": [
     "DB/BB Romanian deadlift","BB/DB Romanian deadlift",
@@ -2189,90 +2244,157 @@ function renderSchedSheet(){
 // ══════════════════════════════════════════════════════════════════════════════
 let _pbExpanded = new Set(); // set of expanded workout indices in builder
 
+// ── Shared workout-card builder (Fix #4: no duplication; #1: edit; #2: reorder; #5: today badge) ──
+function _buildPbWorkoutHTML(ci, cfg, isMain) {
+  const exs      = data[ci] || [];
+  const isExp    = _pbExpanded.has(ci);
+  const exCount  = exs.length;
+  const todayCi  = weekSched[getTodayWeekIdx()];
+  const isToday  = todayCi === ci;
+  const toggleFn = isMain ? `pbToggleMain(${ci})`        : `pbToggle(${ci})`;
+  const renameFn = isMain ? `pbRenameWorkoutMain(${ci})` : `pbRenameWorkout(${ci})`;
+  const deleteFn = isMain ? `pbDeleteWorkoutMain(${ci})` : `pbDeleteWorkout(${ci})`;
+  const addExFn  = isMain ? `openPbExAddMain(${ci})`     : `openPbExAdd(${ci})`;
+  const delExFn  = isMain ? `pbDeleteExMain`              : `pbDeleteEx`;
+  const editExFn = isMain ? `pbEditExMain`                : `pbEditEx`;
+  const moveExFn = isMain ? `pbMoveExMain`                : `pbMoveEx`;
+
+  const exList = isExp ? exs.map((ex, ei) => {
+    const canUp   = ei > 0;
+    const canDown = ei < exs.length - 1;
+    return `
+      <div style="display:flex;align-items:center;gap:6px;padding:9px 10px 9px 14px;border-bottom:1px solid var(--line);background:var(--bg2);">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px;flex-shrink:0">${String(ei+1).padStart(2,'0')}</span>
+        <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(ex.name)}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2);white-space:nowrap;flex-shrink:0">${ex.sets}×${ex.reps}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:2px;white-space:nowrap;flex-shrink:0">${escHtml(String(ex.weight))}</span>
+        <div style="display:flex;gap:2px;flex-shrink:0;margin-left:4px">
+          <button onclick="event.stopPropagation();${moveExFn}(${ci},${ei},-1)"
+            style="background:none;border:1px solid var(--line2);border-radius:3px;color:${canUp ? 'var(--muted2)' : 'var(--line3)'};font-size:10px;cursor:${canUp ? 'pointer' : 'default'};padding:2px 5px;line-height:1;"
+            ${!canUp ? 'disabled' : ''} title="Move up">↑</button>
+          <button onclick="event.stopPropagation();${moveExFn}(${ci},${ei},1)"
+            style="background:none;border:1px solid var(--line2);border-radius:3px;color:${canDown ? 'var(--muted2)' : 'var(--line3)'};font-size:10px;cursor:${canDown ? 'pointer' : 'default'};padding:2px 5px;line-height:1;"
+            ${!canDown ? 'disabled' : ''} title="Move down">↓</button>
+          <button onclick="event.stopPropagation();${editExFn}(${ci},${ei})"
+            style="background:none;border:1px solid var(--line2);border-radius:3px;color:var(--gold3);font-size:10px;cursor:pointer;padding:2px 6px;line-height:1;"
+            title="Edit">✎</button>
+          <button onclick="event.stopPropagation();${delExFn}(${ci},${ei})"
+            style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 3px;line-height:1;"
+            title="Remove">×</button>
+        </div>
+      </div>`;
+  }).join('') : '';
+
+  const todayBadge = isToday
+    ? `<span style="font-family:var(--mono);font-size:7px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold3);border:1px solid rgba(200,169,110,.3);border-radius:20px;padding:2px 8px;flex-shrink:0">Today</span>`
+    : '';
+
+  return `
+  <div style="background:var(--surf);border:1px solid ${isToday ? 'var(--gold3)' : 'var(--line2)'};border-radius:var(--r2);overflow:hidden;margin-bottom:10px;${isToday ? 'box-shadow:0 0 14px rgba(200,169,110,.09)' : ''}">
+    <div onclick="${toggleFn}" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-family:var(--serif);font-size:17px;color:var(--text)">${escHtml(cfg.label)}</span>
+          ${todayBadge}
+        </div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:3px;letter-spacing:.06em">${exCount} exercise${exCount!==1?'s':''}</div>
+      </div>
+      <div style="display:flex;gap:7px;align-items:center;flex-shrink:0">
+        <button onclick="event.stopPropagation();${renameFn}" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Rename</button>
+        ${CFG.length>1?`<button onclick="event.stopPropagation();${deleteFn}" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Delete</button>`:''}
+        <span style="font-family:var(--mono);font-size:14px;color:var(--muted);transition:transform .2s;display:inline-block;transform:rotate(${isExp?'180':'0'}deg)">▾</span>
+      </div>
+    </div>
+    ${isExp ? `
+    <div style="border-top:1px solid var(--line)">
+      ${exList}
+      <div style="padding:10px 14px;background:var(--bg2)">
+        <button onclick="${addExFn}" style="width:100%;padding:11px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;">+ Add exercise</button>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
 function renderPbWorkoutList() {
   const c = document.getElementById('pb-workout-list');
   if (!c) return;
   if (!CFG.length) { c.innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No workouts yet</div>'; return; }
-  c.innerHTML = CFG.map((cfg, ci) => {
-    const exs = data[ci] || [];
-    const isExp = _pbExpanded.has(ci);
-    const exCount = exs.length;
-    const exList = isExp ? exs.map((ex, ei) => `
-      <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg2);">
-        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px">${String(ei+1).padStart(2,'0')}</span>
-        <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px">${escHtml(ex.weight)}</span>
-        <button onclick="pbDeleteEx(${ci},${ei})" style="background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:0 2px;line-height:1;margin-left:4px">×</button>
-      </div>`).join('') : '';
-    return `
-    <div style="background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;margin-bottom:10px">
-      <div onclick="pbToggle(${ci})" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;">
-        <div style="flex:1">
-          <div style="font-family:var(--serif);font-size:17px;color:var(--text)">${escHtml(cfg.label)}</div>
-          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:3px;letter-spacing:.06em">${exCount} exercise${exCount!==1?'s':''}</div>
-        </div>
-        <div style="display:flex;gap:7px;align-items:center">
-          <button onclick="event.stopPropagation();pbRenameWorkout(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Rename</button>
-          ${CFG.length>1?`<button onclick="event.stopPropagation();pbDeleteWorkout(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Delete</button>`:''}
-          <span style="font-family:var(--mono);font-size:14px;color:var(--muted);transition:transform .2s;display:inline-block;transform:rotate(${isExp?'180':'0'}deg)">▾</span>
-        </div>
-      </div>
-      ${isExp ? `
-      <div style="border-top:1px solid var(--line)">
-        ${exList}
-        <div style="padding:10px 14px;background:var(--bg2)">
-          <button onclick="openPbExAdd(${ci})" style="width:100%;padding:11px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;">+ Add exercise</button>
-        </div>
-      </div>` : ''}
-    </div>`;
-  }).join('');
+  c.innerHTML = CFG.map((cfg, ci) => _buildPbWorkoutHTML(ci, cfg, false)).join('');
 }
 
 function renderPbWorkoutListMain() {
   const c = document.getElementById('pb-workout-list-main');
   if (!c) return;
   if (!CFG.length) { c.innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No workouts yet</div>'; return; }
-  c.innerHTML = CFG.map((cfg, ci) => {
-    const exs = data[ci] || [];
-    const isExp = _pbExpanded.has(ci);
-    const exCount = exs.length;
-    const exList = isExp ? exs.map((ex, ei) => `
-      <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg2);">
-        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px">${String(ei+1).padStart(2,'0')}</span>
-        <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px">${escHtml(ex.weight)}</span>
-        <button onclick="pbDeleteExMain(${ci},${ei})" style="background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:0 2px;line-height:1;margin-left:4px">×</button>
-      </div>`).join('') : '';
-    return `
-    <div style="background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;margin-bottom:10px">
-      <div onclick="pbToggleMain(${ci})" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;">
-        <div style="flex:1">
-          <div style="font-family:var(--serif);font-size:17px;color:var(--text)">${escHtml(cfg.label)}</div>
-          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:3px;letter-spacing:.06em">${exCount} exercise${exCount!==1?'s':''}</div>
-        </div>
-        <div style="display:flex;gap:7px;align-items:center">
-          <button onclick="event.stopPropagation();pbRenameWorkoutMain(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Rename</button>
-          ${CFG.length>1?`<button onclick="event.stopPropagation();pbDeleteWorkoutMain(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 11px;color:var(--muted2);cursor:pointer;">Delete</button>`:''}
-          <span style="font-family:var(--mono);font-size:14px;color:var(--muted);transition:transform .2s;display:inline-block;transform:rotate(${isExp?'180':'0'}deg)">▾</span>
-        </div>
-      </div>
-      ${isExp ? `
-      <div style="border-top:1px solid var(--line)">
-        ${exList}
-        <div style="padding:10px 14px;background:var(--bg2)">
-          <button onclick="openPbExAddMain(${ci})" style="width:100%;padding:11px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;">+ Add exercise</button>
-        </div>
-      </div>` : ''}
-    </div>`;
-  }).join('');
+  c.innerHTML = CFG.map((cfg, ci) => _buildPbWorkoutHTML(ci, cfg, true)).join('');
 }
 
 function pbToggleMain(ci) {
   if (_pbExpanded.has(ci)) _pbExpanded.delete(ci);
   else { _pbExpanded.clear(); _pbExpanded.add(ci); }
   renderPbWorkoutListMain();
+}
+
+// ── Fix #1: Edit exercise from Program tab ───────────────────────────────────
+let _pbEditCtx = null;
+
+function pbEditEx(ci, ei)     { _openPbEditEx(ci, ei, false); }
+function pbEditExMain(ci, ei) { _openPbEditEx(ci, ei, true);  }
+
+function _openPbEditEx(ci, ei, isMain) {
+  _pbEditCtx = { ci, ei, isMain };
+  const ex = data[ci][ei];
+  document.getElementById('pb-edit-ex-name').textContent = ex.name;
+  document.getElementById('pb-edit-sets').value   = ex.sets;
+  document.getElementById('pb-edit-reps').value   = ex.reps;
+  document.getElementById('pb-edit-weight').value = ex.weight;
+  document.getElementById('ov-pb-edit').classList.add('open');
+}
+
+function closePbEditSheet() {
+  document.getElementById('ov-pb-edit').classList.remove('open');
+  _pbEditCtx = null;
+}
+
+function savePbEditEx() {
+  if (!_pbEditCtx) return;
+  const { ci, ei, isMain } = _pbEditCtx;
+  const ex   = data[ci][ei];
+  const sets = Math.max(1, parseInt(document.getElementById('pb-edit-sets').value)   || 1);
+  const reps = Math.max(1, parseInt(document.getElementById('pb-edit-reps').value)   || 1);
+  const rawW = document.getElementById('pb-edit-weight').value.trim();
+  const weight = rawW !== '' ? (isNaN(parseFloat(rawW)) ? rawW.toUpperCase() : parseFloat(rawW)+'KG') : 'BW';
+  ex.sets   = sets;
+  ex.reps   = reps;
+  ex.weight = weight;
+  if (ex.setOvr) ex.setOvr = ex.setOvr.slice(0, sets);
+  syncSets(); persist(); render();
+  closePbEditSheet();
+  if (isMain) renderPbWorkoutListMain(); else renderPbWorkoutList();
+  showToast('Exercise updated', 'ok');
+}
+
+// ── Fix #2: Reorder exercises from Program tab ───────────────────────────────
+function pbMoveEx(ci, ei, dir)     { _pbMoveEx(ci, ei, dir, false); }
+function pbMoveExMain(ci, ei, dir) { _pbMoveEx(ci, ei, dir, true);  }
+
+function _pbMoveEx(ci, ei, dir, isMain) {
+  const ni = ei + dir;
+  if (ni < 0 || ni >= data[ci].length) return;
+  [data[ci][ei],       data[ci][ni]]       = [data[ci][ni],       data[ci][ei]];
+  [setsDone[ci][ei],   setsDone[ci][ni]]   = [setsDone[ci][ni],   setsDone[ci][ei]];
+  // Remap restEnabled keys for this workout
+  const nRE = {};
+  Object.keys(restEnabled).forEach(k => {
+    const p = k.split('-'); const kdi = parseInt(p[0]), kei = parseInt(p[1]);
+    if (kdi !== ci) { nRE[k] = restEnabled[k]; return; }
+    if      (kei === ei) nRE[`${ci}-${ni}`] = restEnabled[k];
+    else if (kei === ni) nRE[`${ci}-${ei}`] = restEnabled[k];
+    else                 nRE[k]             = restEnabled[k];
+  });
+  restEnabled = nRE;
+  persist(); render();
+  if (isMain) renderPbWorkoutListMain(); else renderPbWorkoutList();
 }
 
 function pbRenameWorkoutMain(ci) {
@@ -2290,6 +2412,7 @@ function pbDeleteWorkoutMain(ci) {
 }
 
 function pbDeleteExMain(ci, ei) {
+  if (data[ci].length <= 1) { showToast('Cannot remove the last exercise','err'); return; }
   confirmAction(`Remove "${data[ci][ei]?.name}"?`, 'This exercise will be removed from the workout.', 'Remove', 'danger', () => {
     data[ci].splice(ei,1); setsDone[ci].splice(ei,1);
     persist(); render(); renderPbWorkoutListMain();
@@ -2325,6 +2448,7 @@ function pbDeleteWorkout(ci) {
 }
 
 function pbDeleteEx(ci, ei) {
+  if (data[ci].length <= 1) { showToast('Cannot remove the last exercise','err'); return; }
   confirmAction(`Remove "${data[ci][ei]?.name}"?`, 'This exercise will be removed from the workout.', 'Remove', 'danger', () => {
     data[ci].splice(ei,1); setsDone[ci].splice(ei,1);
     persist(); render(); renderPbWorkoutList();
@@ -2409,7 +2533,7 @@ function confirmPbExAdd() {
 function setDayWorkout(wi,val){weekSched[wi]=val==='rest'?null:parseInt(val);persist();renderTabs();const lbl=document.getElementById(`swv-${wi}`);if(lbl){const v=weekSched[wi];lbl.textContent=(v===null||v===undefined||v>=CFG.length)?'Rest':(CFG[v]?.label||'?');lbl.className='sched-workout-val '+((v===null||v===undefined||v>=CFG.length)?'rest-v':'');}}
 
 let dayCtx=null;
-function openDayEdit(e,di){if(e)e.stopPropagation();dayCtx={mode:'edit',di};document.getElementById('day-sheet-title').textContent='Edit Workout';document.getElementById('day-name-input').value=CFG[di].label;document.getElementById('day-del-btn').style.display=data.length>1?'':'none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
+function openDayEdit(e,di){if(e)e.stopPropagation();dayCtx={mode:'edit',di};document.getElementById('day-sheet-title').textContent='Rename Workout';document.getElementById('day-name-input').value=CFG[di].label;document.getElementById('day-del-btn').style.display=data.length>1?'':'none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
 function openDayAdd(){dayCtx={mode:'add'};document.getElementById('day-sheet-title').textContent='Add Workout';document.getElementById('day-name-input').value='';document.getElementById('day-del-btn').style.display='none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
 function closeDaySheet(){document.getElementById('ov-day').classList.remove('open');dayCtx=null;}
 function saveDay(){
