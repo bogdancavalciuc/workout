@@ -1521,7 +1521,14 @@ function syncSets() {
         const prev = Array.isArray(setsDone[di][ei]) ? setsDone[di][ei] : [];
         setsDone[di][ei] = Array.from({length:ex.sets}, (_,i) => i < prev.length ? (prev[i]||false) : false);
       }
-      if (ex.setOvr && ex.setOvr.length > ex.sets) ex.setOvr = ex.setOvr.slice(0, ex.sets);
+      // Trim setOvr to current sets count, preserving existing entries
+      if (ex.setOvr) {
+        ex.setOvr = ex.setOvr.slice(0, ex.sets);
+        // Fill any missing slots with empty objects (don't lose existing overrides)
+        while (ex.setOvr.length < ex.sets) ex.setOvr.push({});
+        // If setOvr is now all empty, remove it entirely (cleaner state)
+        if (ex.setOvr.every(o => o.reps == null && o.weight == null)) delete ex.setOvr;
+      }
     });
   });
 }
@@ -1708,8 +1715,8 @@ function renderTable() {
           <div class="set-row${done?' set-done':''}" id="sr-${di}-${ei}-${si}">
             <span class="set-num${done?' done-num':''}">${si+1}</span>
             <span class="set-prev">${prevLabel}</span>
-            <div class="set-input-wrap"><input type="number" inputmode="numeric" min="1" max="999" class="set-input${done?' done':''}" value="${escHtml(String(reps))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)"></div>
-            <div class="set-input-wrap"><input type="text" inputmode="decimal" class="set-input${done?' done':''}" style="width:50px" value="${escHtml(String(wt))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)"></div>
+            <div class="set-input-wrap"><input type="number" inputmode="numeric" min="1" max="999" class="set-input${done?' done':''}" value="${escHtml(String(reps))}" onclick="event.stopPropagation()" oninput="saveSetOvr(${di},${ei},${si},'reps',this.value)" onblur="saveSetOvr(${di},${ei},${si},'reps',this.value)"></div>
+            <div class="set-input-wrap"><input type="text" inputmode="decimal" class="set-input${done?' done':''}" style="width:50px" value="${escHtml(String(wt))}" onclick="event.stopPropagation()" oninput="saveSetOvr(${di},${ei},${si},'weight',this.value)" onblur="saveSetOvr(${di},${ei},${si},'weight',this.value)"></div>
             <div class="set-check-wrap"><button class="set-check${done?' checked':''}" id="sc-${di}-${ei}-${si}" onclick="toggleSet(event,${di},${ei},${si})"><svg width="11" height="9" viewBox="0 0 12 10" fill="none"><path d="M1 4.8L4.5 8.5L11 1" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           </div></div>`;
       }
@@ -1765,7 +1772,27 @@ function quickLogAll(e,di,ei,isCurrentlyAllDone){
 function getPrevSet(di,exName,si){const label=CFG[di]?.label,todayDk=dayKey(new Date());for(const h of history){if(h.day!==label)continue;const hDk=h.dk||(h.ts?dayKey(new Date(h.ts)):null);if(hDk===todayDk)continue;const ex=(h.exercises||[]).find(e=>e.name===exName);if(!ex)continue;return{reps:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps,weight:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight};}return null;}
 function getSetReps(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps;}
 function getSetWeight(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight;}
-function saveSetOvr(di,ei,si,field,val){const ex=data[di][ei];if(!ex.setOvr)ex.setOvr=[];if(!ex.setOvr[si])ex.setOvr[si]={};if(field==='reps'){const v=parseInt(val);ex.setOvr[si].reps=(!isNaN(v)&&v>0&&v<=999)?v:ex.reps;}else{const t=String(val).trim().toUpperCase();ex.setOvr[si].weight=t.length>0?t:ex.weight;}persist();}
+function saveSetOvr(di,ei,si,field,val){
+  const ex=data[di][ei];
+  if(!ex.setOvr)ex.setOvr=[];
+  if(!ex.setOvr[si])ex.setOvr[si]={};
+  if(field==='reps'){
+    const v=parseInt(val);
+    const safe=(!isNaN(v)&&v>0&&v<=999)?v:ex.reps;
+    ex.setOvr[si].reps=safe;
+    // If all sets have the same reps override, promote to base value
+    const allSameReps=Array.from({length:ex.sets},(_,i)=>ex.setOvr[i]?.reps??ex.reps).every(r=>r===safe);
+    if(allSameReps) ex.reps=safe;
+  } else {
+    const t=String(val).trim().toUpperCase();
+    const safe=t.length>0?t:ex.weight;
+    ex.setOvr[si].weight=safe;
+    // If all sets have the same weight override, promote to base value
+    const allSameWt=Array.from({length:ex.sets},(_,i)=>ex.setOvr[i]?.weight??ex.weight).every(w=>w===safe);
+    if(allSameWt) ex.weight=safe;
+  }
+  persist();
+}
 function getNoteKey(di){const label=CFG[di]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));return h?`hist-${h.ts}`:`${di}-${today}`;}
 function saveSessionNote(){const nk=getNoteKey(activeDay),v=document.getElementById('session-note-input')?.value||'';sessionNotes[nk]=v;const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)h.note=v;persist();}
 function startEdit(di,ei,e){if(e)e.stopPropagation();if(editingEx&&(editingEx.di!==di||editingEx.ei!==ei))saveInlineEdit();expanded.add(`${di}-${ei}`);deleteConfirm=null;editingEx={di,ei};renderTable();}
@@ -1777,12 +1804,42 @@ function saveToHistory(di){
   const cfg=CFG[di],now=new Date(),dk=dayKey(now);
   const existingIdx=history.findIndex(h=>h.day===cfg.label&&(h.dk===dk||(h.ts&&dayKey(new Date(h.ts))===dk)));
   const vol=calcVol(di);
-  const entry={day:cfg.label,date:now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),dk,ts:existingIdx>=0?(history[existingIdx].ts||now.getTime()):now.getTime(),vol,exercises:JSON.parse(JSON.stringify(data[di]))};
+  // Bake setOvr into a clean exercise snapshot so history always has actual values
+  const exSnapshot=data[di].map(ex=>{
+    const baked={...ex};
+    if(ex.setOvr){
+      baked.setOvr=ex.setOvr.map((ovr,si)=>({
+        reps: ovr?.reps??ex.reps,
+        weight: ovr?.weight??ex.weight,
+      }));
+    }
+    return baked;
+  });
+  const entry={day:cfg.label,date:now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),dk,ts:existingIdx>=0?(history[existingIdx].ts||now.getTime()):now.getTime(),vol,exercises:JSON.parse(JSON.stringify(exSnapshot))};
   if(existingIdx>=0){if(history[existingIdx].note)entry.note=history[existingIdx].note;history[existingIdx]=entry;}
   else{history.unshift(entry);if(history.length>100)history=history.slice(0,100);setTimeout(()=>{document.getElementById('backup-nudge')?.classList.add('show');},600);}
   persist();
 }
-function resetSession(){data[activeDay].forEach(ex=>{delete ex.setOvr;});setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));const nk=getNoteKey(activeDay);delete sessionNotes[nk];const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)delete h.note;expanded.clear();stopSessionTimer();persist();render();}
+function resetSession(){
+  // Promote any per-set overrides back into base values before clearing
+  // so the next session starts from the weights/reps you actually used
+  data[activeDay].forEach(ex=>{
+    if(ex.setOvr){
+      // Use the last set's values as the new base (most recent intent)
+      const lastOvr=ex.setOvr[ex.sets-1];
+      if(lastOvr?.reps!=null)   ex.reps   = lastOvr.reps;
+      if(lastOvr?.weight!=null) ex.weight = lastOvr.weight;
+    }
+    delete ex.setOvr;
+  });
+  setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));
+  const nk=getNoteKey(activeDay);
+  delete sessionNotes[nk];
+  const label=CFG[activeDay]?.label,today=dayKey(new Date());
+  const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));
+  if(h)delete h.note;
+  expanded.clear();stopSessionTimer();persist();render();
+}
 
 function getMonthKey(h){if(h.ts){const d=new Date(h.ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}return h.date?h.date.slice(-8):'unknown';}
 function getMonthLabel(h){if(h.ts){const d=new Date(h.ts);return d.toLocaleDateString('en-GB',{month:'long',year:'numeric'});}return'';}
