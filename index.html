@@ -1963,36 +1963,79 @@ function renderProgress() {
   const totalVol=pts.reduce((s,p)=>s+p.vol,0);
 
   function buildChart(values, strokeColor, label) {
-    const H=130, W=400, py=14, pl=38;
+    const H=100, W=400, padX=20, padY=16;
     const min=Math.min(...values), max=Math.max(...values), range=max-min||1;
-    const pw=W-pl, ph=H-py*2;
-    const xs=values.length>1?pw/(values.length-1):pw;
-    const mapped=values.map((v,i)=>({x:pl+(values.length>1?i*xs:pw/2),y:py+ph-((v-min)/range)*ph,v}));
-    const pathD=mapped.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-    const areaD=pathD+` L${mapped[mapped.length-1].x.toFixed(1)},${(py+ph).toFixed(1)} L${mapped[0].x.toFixed(1)},${(py+ph).toFixed(1)} Z`;
-    const gid=`g${label.replace(/[^a-z0-9]/gi,'')}`;
-    const ySteps=3;
-    const yLines=Array.from({length:ySteps},(_,i)=>{
-      const v=min+(range/(ySteps-1))*i;
-      const y=py+ph-(i/(ySteps-1))*ph;
-      return `<line x1="${pl}" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1" opacity="0.6"/>
-              <text x="${pl-5}" y="${(y+4).toFixed(1)}" text-anchor="end" font-family="var(--mono)" font-size="9" fill="var(--muted)">${Math.round(v)}</text>`;
-    }).join('');
-    const dots=mapped.map((p,i)=>{
-      const isLast=i===mapped.length-1;
-      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isLast?5:3}" fill="${isLast?strokeColor:'var(--muted)'}" ${isLast?`stroke="var(--bg)" stroke-width="2"`:''}/>`;
-    }).join('');
-    return `<div class="prog-chart-wrap">
-      <div class="prog-chart-label">${escHtml(label)}</div>
-      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="overflow:visible">
-        <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${strokeColor}" stop-opacity=".18"/><stop offset="100%" stop-color="${strokeColor}" stop-opacity="0"/></linearGradient></defs>
-        ${yLines}
+    const pw=W-padX*2, ph=H-padY*2;
+    const n=values.length;
+    const mapped=values.map((v,i)=>({
+      x: padX+(n>1?i*pw/(n-1):pw/2),
+      y: padY+ph-((v-min)/range)*ph,
+      v, date: pts[i] ? pts[i].date : '', raw: pts[i] ? pts[i].raw : v
+    }));
+
+    // Smooth cubic bezier path
+    let pathD=`M${mapped[0].x.toFixed(1)},${mapped[0].y.toFixed(1)}`;
+    for(let i=1;i<mapped.length;i++){
+      const p=mapped[i-1], c=mapped[i];
+      const tension=0.35;
+      const c1x=(p.x+(c.x-p.x)*tension).toFixed(1);
+      const c2x=(c.x-(c.x-p.x)*tension).toFixed(1);
+      pathD+=` C${c1x},${p.y.toFixed(1)} ${c2x},${c.y.toFixed(1)} ${c.x.toFixed(1)},${c.y.toFixed(1)}`;
+    }
+    const last=mapped[n-1], first=mapped[0];
+    const areaD=pathD+` L${last.x.toFixed(1)},${(padY+ph)} L${first.x.toFixed(1)},${(padY+ph)} Z`;
+    const gid=`g${Math.random().toString(36).slice(2,8)}`;
+
+    // Dots with tap/hover tooltips
+    let dotsHtml='', tipsHtml='';
+    mapped.forEach((p,i)=>{
+      const isLast=i===n-1;
+      const tipId=`tip${gid}${i}`;
+      const pct=W>0?(p.x/W*100).toFixed(1):50;
+      const anchor=p.x>W*0.65?'right:0':'left:0';
+      dotsHtml+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="14" fill="transparent" style="cursor:pointer"
+        onmouseenter="document.getElementById('${tipId}').style.display='block'"
+        onmouseleave="document.getElementById('${tipId}').style.display='none'"
+        ontouchstart="event.preventDefault();var t=document.getElementById('${tipId}');document.querySelectorAll('.cht').forEach(x=>x.style.display='none');t.style.display=t.style.display==='block'?'none':'block'"/>
+      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isLast?4.5:2.5}"
+        fill="${isLast?strokeColor:'var(--surf)'}"
+        stroke="${isLast?'var(--bg)':strokeColor}"
+        stroke-width="${isLast?2:1.2}" opacity="${isLast?1:0.6}"
+        style="pointer-events:none"/>`;
+      // Always show value on last point; show on first if >1 point; show on all if <=5
+      const showInline = isLast || (i===0 && n>1) || (n<=5 && !isLast);
+      if(isLast){
+        const ty=(p.y-10).toFixed(1);
+        const tx=p.x.toFixed(1);
+        const ta=p.x>W*0.65?'end':'middle';
+        dotsHtml+=`<text x="${tx}" y="${ty}" text-anchor="${ta}" font-family="var(--mono)" font-size="10" font-weight="500" fill="${strokeColor}" style="pointer-events:none">${escHtml(String(p.raw))}</text>`;
+      }
+      tipsHtml+=`<div id="${tipId}" class="cht" style="display:none;position:absolute;${anchor};top:${Math.max(2,p.y/H*85).toFixed(0)}%;
+        background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r);
+        padding:4px 10px;font-family:var(--mono);font-size:9px;white-space:nowrap;
+        pointer-events:none;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,.4)">
+        <span style="color:${strokeColor};font-weight:500">${escHtml(String(p.raw))}</span>
+        <span style="color:var(--muted);margin-left:6px;font-size:8px">${escHtml(p.date||'')}</span>
+      </div>`;
+    });
+
+    return `<div style="position:relative;padding:4px 0 2px;user-select:none">
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="overflow:visible;display:block">
+        <defs>
+          <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${strokeColor}" stop-opacity=".1"/>
+            <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
         <path d="${escHtml(areaD)}" fill="url(#${gid})"/>
-        <path d="${escHtml(pathD)}" fill="none" stroke="${strokeColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-        ${dots}
+        <path d="${escHtml(pathD)}" fill="none" stroke="${strokeColor}" stroke-width="1.5"
+          stroke-linejoin="round" stroke-linecap="round"/>
+        ${dotsHtml}
       </svg>
+      ${tipsHtml}
     </div>`;
   }
+
 
   const chartsHtml = allZero
     ? `<div class="prog-empty-sm">Bodyweight exercise — weight chart unavailable.</div>`
@@ -2835,6 +2878,10 @@ function saveNewWorkout() {
   renderPbWorkoutListMain();
   showToast('Workout created', 'ok');
 }
+
+function showChartTip(id){const el=document.getElementById(id);if(el)el.style.display='block';}
+function hideChartTip(id){const el=document.getElementById(id);if(el)el.style.display='none';}
+function toggleChartTip(id,e){e.preventDefault();const el=document.getElementById(id);if(!el)return;const vis=el.style.display==='block';document.querySelectorAll('[id^="tip-"]').forEach(t=>t.style.display='none');if(!vis)el.style.display='block';}
 
 render();updateBackupLabel();_lastBackupLabelUpdate=Date.now();
 
