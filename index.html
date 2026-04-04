@@ -1475,12 +1475,159 @@ const store = {
   setRaw(key, value) { try { localStorage.setItem(key, value); return true; } catch { return false; } },
 };
 
-const DEF_CFG = [{label:'Push',color:'#C8A96E'},{label:'Pull',color:'#C8A96E'},{label:'Legs',color:'#C8A96E'}];
+// ── PROGRAMS FROM RFKINETIX ──────────────────────────────────────────────────
+// 5 DAY SPLIT (Băieți)
+const P_5DAY = [
+  // Ziua I: Spate
+  [{id:1,name:'Neutral Grip Lat Pulldown',sets:3,reps:12,weight:'BW'},{id:2,name:'Neutral Grip One-Arm Row',sets:3,reps:12,weight:'BW'},{id:3,name:'T-Bar Row',sets:3,reps:12,weight:'BW'},{id:4,name:'Machine/Cable High Row',sets:3,reps:12,weight:'BW'},{id:5,name:'Straight Arm Pullover',sets:3,reps:15,weight:'BW'},{id:6,name:'DB/BB Shrug',sets:3,reps:15,weight:'BW'}],
+  // Ziua II: Piept
+  [{id:1,name:'Horizontal DB/Machine Chest Press',sets:3,reps:12,weight:'BW'},{id:2,name:'Incline DB/Machine Chest Press',sets:3,reps:12,weight:'BW'},{id:3,name:'Cable X Crossover',sets:3,reps:15,weight:'BW'},{id:4,name:'Machine Fly',sets:3,reps:15,weight:'BW'},{id:5,name:'Cable Low-to-High Fly',sets:3,reps:15,weight:'BW'},{id:6,name:'Decline Machine Press / Dips',sets:3,reps:12,weight:'BW'}],
+  // Ziua III: Brațe
+  [{id:1,name:'EZ Bar Curls',sets:3,reps:12,weight:'BW'},{id:2,name:'DB Incline Curls',sets:3,reps:12,weight:'BW'},{id:3,name:'Cable Curls',sets:3,reps:15,weight:'BW'},{id:4,name:'Rope Triceps Pushdown',sets:3,reps:12,weight:'BW'},{id:5,name:'Cable Overhead Triceps Extension',sets:3,reps:12,weight:'BW'},{id:6,name:'Dips / Pushdown Machine',sets:3,reps:12,weight:'BW'}],
+  // Ziua IV: Umeri + Abdomen
+  [{id:1,name:'DB/Machine Overhead Press',sets:3,reps:12,weight:'BW'},{id:2,name:'DB Lateral Raises',sets:3,reps:12,weight:'BW'},{id:3,name:'Cable Lateral Fly',sets:2,reps:15,weight:'BW'},{id:4,name:'Cable/Machine Rear Delt Fly',sets:3,reps:12,weight:'BW'},{id:5,name:'DB High Row',sets:3,reps:12,weight:'BW'},{id:6,name:'Rope crunch',sets:4,reps:20,weight:'BW'}],
+  // Ziua V: Picioare
+  [{id:1,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'DB/BB Romanian deadlift',sets:3,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:3,reps:12,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:3,reps:12,weight:'BW'},{id:6,name:'Machine adductions',sets:3,reps:15,weight:'BW'},{id:7,name:'Machine Calf Raises/Smith Calf Raises',sets:4,reps:15,weight:'BW'}],
+];
+const P_5DAY_CFG = [
+  {label:'5DS — Spate',color:'#C8A96E'},
+  {label:'5DS — Piept',color:'#C8A96E'},
+  {label:'5DS — Brațe',color:'#C8A96E'},
+  {label:'5DS — Umeri+Abs',color:'#C8A96E'},
+  {label:'5DS — Picioare',color:'#C8A96E'},
+];
+
+// PPL SPLIT Băieți — Incepător/Intermediar  (A+B)
+const P_PPL = [
+  // Push A
+  [{id:1,name:'Flat DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:2,name:'Incline DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:3,name:'Cable Low-to-High Fly',sets:3,reps:12,weight:'BW'},{id:4,name:'Pushups',sets:3,reps:12,weight:'BW'},{id:5,name:'Cable Lateral Fly',sets:4,reps:12,weight:'BW'},{id:6,name:'DB/Machine Overhead Press',sets:4,reps:12,weight:'BW'},{id:7,name:'Cable Overhead Triceps Extension',sets:4,reps:12,weight:'BW'},{id:8,name:'Rope Triceps Pushdown',sets:4,reps:12,weight:'BW'}],
+  // Pull A
+  [{id:1,name:'Straight-Arm Cable Pullover',sets:3,reps:15,weight:'BW'},{id:2,name:'Overhand Lat Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'Neutral Grip Cable Row',sets:4,reps:12,weight:'BW'},{id:4,name:'One-Arm Cable Row',sets:4,reps:12,weight:'BW'},{id:5,name:'DB/BB Shrug',sets:4,reps:15,weight:'BW'},{id:6,name:'EZ Bar Reverse Grip Curls',sets:4,reps:12,weight:'BW'},{id:7,name:'EZ Bar Curls',sets:4,reps:12,weight:'BW'}],
+  // Legs A
+  [{id:1,name:'Machine adductions',sets:4,reps:15,weight:'BW'},{id:2,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'DB Reverse Lunge',sets:4,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:6,name:'Machine Calf Raises/Smith Calf Raises',sets:6,reps:15,weight:'BW'}],
+  // Push B
+  [{id:1,name:'Incline DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:2,name:'Flat DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:3,name:'Cable X Crossover',sets:3,reps:15,weight:'BW'},{id:4,name:'Pushups',sets:3,reps:12,weight:'BW'},{id:5,name:'Cable/Machine Rear Delt Fly',sets:4,reps:12,weight:'BW'},{id:6,name:'DB/Machine Overhead Press',sets:4,reps:12,weight:'BW'},{id:7,name:'DB Skullcrushers',sets:4,reps:12,weight:'BW'},{id:8,name:'DB Kickbacks',sets:4,reps:12,weight:'BW'}],
+  // Pull B
+  [{id:1,name:'BB Row',sets:4,reps:12,weight:'BW'},{id:2,name:'Underhand Lat Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'DB High Row',sets:4,reps:12,weight:'BW'},{id:4,name:'One-Arm Cable Row',sets:3,reps:15,weight:'BW'},{id:5,name:'DB/BB Shrug',sets:4,reps:15,weight:'BW'},{id:6,name:'DB Curls',sets:4,reps:12,weight:'BW'},{id:7,name:'DB Hammer Curl',sets:4,reps:12,weight:'BW'}],
+  // Legs B
+  [{id:1,name:'Machine adductions',sets:4,reps:15,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'Leg Press',sets:4,reps:12,weight:'BW'},{id:4,name:'Unilateral hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:6,name:'DB calf raises',sets:6,reps:15,weight:'BW'}],
+];
+const P_PPL_CFG = [
+  {label:'PPL — Push A',color:'#C8A96E'},
+  {label:'PPL — Pull A',color:'#C8A96E'},
+  {label:'PPL — Legs A',color:'#C8A96E'},
+  {label:'PPL — Push B',color:'#C8A96E'},
+  {label:'PPL — Pull B',color:'#C8A96E'},
+  {label:'PPL — Legs B',color:'#C8A96E'},
+];
+
+// FOUR DAY SPLIT Băieți — Incepător/Intermediar
+const P_4DAY = [
+  // Spate - Biceps A
+  [{id:1,name:'Straight-Arm Cable Pullover',sets:3,reps:15,weight:'BW'},{id:2,name:'One-Arm Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'Neutral Grip Cable Row',sets:4,reps:12,weight:'BW'},{id:4,name:'Underhand Lat Pulldown',sets:3,reps:12,weight:'BW'},{id:5,name:'Lumbar Hyperextension',sets:4,reps:15,weight:'BW'},{id:6,name:'EZ Bar Curls',sets:3,reps:12,weight:'BW'},{id:7,name:'DB Spider Curl',sets:3,reps:12,weight:'BW'}],
+  // Piept - Triceps A
+  [{id:1,name:'Flat DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:2,name:'Incline DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:3,name:'Cable Low-to-High Fly',sets:3,reps:15,weight:'BW'},{id:4,name:'Chest Fly Machine',sets:3,reps:15,weight:'BW'},{id:5,name:'Pushups',sets:3,reps:12,weight:'BW'},{id:6,name:'DB Skullcrushers',sets:3,reps:12,weight:'BW'},{id:7,name:'Cross-Body Cable Triceps Extension',sets:3,reps:15,weight:'BW'}],
+  // Legs A
+  [{id:1,name:'Machine adductions',sets:3,reps:15,weight:'BW'},{id:2,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'DB/BB Romanian deadlift',sets:4,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:15,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:4,reps:15,weight:'BW'},{id:6,name:'Leg Press',sets:6,reps:15,weight:'BW'}],
+  // Umeri - Rotatori A
+  [{id:1,name:'Banded External Rotation',sets:3,reps:15,weight:'BW'},{id:2,name:'Cable Lateral Fly',sets:4,reps:15,weight:'BW'},{id:3,name:'DB/Machine Overhead Press',sets:4,reps:12,weight:'BW'},{id:4,name:'DB/BB Shrug',sets:4,reps:15,weight:'BW'},{id:5,name:'Cable/Machine Rear Delt Fly',sets:4,reps:15,weight:'BW'},{id:6,name:'Cable Facepull',sets:4,reps:15,weight:'BW'}],
+  // Spate - Biceps B
+  [{id:1,name:'Straight-Arm Cable Pullover',sets:3,reps:15,weight:'BW'},{id:2,name:'Overhand Lat Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'Underhand Cable Row',sets:4,reps:12,weight:'BW'},{id:4,name:'Underhand Lat Pulldown',sets:3,reps:12,weight:'BW'},{id:5,name:'Lumbar Hyperextension',sets:4,reps:15,weight:'BW'},{id:6,name:'DB One-Arm Isometric Curl',sets:3,reps:10,weight:'BW'},{id:7,name:'DB Hammer Curl',sets:3,reps:12,weight:'BW'}],
+  // Piept - Triceps B
+  [{id:1,name:'Flat DB/Machine Press',sets:4,reps:15,weight:'BW'},{id:2,name:'Incline DB/Machine Press',sets:4,reps:15,weight:'BW'},{id:3,name:'Cable X Crossover',sets:3,reps:15,weight:'BW'},{id:4,name:'Cable Low-to-High Fly',sets:3,reps:15,weight:'BW'},{id:5,name:'Pushups',sets:3,reps:12,weight:'BW'},{id:6,name:'Cable Overhead Triceps Extension',sets:3,reps:12,weight:'BW'},{id:7,name:'Katana Cable Extension',sets:3,reps:15,weight:'BW'}],
+  // Legs B
+  [{id:1,name:'Machine abductions',sets:3,reps:15,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:4,reps:12,weight:'BW'},{id:3,name:'BB/Machine hip thrust',sets:4,reps:15,weight:'BW'},{id:4,name:'DB Reverse Lunge',sets:3,reps:12,weight:'BW'},{id:5,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:6,name:'Unilateral hamstring curl machine',sets:3,reps:12,weight:'BW'},{id:7,name:'Single leg DB calf raises',sets:6,reps:15,weight:'BW'}],
+  // Umeri - Rotatori B
+  [{id:1,name:'Cable Facepull',sets:3,reps:15,weight:'BW'},{id:2,name:'DB Lateral Raises',sets:4,reps:15,weight:'BW'},{id:3,name:'DB/Machine Overhead Press',sets:4,reps:15,weight:'BW'},{id:4,name:'DB/BB Shrug',sets:4,reps:12,weight:'BW'},{id:5,name:'DB/Cable Y Raises',sets:4,reps:15,weight:'BW'},{id:6,name:'Cable/Machine Rear Delt Fly',sets:4,reps:15,weight:'BW'}],
+];
+const P_4DAY_CFG = [
+  {label:'4DS — Spate+Bi A',color:'#C8A96E'},
+  {label:'4DS — Piept+Tri A',color:'#C8A96E'},
+  {label:'4DS — Legs A',color:'#C8A96E'},
+  {label:'4DS — Umeri A',color:'#C8A96E'},
+  {label:'4DS — Spate+Bi B',color:'#C8A96E'},
+  {label:'4DS — Piept+Tri B',color:'#C8A96E'},
+  {label:'4DS — Legs B',color:'#C8A96E'},
+  {label:'4DS — Umeri B',color:'#C8A96E'},
+];
+
+// THREE DAY SPLIT Fete — Incepătoare/Intermediar
+const P_3DAY_FETE = [
+  // Coapse - Gambe A
+  [{id:1,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:2,name:'DB/BB Romanian deadlift',sets:4,reps:12,weight:'BW'},{id:3,name:'DB Step Ups',sets:4,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:6,name:'DB unilateral calf raises',sets:5,reps:15,weight:'BW'}],
+  // Superior A
+  [{id:1,name:'BB Row',sets:5,reps:12,weight:'BW'},{id:2,name:'Flat DB/Machine Press',sets:5,reps:12,weight:'BW'},{id:3,name:'DB Lateral Raises',sets:5,reps:12,weight:'BW'},{id:4,name:'EZ Bar Curls',sets:4,reps:15,weight:'BW'},{id:5,name:'Cross-Body Cable Triceps Extension',sets:4,reps:15,weight:'BW'},{id:6,name:'Lumbar Hyperextension',sets:4,reps:15,weight:'BW'}],
+  // Fesieri - Adductori A
+  [{id:1,name:'BB/Machine hip thrust',sets:5,reps:12,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:5,reps:12,weight:'BW'},{id:3,name:'Hip abduction machine',sets:4,reps:15,weight:'BW'},{id:4,name:'Hip adduction machine',sets:4,reps:15,weight:'BW'},{id:5,name:'Cable hip extensions (mule kickback)',sets:4,reps:12,weight:'BW'},{id:6,name:'Banded clamshells',sets:4,reps:15,weight:'BW'}],
+  // Coapse - Gambe B
+  [{id:1,name:'BB Squat',sets:4,reps:15,weight:'BW'},{id:2,name:'Leg Press',sets:4,reps:15,weight:'BW'},{id:3,name:'Goblet Squat',sets:4,reps:15,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Unilateral hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:6,name:'Machine/Leg press bilateral calf raises',sets:5,reps:15,weight:'BW'}],
+  // Superior B
+  [{id:1,name:'Incline DB/Machine Press',sets:4,reps:12,weight:'BW'},{id:2,name:'Overhand Lat Pulldown',sets:4,reps:12,weight:'BW'},{id:3,name:'DB/Machine Overhead Press',sets:3,reps:12,weight:'BW'},{id:4,name:'Cable Facepull',sets:4,reps:15,weight:'BW'},{id:5,name:'Cable Overhead Triceps Extension',sets:4,reps:15,weight:'BW'},{id:6,name:'DB Curls',sets:4,reps:15,weight:'BW'},{id:7,name:'Lumbar Hyperextension',sets:3,reps:15,weight:'BW'}],
+  // Fesieri - Adductori B
+  [{id:1,name:'BB/Machine hip thrust',sets:5,reps:12,weight:'BW'},{id:2,name:'DB Reverse Lunge',sets:5,reps:12,weight:'BW'},{id:3,name:'Cable/Banded hip abductions',sets:4,reps:12,weight:'BW'},{id:4,name:'Physioball isometric adductions',sets:4,reps:15,weight:'BW'},{id:5,name:'One leg hip bridge',sets:4,reps:12,weight:'BW'},{id:6,name:'Banded crab walk',sets:4,reps:12,weight:'BW'}],
+];
+const P_3DAY_FETE_CFG = [
+  {label:'3DS-F — Coapse A',color:'#9B7BB8'},
+  {label:'3DS-F — Superior A',color:'#9B7BB8'},
+  {label:'3DS-F — Fesieri A',color:'#9B7BB8'},
+  {label:'3DS-F — Coapse B',color:'#9B7BB8'},
+  {label:'3DS-F — Superior B',color:'#9B7BB8'},
+  {label:'3DS-F — Fesieri B',color:'#9B7BB8'},
+];
+
+// FOUR DAY SPLIT Fete — Incepătoare/Intermediar
+const P_4DAY_FETE = [
+  // Coapse - Ischogambieri A
+  [{id:1,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:2,name:'DB/BB Romanian deadlift',sets:4,reps:12,weight:'BW'},{id:3,name:'Goblet Squat',sets:3,reps:18,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:15,weight:'BW'},{id:5,name:'Hamstring curl machine',sets:4,reps:15,weight:'BW'},{id:6,name:'DB unilateral calf raises',sets:4,reps:15,weight:'BW'}],
+  // Push A
+  [{id:1,name:'Flat DB/Machine Press',sets:5,reps:12,weight:'BW'},{id:2,name:'Cable Low-to-High Fly',sets:4,reps:12,weight:'BW'},{id:3,name:'Cable X Crossover',sets:4,reps:15,weight:'BW'},{id:4,name:'DB/Machine Overhead Press',sets:5,reps:12,weight:'BW'},{id:5,name:'DB Lateral Raises',sets:4,reps:12,weight:'BW'},{id:6,name:'Cross-Body Cable Triceps Extension',sets:5,reps:12,weight:'BW'}],
+  // Fesieri - Adductori A
+  [{id:1,name:'Hip adduction machine',sets:4,reps:15,weight:'BW'},{id:2,name:'BB/Machine hip thrust',sets:5,reps:12,weight:'BW'},{id:3,name:'DB Bulgarian Split Squat',sets:4,reps:15,weight:'BW'},{id:4,name:'Cable hip extensions (mule kickback)',sets:4,reps:12,weight:'BW'},{id:5,name:'Hip abduction machine',sets:4,reps:15,weight:'BW'},{id:6,name:'Banded clamshells',sets:4,reps:15,weight:'BW'}],
+  // Pull A
+  [{id:1,name:'Straight-Arm Cable Pullover',sets:4,reps:15,weight:'BW'},{id:2,name:'Overhand Lat Pulldown',sets:5,reps:12,weight:'BW'},{id:3,name:'One-Arm Cable Row',sets:4,reps:12,weight:'BW'},{id:4,name:'Neutral Grip Cable Row',sets:5,reps:12,weight:'BW'},{id:5,name:'BB Row',sets:4,reps:15,weight:'BW'},{id:6,name:'DB Curls',sets:4,reps:12,weight:'BW'}],
+  // Coapse - Ischiogambieri B
+  [{id:1,name:'BB Squat',sets:4,reps:12,weight:'BW'},{id:2,name:'DB/BB Romanian deadlift',sets:4,reps:12,weight:'BW'},{id:3,name:'DB Reverse Lunge',sets:4,reps:12,weight:'BW'},{id:4,name:'Leg Extension Machine',sets:4,reps:12,weight:'BW'},{id:5,name:'Unilateral hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:6,name:'Machine/Leg press bilateral calf raises',sets:4,reps:15,weight:'BW'}],
+  // Push B
+  [{id:1,name:'Incline DB/Machine Press',sets:5,reps:12,weight:'BW'},{id:2,name:'Chest Fly Machine',sets:4,reps:15,weight:'BW'},{id:3,name:'Cable High-to-Low Fly',sets:4,reps:12,weight:'BW'},{id:4,name:'Cable/Machine Rear Delt Fly',sets:4,reps:12,weight:'BW'},{id:5,name:'Cable Lateral Fly',sets:5,reps:12,weight:'BW'},{id:6,name:'DB Skullcrushers',sets:4,reps:12,weight:'BW'}],
+  // Fesieri - Adductori B
+  [{id:1,name:'Physioball isometric adductions',sets:4,reps:15,weight:'BW'},{id:2,name:'DB Bulgarian Split Squat',sets:5,reps:10,weight:'BW'},{id:3,name:'BB/Machine hip thrust',sets:4,reps:15,weight:'BW'},{id:4,name:'Banded hip abduction',sets:4,reps:15,weight:'BW'},{id:5,name:'Alternative unilateral glute bridges',sets:4,reps:12,weight:'BW'},{id:6,name:'Glute hip hyperextension',sets:4,reps:15,weight:'BW'}],
+  // Pull B
+  [{id:1,name:'One-Arm Pulldown',sets:4,reps:12,weight:'BW'},{id:2,name:'Underhand Lat Pulldown',sets:5,reps:12,weight:'BW'},{id:3,name:'Unilateral hamstring curl machine',sets:4,reps:12,weight:'BW'},{id:4,name:'DB High Row',sets:5,reps:15,weight:'BW'},{id:5,name:'Lumbar Hyperextension',sets:4,reps:12,weight:'BW'},{id:6,name:'EZ Bar Curls',sets:4,reps:12,weight:'BW'}],
+];
+const P_4DAY_FETE_CFG = [
+  {label:'4DS-F — Coapse A',color:'#9B7BB8'},
+  {label:'4DS-F — Push A',color:'#9B7BB8'},
+  {label:'4DS-F — Fesieri A',color:'#9B7BB8'},
+  {label:'4DS-F — Pull A',color:'#9B7BB8'},
+  {label:'4DS-F — Coapse B',color:'#9B7BB8'},
+  {label:'4DS-F — Push B',color:'#9B7BB8'},
+  {label:'4DS-F — Fesieri B',color:'#9B7BB8'},
+  {label:'4DS-F — Pull B',color:'#9B7BB8'},
+];
+
+// ABDOMEN (standalone)
+const P_ABS = [
+  [{id:1,name:'Rope crunch',sets:4,reps:15,weight:'BW'},{id:2,name:'Rope oblique crunch',sets:4,reps:30,weight:'BW'},{id:3,name:"Captain's chair leg raises",sets:4,reps:20,weight:'BW'},{id:4,name:'Side plank crunch',sets:4,reps:20,weight:'BW'},{id:5,name:'Rotation mountain climbers',sets:4,reps:30,weight:'BW'},{id:6,name:'Woodcutters',sets:4,reps:15,weight:'BW'}],
+];
+const P_ABS_CFG = [{label:'Abdomen',color:'#C8A96E'}];
+
+// ── DEFAULT config: merge all programs ───────────────────────────────────────
+const DEF_CFG = [
+  ...P_5DAY_CFG,
+  ...P_PPL_CFG,
+  ...P_4DAY_CFG,
+  ...P_3DAY_FETE_CFG,
+  ...P_4DAY_FETE_CFG,
+  ...P_ABS_CFG,
+];
 const DEF_SCHED = [0, null, 1, null, 2, null, null];
 const DEF = [
-  [{id:1,name:'Incline Bench Press',sets:3,reps:12,weight:'25KG'},{id:2,name:'Machine Chest Fly',sets:3,reps:12,weight:'45KG'},{id:3,name:'Barbell Overhead Press',sets:3,reps:12,weight:'30KG'},{id:4,name:'DB Lateral Raises',sets:3,reps:12,weight:'6KG'},{id:5,name:'Triceps Push Down',sets:3,reps:12,weight:'36KG'}],
-  [{id:1,name:'Supinated Lat Pulldown',sets:3,reps:12,weight:'40KG'},{id:2,name:'Pronated Cable Row',sets:3,reps:12,weight:'36KG'},{id:3,name:'Biceps Curls',sets:3,reps:12,weight:'12KG'},{id:4,name:'Rope Trap Shrug',sets:3,reps:15,weight:'40KG'},{id:5,name:'Hyperextensions',sets:3,reps:15,weight:'BW'}],
-  [{id:1,name:'Barbell Back Squat',sets:3,reps:8,weight:'70KG'},{id:2,name:'Deadlift',sets:3,reps:8,weight:'70KG'},{id:3,name:'Standing Calf Raise',sets:3,reps:20,weight:'150KG'},{id:4,name:'Incline Bench Press',sets:3,reps:12,weight:'25KG'},{id:5,name:'Machine Chest Fly',sets:3,reps:12,weight:'45KG'}],
+  ...P_5DAY,
+  ...P_PPL,
+  ...P_4DAY,
+  ...P_3DAY_FETE,
+  ...P_4DAY_FETE,
+  ...P_ABS,
 ];
 
 let CFG           = store.get(KEYS.cfg)    || DEF_CFG;
@@ -1521,14 +1668,7 @@ function syncSets() {
         const prev = Array.isArray(setsDone[di][ei]) ? setsDone[di][ei] : [];
         setsDone[di][ei] = Array.from({length:ex.sets}, (_,i) => i < prev.length ? (prev[i]||false) : false);
       }
-      // Trim setOvr to current sets count, preserving existing entries
-      if (ex.setOvr) {
-        ex.setOvr = ex.setOvr.slice(0, ex.sets);
-        // Fill any missing slots with empty objects (don't lose existing overrides)
-        while (ex.setOvr.length < ex.sets) ex.setOvr.push({});
-        // If setOvr is now all empty, remove it entirely (cleaner state)
-        if (ex.setOvr.every(o => o.reps == null && o.weight == null)) delete ex.setOvr;
-      }
+      if (ex.setOvr && ex.setOvr.length > ex.sets) ex.setOvr = ex.setOvr.slice(0, ex.sets);
     });
   });
 }
@@ -1715,8 +1855,8 @@ function renderTable() {
           <div class="set-row${done?' set-done':''}" id="sr-${di}-${ei}-${si}">
             <span class="set-num${done?' done-num':''}">${si+1}</span>
             <span class="set-prev">${prevLabel}</span>
-            <div class="set-input-wrap"><input type="number" inputmode="numeric" min="1" max="999" class="set-input${done?' done':''}" value="${escHtml(String(reps))}" onclick="event.stopPropagation()" oninput="saveSetOvr(${di},${ei},${si},'reps',this.value)" onblur="saveSetOvr(${di},${ei},${si},'reps',this.value)"></div>
-            <div class="set-input-wrap"><input type="text" inputmode="decimal" class="set-input${done?' done':''}" style="width:50px" value="${escHtml(String(wt))}" onclick="event.stopPropagation()" oninput="saveSetOvr(${di},${ei},${si},'weight',this.value)" onblur="saveSetOvr(${di},${ei},${si},'weight',this.value)"></div>
+            <div class="set-input-wrap"><input type="number" inputmode="numeric" min="1" max="999" class="set-input${done?' done':''}" value="${escHtml(String(reps))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)"></div>
+            <div class="set-input-wrap"><input type="text" inputmode="decimal" class="set-input${done?' done':''}" style="width:50px" value="${escHtml(String(wt))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)"></div>
             <div class="set-check-wrap"><button class="set-check${done?' checked':''}" id="sc-${di}-${ei}-${si}" onclick="toggleSet(event,${di},${ei},${si})"><svg width="11" height="9" viewBox="0 0 12 10" fill="none"><path d="M1 4.8L4.5 8.5L11 1" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           </div></div>`;
       }
@@ -1772,27 +1912,7 @@ function quickLogAll(e,di,ei,isCurrentlyAllDone){
 function getPrevSet(di,exName,si){const label=CFG[di]?.label,todayDk=dayKey(new Date());for(const h of history){if(h.day!==label)continue;const hDk=h.dk||(h.ts?dayKey(new Date(h.ts)):null);if(hDk===todayDk)continue;const ex=(h.exercises||[]).find(e=>e.name===exName);if(!ex)continue;return{reps:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps,weight:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight};}return null;}
 function getSetReps(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps;}
 function getSetWeight(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight;}
-function saveSetOvr(di,ei,si,field,val){
-  const ex=data[di][ei];
-  if(!ex.setOvr)ex.setOvr=[];
-  if(!ex.setOvr[si])ex.setOvr[si]={};
-  if(field==='reps'){
-    const v=parseInt(val);
-    const safe=(!isNaN(v)&&v>0&&v<=999)?v:ex.reps;
-    ex.setOvr[si].reps=safe;
-    // If all sets have the same reps override, promote to base value
-    const allSameReps=Array.from({length:ex.sets},(_,i)=>ex.setOvr[i]?.reps??ex.reps).every(r=>r===safe);
-    if(allSameReps) ex.reps=safe;
-  } else {
-    const t=String(val).trim().toUpperCase();
-    const safe=t.length>0?t:ex.weight;
-    ex.setOvr[si].weight=safe;
-    // If all sets have the same weight override, promote to base value
-    const allSameWt=Array.from({length:ex.sets},(_,i)=>ex.setOvr[i]?.weight??ex.weight).every(w=>w===safe);
-    if(allSameWt) ex.weight=safe;
-  }
-  persist();
-}
+function saveSetOvr(di,ei,si,field,val){const ex=data[di][ei];if(!ex.setOvr)ex.setOvr=[];if(!ex.setOvr[si])ex.setOvr[si]={};if(field==='reps'){const v=parseInt(val);ex.setOvr[si].reps=(!isNaN(v)&&v>0&&v<=999)?v:ex.reps;}else{const t=String(val).trim().toUpperCase();ex.setOvr[si].weight=t.length>0?t:ex.weight;}persist();}
 function getNoteKey(di){const label=CFG[di]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));return h?`hist-${h.ts}`:`${di}-${today}`;}
 function saveSessionNote(){const nk=getNoteKey(activeDay),v=document.getElementById('session-note-input')?.value||'';sessionNotes[nk]=v;const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)h.note=v;persist();}
 function startEdit(di,ei,e){if(e)e.stopPropagation();if(editingEx&&(editingEx.di!==di||editingEx.ei!==ei))saveInlineEdit();expanded.add(`${di}-${ei}`);deleteConfirm=null;editingEx={di,ei};renderTable();}
@@ -1804,42 +1924,12 @@ function saveToHistory(di){
   const cfg=CFG[di],now=new Date(),dk=dayKey(now);
   const existingIdx=history.findIndex(h=>h.day===cfg.label&&(h.dk===dk||(h.ts&&dayKey(new Date(h.ts))===dk)));
   const vol=calcVol(di);
-  // Bake setOvr into a clean exercise snapshot so history always has actual values
-  const exSnapshot=data[di].map(ex=>{
-    const baked={...ex};
-    if(ex.setOvr){
-      baked.setOvr=ex.setOvr.map((ovr,si)=>({
-        reps: ovr?.reps??ex.reps,
-        weight: ovr?.weight??ex.weight,
-      }));
-    }
-    return baked;
-  });
-  const entry={day:cfg.label,date:now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),dk,ts:existingIdx>=0?(history[existingIdx].ts||now.getTime()):now.getTime(),vol,exercises:JSON.parse(JSON.stringify(exSnapshot))};
+  const entry={day:cfg.label,date:now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),dk,ts:existingIdx>=0?(history[existingIdx].ts||now.getTime()):now.getTime(),vol,exercises:JSON.parse(JSON.stringify(data[di]))};
   if(existingIdx>=0){if(history[existingIdx].note)entry.note=history[existingIdx].note;history[existingIdx]=entry;}
   else{history.unshift(entry);if(history.length>100)history=history.slice(0,100);setTimeout(()=>{document.getElementById('backup-nudge')?.classList.add('show');},600);}
   persist();
 }
-function resetSession(){
-  // Promote any per-set overrides back into base values before clearing
-  // so the next session starts from the weights/reps you actually used
-  data[activeDay].forEach(ex=>{
-    if(ex.setOvr){
-      // Use the last set's values as the new base (most recent intent)
-      const lastOvr=ex.setOvr[ex.sets-1];
-      if(lastOvr?.reps!=null)   ex.reps   = lastOvr.reps;
-      if(lastOvr?.weight!=null) ex.weight = lastOvr.weight;
-    }
-    delete ex.setOvr;
-  });
-  setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));
-  const nk=getNoteKey(activeDay);
-  delete sessionNotes[nk];
-  const label=CFG[activeDay]?.label,today=dayKey(new Date());
-  const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));
-  if(h)delete h.note;
-  expanded.clear();stopSessionTimer();persist();render();
-}
+function resetSession(){data[activeDay].forEach(ex=>{delete ex.setOvr;});setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));const nk=getNoteKey(activeDay);delete sessionNotes[nk];const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)delete h.note;expanded.clear();stopSessionTimer();persist();render();}
 
 function getMonthKey(h){if(h.ts){const d=new Date(h.ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}return h.date?h.date.slice(-8):'unknown';}
 function getMonthLabel(h){if(h.ts){const d=new Date(h.ts);return d.toLocaleDateString('en-GB',{month:'long',year:'numeric'});}return'';}
@@ -2085,16 +2175,21 @@ const EXERCISE_LIBRARY = {
   "Chest": [
     "Flat DB/Machine Press",
     "Incline DB/Machine Press",
+    "Horizontal DB/Machine Chest Press",
+    "Incline DB/Machine Chest Press",
     "Cable Low-to-High Fly",
     "Cable High-to-Low Fly",
     "Cable Crossover",
+    "Cable X Crossover",
     "Chest Fly Machine",
+    "Decline Machine Press",
     "Pushups",
   ],
   "Back": [
     "Overhand Lat Pulldown",
     "Underhand Lat Pulldown",
     "Neutral Grip Lat Pulldown",
+    "Short Grip Pulldown",
     "One-Arm Pulldown",
     "Neutral Grip Cable Row",
     "Underhand Cable Row",
@@ -2104,6 +2199,7 @@ const EXERCISE_LIBRARY = {
     "Machine High Row",
     "DB High Row",
     "Straight-Arm Cable Pullover",
+    "One-Arm Cable Pullover",
     "DB/BB Shrug",
     "Lumbar Hyperextension",
   ],
@@ -2115,6 +2211,7 @@ const EXERCISE_LIBRARY = {
     "Cable Facepull",
     "Banded External Rotation",
     "DB/Cable Y Raises",
+    "Banded Facepull",
   ],
   "Biceps": [
     "EZ Bar Curls",
@@ -2135,38 +2232,62 @@ const EXERCISE_LIBRARY = {
     "DB Kickbacks",
     "Dips",
     "Triceps Pushdown Machine",
+    "Rope Overhead Cable Extensions",
   ],
   "Quads": [
     "BB Squat",
     "Hack Squat / Pendulum Squat",
     "Goblet Squat",
+    "DB Sumo Squat",
     "DB Split Squat",
     "DB Bulgarian Split Squat",
     "DB Reverse Lunge",
     "DB Step Ups",
     "Leg Extension Machine",
+    "Unilateral Leg Extension Machine",
     "Leg Press",
   ],
   "Hamstrings": [
-    "DB/BB Romanian deadlift","BB/DB Romanian deadlift",
-    "Hamstring curl machine","Unilateral hamstring curl machine",
+    "DB/BB Romanian deadlift",
+    "Hamstring curl machine",
+    "Unilateral hamstring curl machine",
   ],
-  "Glutes & Adductors": [
-    "BB/Machine hip thrust","Alternative unilateral glute bridges","One leg hip bridge",
-    "Glute hip hyperextension","Hip adduction machine","Hip abduction machine",
-    "Banded clamshells","Banded hip abduction","Cable/Banded hip abductions",
-    "Cable hip extensions (mule kickback)","Physioball isometric adductions",
-    "Banded crab walk","Machine adductions","Machine abductions",
+  "Glutes & Adductori": [
+    "BB/Machine hip thrust",
+    "Alternative unilateral glute bridges",
+    "One leg hip bridge",
+    "Glute hip hyperextension",
+    "Hip adduction machine",
+    "Hip abduction machine",
+    "Banded clamshells",
+    "Banded hip abduction",
+    "Cable/Banded hip abductions",
+    "Cable hip extensions (mule kickback)",
+    "Physioball isometric adductions",
+    "Banded crab walk",
+    "Machine adductions",
+    "Machine abductions",
   ],
   "Calves": [
-    "DB unilateral calf raises","Machine/Leg press bilateral calf raises",
-    "DB calf raises","Single leg DB calf raises","Leg press calf raises",
+    "DB unilateral calf raises",
+    "Machine/Leg press bilateral calf raises",
+    "DB calf raises",
+    "Single leg DB calf raises",
+    "Leg press calf raises",
     "Machine Calf Raises/Smith Calf Raises",
   ],
   "Core": [
-    "Rope crunch","Rope oblique crunch","Captain's chair leg raises",
-    "Physioball stirs","Medicine ball/sandbag transfers","Side plank crunch",
-    "Rotation mountain climbers","Starfish crunch","Two up one down","Woodcutters","Cable Rope Crunches",
+    "Rope crunch",
+    "Rope oblique crunch",
+    "Captain's chair leg raises",
+    "Physioball stirs",
+    "Medicine ball/sandbag transfers",
+    "Side plank crunch",
+    "Rotation mountain climbers",
+    "Starfish crunch",
+    "Two up one down",
+    "Woodcutters",
+    "Cable Rope Crunches",
   ],
 };
 
