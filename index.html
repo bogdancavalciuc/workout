@@ -1283,6 +1283,13 @@ body.light .set-row { background: var(--surf); }
       <div class="sched-day-list" id="sched-day-list"></div>
     </div>
 
+    <!-- Manage Workouts -->
+    <div style="margin-top:28px">
+      <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;opacity:.7">Manage workouts</div>
+      <div id="sched-workout-manage"></div>
+      <button onclick="closeSchedSheet();openNewWorkoutSheet();" style="width:100%;margin-top:8px;padding:12px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;">+ New workout</button>
+    </div>
+
   </div>
 </div>
 
@@ -1920,48 +1927,6 @@ function renderProgressOverview() {
         <span class="heat-legend-label">More</span>
       </div>
     </div>
-    ${Object.keys(volByDay).length>1?`<div class="prog-card">
-      <div class="prog-card-title">Total accumulated volume by workout type</div>
-      <div class="vol-bars">
-        ${Object.entries(volByDay).sort((a,b)=>b[1]-a[1]).map(([day,vol])=>{
-          const maxV=Math.max(...Object.values(volByDay));
-          const p=Math.round((vol/maxV)*100);
-          return `<div class="vol-bar-row">
-            <span class="vol-bar-label">${escHtml(day)}</span>
-            <div class="vol-bar-track"><div class="vol-bar-fill" style="width:${p}%"></div></div>
-            <span class="vol-bar-val">${fmtVol(Math.round(vol))}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`:''}
-    ${(()=>{
-      // Build PR table: best weight per exercise across filtered history
-      const prs = {};
-      fh.forEach(h => {
-        (h.exercises||[]).forEach(ex => {
-          const k = parseFloat(ex.weight);
-          if (isNaN(k) || k <= 0) return;
-          const orm = calc1RM(ex.weight, ex.reps) || k;
-          if (!prs[ex.name] || orm > prs[ex.name].orm) {
-            prs[ex.name] = { orm, weight: ex.weight, reps: ex.reps, date: h.date };
-          }
-        });
-      });
-      const sorted = Object.entries(prs).sort((a,b)=>b[1].orm-a[1].orm).slice(0,8);
-      if (!sorted.length) return '';
-      const medals = ['🥇','🥈','🥉'];
-      return `<div class="prog-card">
-        <div class="prog-card-title">Personal records — best estimated 1RM</div>
-        <div class="pr-list">
-          ${sorted.map(([name,pr],i)=>`
-            <div class="pr-row">
-              <span class="pr-rank">${medals[i]||'·'}</span>
-              <span class="pr-name">${escHtml(name)}</span>
-              <span class="pr-val">${pr.orm}kg</span>
-            </div>`).join('')}
-        </div>
-      </div>`;
-    })()}
   `;
 }
 
@@ -2031,21 +1996,9 @@ function renderProgress() {
 
   const chartsHtml = allZero
     ? `<div class="prog-empty-sm">Bodyweight exercise — weight chart unavailable.</div>`
-    : `${buildChart(pts.map(p=>p.weight),'var(--gold)','Weight (kg)')}
-       ${maxORM>0?buildChart(pts.map(p=>p.orm),'var(--success)','Estimated 1RM — Epley (kg)'):''}
-       ${totalVol>0?buildChart(pts.map(p=>p.vol),'var(--muted2)','Volume per session (kg)'):''}`;
+    : buildChart(pts.map(p=>p.weight),'var(--gold)','Weight (kg)');
 
-  const lastSetHtml = last.setData.length ? `
-    <div class="prog-card">
-      <div class="prog-card-title">Last session — set breakdown</div>
-      <div class="set-breakdown">
-        <div class="sb-header"><span>Set</span><span>Reps</span><span>Kg</span><span>Est. 1RM</span></div>
-        ${last.setData.map((s,i)=>{
-          const orm=calc1RM(s.weight,s.reps);
-          return `<div class="sb-row"><span class="sb-num">${i+1}</span><span>${s.reps}</span><span>${escHtml(String(s.weight))}</span><span class="sb-orm">${orm?orm+'kg':'—'}</span></div>`;
-        }).join('')}
-      </div>
-    </div>` : '';
+
 
   c.innerHTML = `
     <div class="prog-kpi-strip">
@@ -2053,13 +2006,11 @@ function renderProgress() {
       <div class="prog-kpi"><div class="prog-kpi-val">${maxW>0?maxW+'kg':'—'}</div><div class="prog-kpi-label">Best weight</div></div>
       <div class="prog-kpi${diffW>0?' kpi-up':diffW<0?' kpi-down':''}"><div class="prog-kpi-val">${diffW===0?'—':(diffW>0?'+':'')+diffW.toFixed(1)+'kg'}</div><div class="prog-kpi-label">Progress</div></div>
       <div class="prog-kpi"><div class="prog-kpi-val">${pts.length}</div><div class="prog-kpi-label">Sessions</div></div>
-      ${totalVol>0?`<div class="prog-kpi"><div class="prog-kpi-val">${fmtVol(Math.round(totalVol))}</div><div class="prog-kpi-label">Total vol.</div></div>`:''}
     </div>
     <div class="prog-card">
       <div class="prog-card-title">${escHtml(name)}${df?' · '+escHtml(df):''} — progress (${pts.length} sessions)</div>
       ${chartsHtml}
     </div>
-    ${lastSetHtml}
   `;
 }
 
@@ -2279,6 +2230,65 @@ function renderSchedSheet(){
   c.innerHTML=WEEK_DAYS.map((dayName,wi)=>{const cfgIdx=weekSched[wi],isToday=wi===todayIdx,isRest=cfgIdx===null||cfgIdx===undefined||cfgIdx>=CFG.length;const wkLabel=isRest?'Rest':(CFG[cfgIdx]?.label||'?'),wkClass=isRest?'rest-v':'';const opts=['<option value="rest"'+(isRest?' selected':'')+'>— Rest —</option>'].concat(CFG.map((cfg,ci)=>`<option value="${ci}"${cfgIdx===ci?' selected':''}>${escHtml(cfg.label)}</option>`)).join('');return`<div class="sched-day-row${isToday?' today-row':''}"><div class="sched-day-info"><span class="sched-day-label${isToday?' today-lbl':''}">${escHtml(dayName)}${isToday?' · Today':''}</span><span class="sched-workout-val ${wkClass}" id="swv-${wi}">${escHtml(wkLabel)}</span></div><select class="sched-select" onchange="setDayWorkout(${wi},this.value)">${opts}</select></div>`;}).join('');
   const wl=document.getElementById('sched-workout-list');
   if(wl)wl.innerHTML=CFG.map((cfg,ci)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf2);border:1px solid var(--line);border-radius:var(--r);gap:8px"><span style="font-family:var(--serif);font-size:14px;color:var(--text)">${escHtml(cfg.label)}</span><button onclick="closeSchedSheet();openDayEdit(null,${ci});" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 12px;color:var(--muted2);cursor:pointer;">Rename</button></div>`).join('');
+  renderSchedWorkoutManage();
+}
+
+function renderSchedWorkoutManage() {
+  const c = document.getElementById('sched-workout-manage');
+  if (!c) return;
+  if (!CFG.length) { c.innerHTML = ''; return; }
+  c.innerHTML = CFG.map((cfg, ci) => {
+    const usedDays = weekSched.filter(v => v === ci).length;
+    const exCount = (data[ci]||[]).length;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);margin-bottom:6px">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--serif);font-size:16px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(cfg.label)}</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:2px;letter-spacing:.04em">${exCount} exercise${exCount!==1?'s':''}${usedDays>0?' · '+usedDays+' day'+(usedDays>1?'s':'')+' assigned':' · unassigned'}</div>
+      </div>
+      <button onclick="schedRenameWorkout(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:7px 11px;color:var(--muted2);cursor:pointer;flex-shrink:0">Rename</button>
+      ${CFG.length>1?`<button onclick="schedDeleteWorkout(${ci})" style="background:none;border:1px solid var(--line2);border-radius:var(--r);color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:4px 10px;flex-shrink:0;transition:color .15s,border-color .15s" onmouseover="this.style.color='var(--danger)';this.style.borderColor='var(--danger)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--line2)'">×</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+function schedRenameWorkout(ci) {
+  closeSchedSheet();
+  openDayEdit(null, ci);
+}
+
+function schedDeleteWorkout(ci) {
+  const label = CFG[ci]?.label || 'this workout';
+  const usedDays = weekSched.filter(v => v === ci).length;
+  const msg = usedDays > 0
+    ? `"${label}" este asignat la ${usedDays} zi${usedDays>1?'le':''}. Acele zile devin Rest. Istoricul rămâne intact.`
+    : `"${label}" va fi șters. Istoricul rămâne intact.`;
+  confirmAction('Șterge workout?', msg, 'Șterge', 'danger', () => {
+    CFG.splice(ci, 1);
+    data.splice(ci, 1);
+    setsDone.splice(ci, 1);
+    weekSched = weekSched.map(v => {
+      if (v === null || v === undefined) return v;
+      if (v === ci) return null;
+      if (v > ci) return v - 1;
+      return v;
+    });
+    if (activeDay >= CFG.length) activeDay = Math.max(0, CFG.length - 1);
+    const nRE = {};
+    Object.keys(restEnabled).forEach(k => {
+      const parts = k.split('-');
+      const kdi = parseInt(parts[0]), kei = parseInt(parts[1]);
+      if (kdi === ci) return;
+      const newDi = kdi > ci ? kdi - 1 : kdi;
+      nRE[`${newDi}-${kei}`] = restEnabled[k];
+    });
+    restEnabled = nRE;
+    syncSets();
+    persist();
+    render();
+    renderSchedSheet();
+    renderProgramsSection();
+    showToast(`"${label}" șters`, 'ok');
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
