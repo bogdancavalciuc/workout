@@ -1873,7 +1873,7 @@ function renderProgressOverview() {
   let streak = 0, prev = new Date();
   for (const dk of allDks) {
     const parts = dk.split('-').map(Number);
-    const d = new Date(parts[0], parts[1], parts[2]);
+    const d = new Date(parts[0], parts[1]-1, parts[2]);
     if (Math.abs(prev - d) <= 8 * 86400000) { streak++; prev = d; } else break;
   }
 
@@ -1882,10 +1882,13 @@ function renderProgressOverview() {
   let completedDays = 0;
   for (let d = 0; d < 28; d++) {
     const day = new Date(now); day.setDate(now.getDate()-d);
+    const wi = (day.getDay()+6)%7; // Mon=0 … Sun=6
+    const isScheduled = weekSched[wi]!==null && weekSched[wi]!==undefined && weekSched[wi]<CFG.length;
+    if (!isScheduled) continue;
     const dk = dayKey(day);
     if (fh.some(h => h.dk===dk||(h.ts&&dayKey(new Date(h.ts))===dk))) completedDays++;
   }
-  const pct = scheduledTotal > 0 ? Math.round((completedDays/scheduledTotal)*100) : null;
+  const pct = scheduledTotal > 0 ? Math.min(100, Math.round((completedDays/scheduledTotal)*100)) : null;
 
   const heatHtml = weeks.map(week =>
     `<div class="heat-col">${week.map(d => {
@@ -1931,6 +1934,34 @@ function renderProgressOverview() {
         }).join('')}
       </div>
     </div>`:''}
+    ${(()=>{
+      // Build PR table: best weight per exercise across filtered history
+      const prs = {};
+      fh.forEach(h => {
+        (h.exercises||[]).forEach(ex => {
+          const k = parseFloat(ex.weight);
+          if (isNaN(k) || k <= 0) return;
+          const orm = calc1RM(ex.weight, ex.reps) || k;
+          if (!prs[ex.name] || orm > prs[ex.name].orm) {
+            prs[ex.name] = { orm, weight: ex.weight, reps: ex.reps, date: h.date };
+          }
+        });
+      });
+      const sorted = Object.entries(prs).sort((a,b)=>b[1].orm-a[1].orm).slice(0,8);
+      if (!sorted.length) return '';
+      const medals = ['🥇','🥈','🥉'];
+      return `<div class="prog-card">
+        <div class="prog-card-title">Personal records — best estimated 1RM</div>
+        <div class="pr-list">
+          ${sorted.map(([name,pr],i)=>`
+            <div class="pr-row">
+              <span class="pr-rank">${medals[i]||'·'}</span>
+              <span class="pr-name">${escHtml(name)}</span>
+              <span class="pr-val">${pr.orm}kg</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    })()}
   `;
 }
 
