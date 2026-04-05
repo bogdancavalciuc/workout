@@ -87,23 +87,17 @@ body {
   justify-content: space-between;
   margin-bottom: 20px;
 }
-.brand-wordmark { display: flex; flex-direction: column; gap: 3px; }
+.brand-wordmark { display: flex; flex-direction: row; align-items: center; gap: 8px; }
 .brand-title {
-  font-family: var(--serif);
-  font-size: 20px;
-  font-weight: 300;
-  letter-spacing: .22em;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .18em;
   text-transform: uppercase;
-  color: var(--text);
+  color: var(--muted);
   line-height: 1;
 }
-.brand-rule {
-  width: 32px;
-  height: 1px;
-  background: var(--gold);
-  opacity: .6;
-  margin-top: 2px;
-}
+.brand-rule { display: none; }
 .brand-controls { display: flex; align-items: center; gap: 8px; }
 .brand-sub-controls { display: none; }
 .theme-btn {
@@ -114,6 +108,8 @@ body {
   transition: border-color .2s, color .2s; font-size: 14px;
 }
 .theme-btn:active { border-color: var(--gold3); color: var(--gold); }
+
+#nw-day-count-grid button:active { border-color: var(--gold3) !important; background: var(--surf2) !important; color: var(--gold) !important; }
 
 .timer-pill {
   display: flex; align-items: center; gap: 7px;
@@ -207,7 +203,7 @@ body {
 .day-info-bar.rest-bar { opacity: .5; }
 .day-info-name {
   font-family: var(--serif); font-size: 19px; font-weight: 300;
-  letter-spacing: .04em; color: var(--text); flex: 1; font-style: italic;
+  letter-spacing: .08em; color: var(--text); flex: 1; font-style: normal;
 }
 .day-info-name.rest-name {
   font-family: var(--mono); font-size: 9px; letter-spacing: .14em;
@@ -1020,8 +1016,8 @@ body.light .set-row { background: var(--surf); }
 <div class="top">
   <div class="brand">
     <div class="brand-wordmark">
+      <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">◑</button>
       <div class="brand-title">Consistency</div>
-      <div class="brand-rule"></div>
     </div>
     <div class="brand-controls">
       <div class="timer-pill" id="timer-pill" onclick="toggleSessionTimer()">
@@ -1030,7 +1026,6 @@ body.light .set-row { background: var(--surf); }
         </button>
         <span class="timer-val" id="st-val">00:00</span>
       </div>
-      <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">◑</button>
     </div>
   </div>
   <div class="page-nav">
@@ -1231,12 +1226,27 @@ body.light .set-row { background: var(--surf); }
   <div class="sh" style="max-height:94vh;overflow-y:auto;padding-bottom:40px" id="new-workout-sh">
     <div class="shh"></div>
 
-    <!-- Step 1: Name -->
-    <div id="nw-step-name">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <div class="shl" style="margin-bottom:0">New Workout</div>
+    <!-- Step 0: How many days -->
+    <div id="nw-step-days">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <div class="shl" style="margin-bottom:0">New Program</div>
         <button onclick="closeNewWorkoutSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
       </div>
+      <div style="font-family:var(--mono);font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">How many workout days?</div>
+      <div id="nw-day-count-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px"></div>
+      <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.08em;opacity:.6;text-align:center">You’ll name each day and add exercises one by one</div>
+    </div>
+
+    <!-- Step 1: Name current day -->
+    <div id="nw-step-name" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div class="shl" style="margin-bottom:0;font-size:18px" id="nw-step-name-title">Day 1 of 3</div>
+          <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Name this workout</div>
+        </div>
+        <button onclick="closeNewWorkoutSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
+      </div>
+      <div id="nw-dots" style="display:flex;gap:5px;margin-bottom:20px"></div>
       <div class="field">
         <label>Workout name</label>
         <input id="nw-name-input" type="text" placeholder="e.g. Push, Pull, Upper…" autocomplete="off" spellcheck="false" maxlength="40" oninput="nwUpdateNameBtn()">
@@ -1250,10 +1260,11 @@ body.light .set-row { background: var(--surf); }
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div>
           <div class="shl" style="margin-bottom:0;font-size:18px" id="nw-exercises-title">Push</div>
-          <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Build your exercise list</div>
+          <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px" id="nw-exercises-sub">Build your exercise list</div>
         </div>
         <button onclick="closeNewWorkoutSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
       </div>
+      <div id="nw-dots2" style="display:flex;gap:5px;margin-bottom:12px"></div>
 
       <!-- Added exercises list -->
       <div id="nw-added-list" style="margin-bottom:12px"></div>
@@ -2272,7 +2283,14 @@ function cancelReplaceSheet() {
 
 function renderReplaceList(query) {
   const container = document.getElementById('replace-list');
-  const currentName = replaceCtx ? data[replaceCtx.di]?.[replaceCtx.ei]?.name : '';
+  let currentName = '';
+  if (replaceCtx) {
+    if (replaceCtx.tpl) {
+      currentName = tplEditData?.workouts[replaceCtx.wi]?.exercises[replaceCtx.ei]?.name || '';
+    } else {
+      currentName = data[replaceCtx.di]?.[replaceCtx.ei]?.name || '';
+    }
+  }
   const q = query.trim().toLowerCase();
   let html = '';
   let anyResults = false;
@@ -2298,6 +2316,18 @@ function filterReplaceList(q) { renderReplaceList(q); }
 
 function selectReplaceEx(name) {
   if (!replaceCtx) { showToast('ERR: no ctx','err'); return; }
+
+  if (replaceCtx.tpl) {
+    // Template preview context — update tplEditData, re-render preview
+    const { wi, ei } = replaceCtx;
+    replaceCtx = null;
+    tplEditData.workouts[wi].exercises[ei].name = name;
+    closeReplaceSheet();
+    renderTplPreviewContent(false);
+    showToast('Exercițiu înlocuit!', 'ok');
+    return;
+  }
+
   const {di, ei} = replaceCtx;
   replaceCtx = null;
   data[di][ei].name = name;
@@ -2312,21 +2342,64 @@ function selectReplaceEx(name) {
 // ══════════════════════════════════════════════════════════════════════════════
 // NEW WORKOUT CREATOR
 // ══════════════════════════════════════════════════════════════════════════════
-let _nwExercises = []; // [{name, sets, reps, weight}]
-let _nwPendingEx = null; // exercise being configured
-let _nwWorkoutName = ''; // workout name saved at step 1
+// ── NEW WORKOUT FLOW (multi-day) ──────────────────────────────────────────────
+let _nwExercises = [];    // exercises for current day being built
+let _nwPendingEx = null;  // exercise name being configured
+let _nwDayCount  = 1;     // total days in program
+let _nwDayIdx    = 0;     // current day index (0-based)
+let _nwDays      = [];    // [{name, exercises:[]}] collected so far
+
+function nwRenderDots(containerId, total, current) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = Array.from({length: total}, (_, i) =>
+    `<div style="width:${i===current?18:6}px;height:6px;border-radius:3px;background:${i<current?'var(--gold3)':i===current?'var(--gold)':'var(--line2)'};transition:all .2s"></div>`
+  ).join('');
+}
 
 function openNewWorkoutSheet() {
   _nwExercises = [];
   _nwPendingEx = null;
-  _nwWorkoutName = '';
-  document.getElementById('nw-name-input').value = '';
-  document.getElementById('nw-name-btn').style.opacity = '.4';
-  document.getElementById('nw-name-btn').style.pointerEvents = 'none';
-  document.getElementById('nw-step-name').style.display = '';
+  _nwDayCount  = 1;
+  _nwDayIdx    = 0;
+  _nwDays      = [];
+  // Render day count grid
+  const grid = document.getElementById('nw-day-count-grid');
+  grid.innerHTML = [2,3,4,5,6].map(n =>
+    `<button onclick="nwSelectDayCount(${n})" style="padding:18px 8px;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);font-family:var(--mono);font-size:22px;color:var(--text);cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:6px">
+      ${n}
+      <span style="font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">${n===1?'day':n+' days'}</span>
+    </button>`
+  ).join('') + `<button onclick="nwSelectDayCount(1)" style="padding:18px 8px;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);font-family:var(--mono);font-size:22px;color:var(--text);cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:6px">
+    1
+    <span style="font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">single</span>
+  </button>`;
+  document.getElementById('nw-step-days').style.display = '';
+  document.getElementById('nw-step-name').style.display = 'none';
   document.getElementById('nw-step-exercises').style.display = 'none';
   document.getElementById('nw-step-config').style.display = 'none';
   document.getElementById('ov-new-workout').classList.add('open');
+}
+
+function nwSelectDayCount(n) {
+  _nwDayCount = n;
+  _nwDayIdx   = 0;
+  _nwDays     = [];
+  nwGoToNameStep();
+}
+
+function nwGoToNameStep() {
+  document.getElementById('nw-step-days').style.display = 'none';
+  document.getElementById('nw-step-name').style.display = '';
+  document.getElementById('nw-step-exercises').style.display = 'none';
+  document.getElementById('nw-step-config').style.display = 'none';
+  const titleEl = document.getElementById('nw-step-name-title');
+  titleEl.textContent = _nwDayCount === 1 ? 'New Workout' : `Day ${_nwDayIdx+1} of ${_nwDayCount}`;
+  document.getElementById('nw-name-input').value = '';
+  document.getElementById('nw-name-btn').style.opacity = '.4';
+  document.getElementById('nw-name-btn').style.pointerEvents = 'none';
+  nwRenderDots('nw-dots', _nwDayCount, _nwDayIdx);
+  document.getElementById('new-workout-sh').scrollTop = 0;
   setTimeout(() => document.getElementById('nw-name-input').focus(), 300);
 }
 
@@ -2334,24 +2407,37 @@ function closeNewWorkoutSheet() {
   document.getElementById('ov-new-workout').classList.remove('open');
   _nwExercises = [];
   _nwPendingEx = null;
-  _nwWorkoutName = '';
+  _nwDayCount  = 1;
+  _nwDayIdx    = 0;
+  _nwDays      = [];
 }
 
 function nwUpdateNameBtn() {
   const val = document.getElementById('nw-name-input').value.trim();
   const btn = document.getElementById('nw-name-btn');
-  if (val.length > 0) {
-    btn.style.opacity = '1'; btn.style.pointerEvents = '';
-  } else {
-    btn.style.opacity = '.4'; btn.style.pointerEvents = 'none';
-  }
+  btn.style.opacity = val.length > 0 ? '1' : '.4';
+  btn.style.pointerEvents = val.length > 0 ? '' : 'none';
 }
 
 function nwGoToExercises() {
   const name = document.getElementById('nw-name-input').value.trim();
   if (!name) return;
-  _nwWorkoutName = name;
+  // Save name for this day, start fresh exercise list
+  if (_nwDays[_nwDayIdx]) {
+    _nwDays[_nwDayIdx].name = name;
+  } else {
+    _nwDays[_nwDayIdx] = { name, exercises: [] };
+  }
+  _nwExercises = _nwDays[_nwDayIdx].exercises;
   document.getElementById('nw-exercises-title').textContent = name;
+  const isLast = _nwDayIdx === _nwDayCount - 1;
+  document.getElementById('nw-exercises-sub').textContent =
+    _nwDayCount === 1 ? 'Build your exercise list'
+    : isLast ? `Day ${_nwDayIdx+1} of ${_nwDayCount} · Last day`
+    : `Day ${_nwDayIdx+1} of ${_nwDayCount} · Next: name day ${_nwDayIdx+2}`;
+  document.getElementById('nw-save-btn').textContent =
+    isLast ? 'Create Program →' : `Save & Next Day →`;
+  nwRenderDots('nw-dots2', _nwDayCount, _nwDayIdx);
   document.getElementById('nw-step-name').style.display = 'none';
   document.getElementById('nw-step-exercises').style.display = '';
   document.getElementById('nw-step-config').style.display = 'none';
@@ -2459,29 +2545,42 @@ function nwConfirmAdd() {
 }
 
 function saveNewWorkout() {
-  const name = (_nwWorkoutName || document.getElementById('nw-exercises-title').textContent).trim();
-  if (!name) return;
-  if (name.length > 40) { showToast('Name too long (max 40 chars)', 'err'); return; }
-  // Create workout
-  const ci = CFG.length;
-  CFG.push({ label: name, color: '#C8A96E' });
-  const exercises = _nwExercises.map((ex, i) => ({
-    id: i + 1,
-    name: ex.name,
-    sets: ex.sets,
-    reps: ex.reps,
-    weight: ex.weight,
-  }));
-  data.push(exercises);
-  setsDone.push([]);
+  // Sync current exercises into _nwDays before saving
+  const currentName = document.getElementById('nw-exercises-title').textContent.trim();
+  if (_nwDays[_nwDayIdx]) {
+    _nwDays[_nwDayIdx].exercises = [..._nwExercises];
+  } else {
+    _nwDays[_nwDayIdx] = { name: currentName, exercises: [..._nwExercises] };
+  }
+
+  const isLast = _nwDayIdx === _nwDayCount - 1;
+
+  if (!isLast) {
+    // Move to next day name step
+    _nwDayIdx++;
+    _nwExercises = [];
+    nwGoToNameStep();
+    return;
+  }
+
+  // All days done — commit everything
+  const firstCi = CFG.length;
+  _nwDays.forEach((day, i) => {
+    CFG.push({ label: day.name, color: '#C8A96E' });
+    const exercises = day.exercises.map((ex, j) => ({
+      id: j + 1, name: ex.name, sets: ex.sets, reps: ex.reps, weight: ex.weight,
+    }));
+    data.push(exercises);
+    setsDone.push([]);
+  });
   syncSets();
-  activeDay = ci;
+  activeDay = firstCi;
   persist();
   closeNewWorkoutSheet();
-  // Switch to Workout tab and show the new workout
   render();
   setPage('workout');
-  showToast('Workout created', 'ok');
+  const n = _nwDays.length;
+  showToast(n === 1 ? 'Workout created' : `${n} workouts created`, 'ok');
 }
 
 function showChartTip(id){const el=document.getElementById(id);if(el)el.style.display='block';}
@@ -3149,15 +3248,39 @@ function renderTemplatesList() {
   container.innerHTML = html;
 }
 
+// Deep-clone of current preview data for editing
+let tplEditData = null;
+let tplCurrentCategory = null;
+let tplCurrentProgName = null;
+
 function previewTemplate(category, progName) {
   const prog = PROGRAMS[category][progName];
   if (!prog) return;
+  tplCurrentCategory = category;
+  tplCurrentProgName = progName;
+  // Deep clone so edits don't mutate PROGRAMS
+  tplEditData = { ...prog, workouts: prog.workouts.map(w => ({ ...w, exercises: w.exercises.map(ex => ({ ...ex })) })) };
+
   const isAddon = category === 'Abs';
   const preview = document.getElementById('tpl-preview');
   const list = document.getElementById('tpl-list');
   const backBtn = document.getElementById('tpl-back-btn');
   document.getElementById('tpl-preview-title').textContent = progName;
 
+  renderTplPreviewContent(isAddon);
+
+  const loadBtn = preview.querySelector('#tpl-load-btn');
+  loadBtn.textContent = isAddon ? '➕ Adaugă exercițiile selectate →' : 'Load this program →';
+  loadBtn.onclick = () => loadTemplateFromEdit(category);
+  list.style.display = 'none';
+  backBtn.style.display = '';
+  preview.style.display = '';
+  document.getElementById('ov-templates').classList.add('open');
+  document.getElementById('tpl-sheet-inner').scrollTop = 0;
+}
+
+function renderTplPreviewContent(isAddon) {
+  const prog = tplEditData;
   let html = `<div style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.06em;margin-bottom:12px;line-height:1.7">${escHtml(prog.desc)}</div>`;
 
   if (isAddon) {
@@ -3165,7 +3288,6 @@ function previewTemplate(category, progName) {
       <span style="font-size:14px">➕</span>
       <span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.08em;line-height:1.6">Add-on · Selectează exercițiile pe care vrei să le adaugi</span>
     </div>`;
-    // Per-exercise selection UI for Abs
     prog.workouts.forEach((w, wi) => {
       html += `<div style="background:var(--surf);border:1px solid var(--line);border-radius:var(--r2);margin-bottom:10px;overflow:hidden">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surf2)">
@@ -3186,35 +3308,92 @@ function previewTemplate(category, progName) {
       html += `</div>`;
     });
   } else {
-    html += `<div style="display:flex;align-items:center;gap:8px;background:rgba(192,97,74,.07);border:1px solid rgba(192,97,74,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:16px">
+    html += `<div style="display:flex;align-items:center;gap:8px;background:rgba(192,97,74,.07);border:1px solid rgba(192,97,74,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:12px">
       <span style="font-size:14px">⚠️</span>
-      <span style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.08em;line-height:1.6">Replaces your current program · History stays intact</span>
+      <span style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.08em;line-height:1.6">Replaces your current program · History stays intact · Poți edita exercițiile înainte de a încărca</span>
     </div>`;
-    prog.workouts.forEach((w) => {
+    prog.workouts.forEach((w, wi) => {
       html += `<div style="background:var(--surf);border:1px solid var(--line);border-radius:var(--r2);margin-bottom:10px;overflow:hidden">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surf2)">
           <span style="font-family:var(--serif);font-size:15px;color:var(--text)">${escHtml(w.label)}</span>
-          <span style="font-family:var(--mono);font-size:8px;color:var(--muted)">${w.exercises.length} ex.</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-family:var(--mono);font-size:8px;color:var(--muted)">${w.exercises.length} ex.</span>
+            <button onclick="tplAddExercise(${wi})" title="Adaugă exercițiu"
+              style="font-family:var(--mono);font-size:11px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--line2);border-radius:var(--r);color:var(--gold3);cursor:pointer;">+</button>
+          </div>
         </div>`;
-      w.exercises.forEach(ex => {
-        html += `<div style="display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);gap:10px">
-          <span style="font-family:var(--serif);font-size:13px;color:var(--text2);flex:1">${escHtml(ex.name)}</span>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--muted2);flex-shrink:0">${ex.sets}×${ex.reps}</span>
+      w.exercises.forEach((ex, ei) => {
+        html += `<div id="tpl-ex-row-${wi}-${ei}" style="display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);gap:8px;transition:background .15s">
+          <span style="font-family:var(--serif);font-size:13px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(ex.name)}</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted2);flex-shrink:0;white-space:nowrap">${ex.sets}×${ex.reps}</span>
+          <button onclick="tplEditExercise(${wi},${ei})" title="Înlocuiește exercițiul"
+            style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:5px 9px;color:var(--muted);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:border-color .15s,color .15s"
+            onmouseover="this.style.borderColor='var(--gold3)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--line2)';this.style.color='var(--muted)'"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7C2 4.24 4.24 2 7 2c1.6 0 3.02.74 3.97 1.9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M12 7c0 2.76-2.24 5-5 5-1.6 0-3.02-.74-3.97-1.9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M10.5 1.5L11.97 3.9 9.5 3.9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 12.5L2.03 10.1 4.5 10.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button onclick="tplDeleteExercise(${wi},${ei})" title="Șterge"
+            style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:4px 8px;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;flex-shrink:0;transition:border-color .15s,color .15s"
+            onmouseover="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'" onmouseout="this.style.borderColor='var(--line2)';this.style.color='var(--muted)'">✕</button>
         </div>`;
       });
       html += `</div>`;
     });
   }
+  document.getElementById('tpl-preview-content').innerHTML = html;
+}
 
-  preview.querySelector('#tpl-preview-content').innerHTML = html;
-  const loadBtn = preview.querySelector('#tpl-load-btn');
-  loadBtn.textContent = isAddon ? '➕ Adaugă exercițiile selectate →' : 'Load this program →';
-  loadBtn.onclick = () => loadTemplate(category, progName);
-  list.style.display = 'none';
-  backBtn.style.display = '';
-  preview.style.display = '';
-  document.getElementById('ov-templates').classList.add('open');
-  document.getElementById('tpl-sheet-inner').scrollTop = 0;
+function tplEditExercise(wi, ei) {
+  // Reuse the existing replace sheet — set a template context flag
+  replaceCtx = { tpl: true, wi, ei };
+  document.getElementById('replace-search').value = '';
+  renderReplaceList('');
+  document.getElementById('ov-replace').classList.add('open');
+  setTimeout(() => document.getElementById('replace-search').focus(), 300);
+}
+
+function tplDeleteExercise(wi, ei) {
+  tplEditData.workouts[wi].exercises.splice(ei, 1);
+  renderTplPreviewContent(false);
+  showToast('Exercițiu șters.', 'ok');
+}
+
+function tplAddExercise(wi) {
+  tplEditData.workouts[wi].exercises.push({ name: 'Exercițiu nou', sets: 3, reps: 10, weight: '0KG' });
+  renderTplPreviewContent(false);
+  // Auto-open edit for the new exercise
+  const newEi = tplEditData.workouts[wi].exercises.length - 1;
+  setTimeout(() => tplEditExercise(wi, newEi), 50);
+}
+
+function loadTemplateFromEdit(category) {
+  const prog = tplEditData;
+  if (!prog) return;
+  const isAddon = category === 'Abs';
+
+  if (isAddon) {
+    // same as before using original checkboxes
+    loadTemplate(category, tplCurrentProgName);
+  } else {
+    confirmAction(
+      'Replace current program?',
+      `All current workouts will be replaced with "${tplCurrentProgName}" (with your edits). History stays intact.`,
+      'Load program',
+      'danger',
+      () => {
+        CFG = prog.workouts.map(w => ({ label: w.label, color: '#C8A96E' }));
+        data = prog.workouts.map(w => w.exercises.map((ex, i) => ({
+          id: i+1, name: ex.name, sets: ex.sets, reps: ex.reps, weight: ex.weight || '0KG'
+        })));
+        setsDone = [];
+        weekSched = prog.schedule ? [...prog.schedule] : [0,null,1,null,2,null,null];
+        activeDay = 0;
+        syncSets();
+        persist();
+        closeTemplatesSheet();
+        render();
+        setPage('workout');
+        showToast(`Program "${tplCurrentProgName}" loaded!`, 'ok');
+      }
+    );
+  }
 }
 
 function tplToggleAllEx(wi, count) {
