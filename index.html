@@ -1674,8 +1674,8 @@ function renderDayInfoBar() {
 function renderTable() {
   const cfgIdx=weekSched[selectedWeekIdx];
   const isRestDay=cfgIdx===null||cfgIdx===undefined||cfgIdx>=CFG.length;
-  if (isRestDay) { document.getElementById('done-banner').classList.remove('show'); document.getElementById('tbl').innerHTML=''; return; }
-  if (cfgIdx !== activeDay) activeDay = cfgIdx;
+  if (!isRestDay) activeDay=cfgIdx;
+  if (isRestDay&&(activeDay===null||activeDay===undefined||activeDay>=CFG.length)){document.getElementById('done-banner').classList.remove('show');document.getElementById('tbl').innerHTML='';return;}
   const di=activeDay, exs=data[di], allDone=isAllDone(di);
   document.getElementById('done-banner').classList.toggle('show',allDone);
   if (allDone) {
@@ -2699,10 +2699,9 @@ function selectReplaceEx(name) {
   data[di][ei].name = name;
   persist();
   closeReplaceSheet();
-  // Sync selectedWeekIdx to match activeDay so renderTable uses the correct day
-  const schedIdx = weekSched.findIndex(v => v === di);
-  if (schedIdx !== -1) selectedWeekIdx = schedIdx;
   activeDay = di;
+  const si = weekSched.findIndex(v => v === di);
+  if (si !== -1) selectedWeekIdx = si;
   render();
 }
 
