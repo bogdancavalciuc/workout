@@ -135,15 +135,6 @@ body {
 }
 .timer-pill.running .timer-val { color: var(--gold); }
 
-.wake-btn {
-  font-family: var(--mono); font-size: 7.5px; letter-spacing: .1em; text-transform: uppercase;
-  background: none; border: 1px solid var(--line2); border-radius: var(--r);
-  padding: 0 10px; color: var(--muted); cursor: pointer; height: 36px;
-  transition: border-color .2s, color .2s;
-  display: inline-flex; align-items: center;
-}
-.wake-btn.active { border-color: var(--gold3); color: var(--gold); }
-
 /* ── NAV ─────────────────────────────────────────────────────────────────────── */
 .page-nav {
   display: flex; gap: 0;
@@ -1039,7 +1030,6 @@ body.light .set-row { background: var(--surf); }
         </button>
         <span class="timer-val" id="st-val">00:00</span>
       </div>
-      <button class="wake-btn" id="wake-btn" onclick="toggleWakeLock()">Screen on</button>
       <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">◑</button>
     </div>
   </div>
@@ -1445,21 +1435,6 @@ function hapticSet()     { haptic([12]); }
 function hapticEx()      { haptic([0,60,40,80,40,120]); }
 function hapticAllDone() { haptic([0,100,50,100,50,150]); }
 
-let wakeLock = null;
-async function toggleWakeLock() {
-  const btn = document.getElementById('wake-btn');
-  if (wakeLock) {
-    await wakeLock.release(); wakeLock = null;
-    btn.classList.remove('active'); btn.textContent = 'Screen on';
-  } else {
-    try {
-      wakeLock = await navigator.wakeLock.request('screen');
-      btn.classList.add('active'); btn.textContent = 'Screen on ✓';
-      wakeLock.addEventListener('release', () => { wakeLock=null; btn.classList.remove('active'); btn.textContent='Screen on'; });
-    } catch(e) { showToast('Wake lock not supported','err'); }
-  }
-}
-if (!('wakeLock' in navigator)) document.getElementById('wake-btn').style.display = 'none';
 
 let sessionStart=null, sessionTick=null, sessionActive=false;
 function startSessionTimer() { if (sessionActive) return; sessionActive=true; sessionStart=Date.now(); sessionTick=setInterval(updateSessionUI,1000); updateSessionUI(); updatePlayBtn(); }
