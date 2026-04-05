@@ -1674,8 +1674,10 @@ function renderDayInfoBar() {
 function renderTable() {
   const cfgIdx=weekSched[selectedWeekIdx];
   const isRestDay=cfgIdx===null||cfgIdx===undefined||cfgIdx>=CFG.length;
+  // Sync activeDay from selected tab when it's a workout day
   if (!isRestDay) activeDay=cfgIdx;
-  if (isRestDay&&(activeDay===null||activeDay===undefined||activeDay>=CFG.length)){document.getElementById('done-banner').classList.remove('show');document.getElementById('tbl').innerHTML='';return;}
+  // Guard: if activeDay is invalid, clear table
+  if (activeDay===null||activeDay===undefined||activeDay<0||activeDay>=data.length){document.getElementById('done-banner').classList.remove('show');document.getElementById('tbl').innerHTML='';return;}
   const di=activeDay, exs=data[di], allDone=isAllDone(di);
   document.getElementById('done-banner').classList.toggle('show',allDone);
   if (allDone) {
@@ -2188,7 +2190,7 @@ function renderAddLibList(query) {
     html += `<div class="replace-group-label">${escHtml(group)}</div>`;
     filtered.forEach(ex => {
       const isSel = ex === addLibSelected;
-      html += `<button class="replace-ex-btn${isSel?' current-ex':''}" onclick="selectAddLibEx(${JSON.stringify(ex)})">${escHtml(ex)}${isSel?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${isSel?' current-ex':''}" onclick='selectAddLibEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isSel?' ✓':''}</button>`;
     });
   }
 
@@ -2554,7 +2556,7 @@ function renderPbExList(query) {
     html += `<div class="replace-group-label">${escHtml(group)}</div>`;
     filtered.forEach(ex => {
       const isSel = ex === _pbAddSelected;
-      html += `<button class="replace-ex-btn${isSel?' current-ex':''}" onclick="selectPbEx(${JSON.stringify(ex)})">${escHtml(ex)}${isSel?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${isSel?' current-ex':''}" onclick='selectPbEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isSel?' ✓':''}</button>`;
     });
   }
   if (!anyResults && !q) html = '';
@@ -2631,8 +2633,10 @@ function render(){
   renderTabs();renderDayInfoBar();renderTable();updateDelExBtn();
   const now=Date.now();
   if(now-_lastBackupLabelUpdate>30000){updateBackupLabel();_lastBackupLabelUpdate=now;}
+  // Use activeDay to decide FAB visibility — not selectedWeekIdx
+  const activeDayIsValid=activeDay!==null&&activeDay!==undefined&&activeDay>=0&&activeDay<data.length;
   const fab=document.getElementById('fab'),delBtn=document.getElementById('del-ex-btn');
-  if(fab)fab.style.display=isRestDay?'none':'';
+  if(fab)fab.style.display=(isRestDay&&!activeDayIsValid)?'none':'';
   if(delBtn&&isRestDay)delBtn.classList.remove('visible');
 }
 document.getElementById('fab').onclick=()=>doAdd(activeDay);
@@ -2686,7 +2690,7 @@ function renderReplaceList(query) {
     html += `<div class="replace-group-label">${escHtml(group)}</div>`;
     filtered.forEach(ex => {
       const isCurrent = ex === currentName;
-      html += `<button class="replace-ex-btn${isCurrent?' current-ex':''}" onclick="selectReplaceEx(${JSON.stringify(ex)})">${escHtml(ex)}${isCurrent?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${isCurrent?' current-ex':''}" onclick='selectReplaceEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isCurrent?' ✓':''}</button>`;
     });
   }
 
@@ -2699,7 +2703,7 @@ function renderReplaceList(query) {
 function filterReplaceList(q) { renderReplaceList(q); }
 
 function selectReplaceEx(name) {
-  if (!replaceCtx) return;
+  if (!replaceCtx) { showToast('ERR: no ctx','err'); return; }
   const {di, ei} = replaceCtx;
   replaceCtx = null;
   data[di][ei].name = name;
@@ -2798,7 +2802,7 @@ function nwRenderLib(query) {
     html += `<div class="replace-group-label">${escHtml(group)}</div>`;
     filtered.forEach(ex => {
       const already = _nwExercises.some(e => e.name === ex);
-      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick="nwOpenConfig(${JSON.stringify(ex)})">${escHtml(ex)}${already?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick='nwOpenConfig(${JSON.stringify(ex)})'>${escHtml(ex)}${already?' ✓':''}</button>`;
     });
   }
   if (!anyResults && q) {
