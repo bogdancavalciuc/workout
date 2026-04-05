@@ -482,51 +482,6 @@ body {
 .del-no { background: var(--surf2); color: var(--muted); }
 .del-yes { background: var(--danger); color: var(--text); }
 
-/* ── HISTORY ─────────────────────────────────────────────────────────────────── */
-.hist-empty {
-  text-align: center; padding: 80px 20px 60px;
-  display: flex; flex-direction: column; align-items: center; gap: 14px;
-}
-.hist-empty-icon { opacity: .18; }
-.hist-empty-title { font-family: var(--serif); font-size: 22px; font-weight: 300; font-style: italic; color: var(--text2); line-height: 1.5; }
-.hist-empty-sub { font-family: var(--mono); font-size: 8px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; line-height: 1.8; }
-.hist-empty-cta {
-  margin-top: 6px; padding: 11px 24px;
-  border: 1px solid var(--gold3); border-radius: var(--r);
-  background: none; color: var(--gold); font-family: var(--mono);
-  font-size: 8px; letter-spacing: .18em; text-transform: uppercase;
-  cursor: pointer; transition: background .2s, color .2s;
-}
-.hist-empty-cta:active { background: rgba(200,169,110,.08); }
-.hist-month-sep { display: flex; align-items: center; gap: 10px; padding: 8px 2px 12px; }
-.hist-month-label { font-family: var(--mono); font-size: 7.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
-.hist-month-line { flex: 1; height: 1px; background: var(--line); }
-.hist-stats {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
-  background: var(--line); border-radius: var(--r2); overflow: hidden; margin-bottom: 16px; box-shadow: var(--shadow-sm);
-}
-.hs { background: var(--surf); padding: 16px 10px; text-align: center; }
-.hs-val { font-family: var(--serif); font-size: 26px; font-weight: 300; color: var(--gold); letter-spacing: .02em; line-height: 1; }
-.hs-label { font-family: var(--mono); font-size: 7px; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; margin-top: 5px; }
-.hist-item { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r2); overflow: hidden; margin-bottom: 10px; box-shadow: var(--shadow-sm); transition: border-color .2s; }
-.hist-head { padding: 16px 18px; display: flex; align-items: flex-start; gap: 14px; }
-.hist-accent { width: 2px; height: 40px; border-radius: 2px; background: linear-gradient(to bottom, var(--gold), transparent); flex-shrink: 0; margin-top: 2px; }
-.hist-info { flex: 1; }
-.hist-day { font-family: var(--serif); font-size: 16px; font-weight: 400; letter-spacing: .02em; }
-.hist-date { font-family: var(--mono); font-size: 8px; color: var(--muted); margin-top: 3px; letter-spacing: .06em; }
-.hist-note { font-family: var(--serif); font-size: 12px; font-style: italic; color: var(--muted2); margin-top: 5px; line-height: 1.5; opacity: .85; }
-.hist-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
-.hist-badge { font-family: var(--mono); font-size: 8px; color: var(--muted); background: var(--surf2); border: 1px solid var(--line); border-radius: var(--r); padding: 3px 9px; }
-.hist-vol { font-family: var(--mono); font-size: 8px; color: var(--gold); opacity: .8; letter-spacing: .06em; }
-.hist-del { font-family: var(--mono); font-size: 13px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; }
-.hist-del:active { background: var(--line); }
-.hist-exs { border-top: 1px solid var(--line); }
-.hist-row { display: grid; grid-template-columns: 20px 1fr 30px 30px 58px; padding: 9px 18px; border-bottom: 1px solid var(--line); align-items: center; gap: 4px; }
-.hist-row:last-child { border-bottom: none; }
-.hc { font-family: var(--mono); font-size: 9.5px; color: var(--muted); }
-.hc.nm { font-family: var(--serif); font-size: 13px; color: var(--text2); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hc.r { text-align: center; }
-
 /* ══════════════════════════════════════════════════════════════════════════════
    PROGRESS PAGE — ENHANCED
 ══════════════════════════════════════════════════════════════════════════════ */
@@ -1089,8 +1044,7 @@ body.light .set-row { background: var(--surf); }
   </div>
   <div class="page-nav">
     <div class="pn active" onclick="setPage('workout')">Workout</div>
-    <div class="pn" onclick="setPage('program')">Program</div>
-    <div class="pn" onclick="setPage('history')">History</div>
+    <div class="pn" onclick="setPage('schedule')">Schedule</div>
     <div class="pn" onclick="setPage('progress')">Progress</div>
   </div>
 </div>
@@ -1102,7 +1056,6 @@ body.light .set-row { background: var(--surf); }
 <div id="page-workout" style="padding:0 24px">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
     <div class="day-tabs" id="day-tabs" style="margin-bottom:0;flex:1"></div>
-    <button onclick="openSchedSheet()" style="flex-shrink:0;width:30px;height:30px;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:13px;transition:border-color .2s,color .2s" title="Weekly schedule">⚙</button>
   </div>
   <div class="day-info-bar" id="day-info-bar"></div>
   <div id="done-banner" class="done-banner">
@@ -1125,14 +1078,29 @@ body.light .set-row { background: var(--surf); }
   <div class="hint">Swipe row to check · pencil to rename · drag to reorder</div>
 </div>
 
-<!-- PROGRAM PAGE -->
-<div id="page-program" class="hidden" style="padding:16px 24px 24px">
-  <div id="pb-workout-list-main" style="display:none"></div>
-  <div id="programs-section"></div>
-</div>
+<!-- SCHEDULE PAGE -->
+<div id="page-schedule" class="hidden" style="padding:0 24px 24px">
+  <div style="margin-bottom:20px">
+    <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;opacity:.7">Assign a workout to each day</div>
+    <div class="sched-day-list" id="sched-day-list-page"></div>
+  </div>
 
-<!-- HISTORY PAGE -->
-<div id="page-history" class="hidden" style="padding:0 24px"><div id="hist-list"></div></div>
+  <div style="margin-bottom:28px">
+    <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;opacity:.7">Manage workouts</div>
+    <div id="sched-workout-manage-page"></div>
+    <button onclick="openNewWorkoutSheet()" style="width:100%;margin-top:8px;padding:12px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;">+ New workout</button>
+  </div>
+
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="flex:1;height:1px;background:var(--line)"></div>
+      <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:.22em;text-transform:uppercase">Playbooks</div>
+      <div style="flex:1;height:1px;background:var(--line)"></div>
+    </div>
+    <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.04em;line-height:1.7;margin-bottom:14px;opacity:.7">Ready-made programs — load one to replace your current split.</div>
+    <div id="sched-playbooks-page"></div>
+  </div>
+</div>
 
 <!-- PROGRESS PAGE — ENHANCED -->
 <div id="page-progress" class="hidden">
@@ -1642,14 +1610,12 @@ function fireConfetti() {
 function setPage(p) {
   document.querySelectorAll('.pn').forEach(el=>el.classList.toggle('active',el.textContent.toLowerCase()===p));
   document.getElementById('page-workout').classList.toggle('hidden',p!=='workout');
-  document.getElementById('page-program').classList.toggle('hidden',p!=='program');
-  document.getElementById('page-history').classList.toggle('hidden',p!=='history');
+  document.getElementById('page-schedule').classList.toggle('hidden',p!=='schedule');
   document.getElementById('page-progress').classList.toggle('hidden',p!=='progress');
   document.getElementById('fab').style.display = p==='workout' ? '' : 'none';
   document.getElementById('del-ex-btn').style.display = p==='workout' ? '' : 'none';
-  if (p==='history')  renderHistory();
   if (p==='progress') initProgress();
-  if (p==='program')  { renderPbWorkoutListMain(); renderProgramsSection(); }
+  if (p==='schedule') renderSchedulePage();
 }
 
 function renderTabs() {
@@ -1816,26 +1782,6 @@ function saveToHistory(di){
 }
 function resetSession(){data[activeDay].forEach(ex=>{delete ex.setOvr;});setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));const nk=getNoteKey(activeDay);delete sessionNotes[nk];const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)delete h.note;expanded.clear();stopSessionTimer();persist();render();}
 
-function getMonthKey(h){if(h.ts){const d=new Date(h.ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}return h.date?h.date.slice(-8):'unknown';}
-function getMonthLabel(h){if(h.ts){const d=new Date(h.ts);return d.toLocaleDateString('en-GB',{month:'long',year:'numeric'});}return'';}
-
-function renderHistory(){
-  const c=document.getElementById('hist-list');
-  if(!history.length){c.innerHTML=`<div class="hist-empty"><svg class="hist-empty-icon" width="56" height="56" viewBox="0 0 56 56" fill="none"><rect x="8" y="16" width="40" height="32" rx="4" stroke="var(--gold)" stroke-width="1.5"/><path d="M18 8v10M38 8v10" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/><path d="M8 26h40" stroke="var(--gold)" stroke-width="1.5"/><path d="M19 36l4 4 10-10" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="hist-empty-title">No sessions yet.</div><div class="hist-empty-sub">Complete a workout to see<br>your history appear here.</div><button class="hist-empty-cta" onclick="setPage('workout')">Start first workout</button></div>`;return;}
-  const totalVol=history.reduce((s,h)=>s+(h.vol||0),0);
-  const statsBar=`<div class="hist-stats"><div class="hs"><div class="hs-val">${history.length}</div><div class="hs-label">Sessions</div></div><div class="hs"><div class="hs-val">${totalVol>0?fmtVol(totalVol):'—'}</div><div class="hs-label">Total vol</div></div></div>`;
-  const warn=history.length>=90?`<div style="font-family:var(--mono);font-size:7.5px;color:var(--gold);text-align:center;padding:8px 0;opacity:.8;letter-spacing:.06em">⚠ ${history.length}/100 sessions · export soon</div>`:'';
-  let lastMonthKey='',itemsHtml='';
-  history.forEach(h=>{
-    const mk=getMonthKey(h);
-    if(mk!==lastMonthKey){const ml=getMonthLabel(h)||mk;itemsHtml+=`<div class="hist-month-sep"><span class="hist-month-label">${escHtml(ml)}</span><div class="hist-month-line"></div></div>`;lastMonthKey=mk;}
-    const ts=h.ts||0;
-    itemsHtml+=`<div class="hist-item"><div class="hist-head"><div class="hist-accent"></div><div class="hist-info"><div class="hist-day">${escHtml(h.day)}</div><div class="hist-date">${escHtml(h.date)}</div>${h.note?`<div class="hist-note">${escHtml(h.note)}</div>`:''}</div><div class="hist-meta"><div class="hist-badge">${(h.exercises||[]).length} ex</div>${h.vol?`<div class="hist-vol">${escHtml(fmtVol(h.vol))}</div>`:''}<button class="hist-del" onclick="deleteHistoryEntry(${ts})">×</button></div></div><div class="hist-exs"><div class="hist-row" style="opacity:.3;border-bottom:1px solid var(--line)"><span class="hc"></span><span class="hc" style="font-family:var(--mono);font-size:7px;letter-spacing:.12em">EXERCISE</span><span class="hc r" style="font-size:7px">SETS</span><span class="hc r" style="font-size:7px">REPS</span><span class="hc r" style="font-size:7px">WEIGHT</span></div>${(h.exercises||[]).map((ex,i)=>`<div class="hist-row"><span class="hc">${String(i+1).padStart(2,'0')}</span><span class="hc nm">${escHtml(ex.name)}</span><span class="hc r">${Number(ex.sets)}</span><span class="hc r">${Number(ex.reps)}</span><span class="hc r">${escHtml(ex.weight)}</span></div>`).join('')}</div></div>`;
-  });
-  c.innerHTML=statsBar+warn+itemsHtml;
-}
-
-function deleteHistoryEntry(ts){const idx=history.findIndex(h=>h.ts===ts);if(idx===-1){showToast('Entry not found','err');return;}const entry=history[idx];confirmAction('Delete session?',`Remove "${entry.day}" from ${entry.date}.`,'Delete','danger',()=>{const i=history.findIndex(h=>h.ts===ts);if(i!==-1)history.splice(i,1);persist();renderHistory();});}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PROGRESS — ENHANCED
@@ -2282,6 +2228,72 @@ function openSchedSheet(){
   document.getElementById('ov-sched').classList.add('open');
 }
 function closeSchedSheet(){document.getElementById('ov-sched').classList.remove('open');}
+
+function renderSchedulePage() {
+  const todayIdx = getTodayWeekIdx();
+  // Day assignment list
+  const cl = document.getElementById('sched-day-list-page');
+  if (cl) cl.innerHTML = WEEK_DAYS.map((dayName, wi) => {
+    const cfgIdx = weekSched[wi], isToday = wi === todayIdx;
+    const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
+    const wkClass = isRest ? 'rest-v' : '';
+    const wkLabel = isRest ? 'Rest' : (CFG[cfgIdx]?.label || '?');
+    const opts = ['<option value="rest"' + (isRest ? ' selected' : '') + '>— Rest —</option>']
+      .concat(CFG.map((cfg, ci) => `<option value="${ci}"${cfgIdx === ci ? ' selected' : ''}>${escHtml(cfg.label)}</option>`)).join('');
+    return `<div class="sched-day-row${isToday ? ' today-row' : ''}">
+      <div class="sched-day-info">
+        <span class="sched-day-label${isToday ? ' today-lbl' : ''}">${escHtml(dayName)}${isToday ? ' · Today' : ''}</span>
+        <span class="sched-workout-val ${wkClass}">${escHtml(wkLabel)}</span>
+      </div>
+      <select class="sched-select" onchange="setDayWorkout(${wi},this.value)">${opts}</select>
+    </div>`;
+  }).join('');
+  // Manage workouts
+  const cm = document.getElementById('sched-workout-manage-page');
+  if (cm) {
+    if (!CFG.length) { cm.innerHTML = ''; }
+    else cm.innerHTML = CFG.map((cfg, ci) => {
+      const usedDays = weekSched.filter(v => v === ci).length;
+      const exCount = (data[ci] || []).length;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);margin-bottom:6px">
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--serif);font-size:16px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(cfg.label)}</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:2px;letter-spacing:.04em">${exCount} exercise${exCount !== 1 ? 's' : ''}${usedDays > 0 ? ' · ' + usedDays + ' day' + (usedDays > 1 ? 's' : '') + ' assigned' : ' · unassigned'}</div>
+        </div>
+        <button onclick="schedRenameWorkout(${ci})" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:7px 11px;color:var(--muted2);cursor:pointer;flex-shrink:0">Rename</button>
+        ${CFG.length > 1 ? `<button onclick="schedDeleteWorkout(${ci})" style="background:none;border:1px solid var(--line2);border-radius:var(--r);color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:4px 10px;flex-shrink:0;transition:color .15s,border-color .15s" onmouseover="this.style.color='var(--danger)';this.style.borderColor='var(--danger)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--line2)'">×</button>` : ''}
+      </div>`;
+    }).join('');
+  }
+  // Playbooks
+  const cp = document.getElementById('sched-playbooks-page');
+  if (cp) {
+    let html = '';
+    for (const [category, programs] of Object.entries(PROGRAMS)) {
+      const isAddon = category === 'Abs';
+      html += `<div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;padding:10px 0 6px;display:flex;align-items:center;gap:8px">
+        ${escHtml(category)}
+        ${isAddon ? `<span style="font-size:7px;background:rgba(200,169,110,.12);color:var(--gold3);border:1px solid rgba(200,169,110,.25);border-radius:20px;padding:2px 8px;letter-spacing:.1em">ADD-ON</span>` : ''}
+      </div>`;
+      for (const [progName, prog] of Object.entries(programs)) {
+        const wCount = prog.workouts.length;
+        const safeCategory = JSON.stringify(category).replace(/"/g, '&quot;');
+        const safeProgName = JSON.stringify(progName).replace(/"/g, '&quot;');
+        html += `<button onclick="previewTemplate(${safeCategory},${safeProgName})"
+          style="width:100%;text-align:left;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;cursor:pointer;display:block;transition:border-color .2s,background .2s"
+          onmouseover="this.style.borderColor='var(--line3)'" onmouseout="this.style.borderColor='var(--line2)'">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="font-family:var(--serif);font-size:16px;color:var(--text);letter-spacing:.02em">${escHtml(progName)}</div>
+            <div style="font-family:var(--mono);font-size:7.5px;color:${isAddon ? 'var(--gold)' : 'var(--gold3)'};letter-spacing:.1em;flex-shrink:0">${isAddon ? '➕ ' : ''}${wCount}×</div>
+          </div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.04em;line-height:1.6;margin-top:4px">${escHtml(prog.desc)}</div>
+        </button>`;
+      }
+    }
+    cp.innerHTML = html;
+  }
+}
+
 function renderSchedSheet(){
   const c=document.getElementById('sched-day-list'),todayIdx=getTodayWeekIdx();
   c.innerHTML=WEEK_DAYS.map((dayName,wi)=>{const cfgIdx=weekSched[wi],isToday=wi===todayIdx,isRest=cfgIdx===null||cfgIdx===undefined||cfgIdx>=CFG.length;const wkLabel=isRest?'Rest':(CFG[cfgIdx]?.label||'?'),wkClass=isRest?'rest-v':'';const opts=['<option value="rest"'+(isRest?' selected':'')+'>— Rest —</option>'].concat(CFG.map((cfg,ci)=>`<option value="${ci}"${cfgIdx===ci?' selected':''}>${escHtml(cfg.label)}</option>`)).join('');return`<div class="sched-day-row${isToday?' today-row':''}"><div class="sched-day-info"><span class="sched-day-label${isToday?' today-lbl':''}">${escHtml(dayName)}${isToday?' · Today':''}</span><span class="sched-workout-val ${wkClass}" id="swv-${wi}">${escHtml(wkLabel)}</span></div><select class="sched-select" onchange="setDayWorkout(${wi},this.value)">${opts}</select></div>`;}).join('');
@@ -2338,7 +2350,6 @@ function renderSchedWorkoutManage() {
 }
 
 function schedRenameWorkout(ci) {
-  closeSchedSheet();
   openDayEdit(null, ci);
 }
 
@@ -2371,8 +2382,7 @@ function schedDeleteWorkout(ci) {
     syncSets();
     persist();
     render();
-    renderSchedSheet();
-    renderProgramsSection();
+    renderSchedulePage();
     showToast(`"${label}" șters`, 'ok');
   });
 }
@@ -2460,12 +2470,7 @@ function renderPbWorkoutList() {
   c.innerHTML = CFG.map((cfg, ci) => _buildPbWorkoutHTML(ci, cfg, false)).join('');
 }
 
-function renderPbWorkoutListMain() {
-  const c = document.getElementById('pb-workout-list-main');
-  if (!c) return;
-  if (!CFG.length) { c.innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No workouts yet</div>'; return; }
-  c.innerHTML = CFG.map((cfg, ci) => _buildPbWorkoutHTML(ci, cfg, true)).join('');
-}
+function renderPbWorkoutListMain() { /* program tab removed */ }
 
 function pbToggleMain(ci) {
   if (_pbExpanded.has(ci)) _pbExpanded.delete(ci);
@@ -2639,7 +2644,7 @@ function confirmPbExAdd() {
   renderPbWorkoutListMain();
   showToast('Exercise added','ok');
 }
-function setDayWorkout(wi,val){weekSched[wi]=val==='rest'?null:parseInt(val);persist();renderTabs();const lbl=document.getElementById(`swv-${wi}`);if(lbl){const v=weekSched[wi];lbl.textContent=(v===null||v===undefined||v>=CFG.length)?'Rest':(CFG[v]?.label||'?');lbl.className='sched-workout-val '+((v===null||v===undefined||v>=CFG.length)?'rest-v':'');}}
+function setDayWorkout(wi,val){weekSched[wi]=val==='rest'?null:parseInt(val);persist();renderTabs();const lbl=document.getElementById(`swv-${wi}`);if(lbl){const v=weekSched[wi];lbl.textContent=(v===null||v===undefined||v>=CFG.length)?'Rest':(CFG[v]?.label||'?');lbl.className='sched-workout-val '+((v===null||v===undefined||v>=CFG.length)?'rest-v':'');}const pg=document.getElementById('page-schedule');if(pg&&!pg.classList.contains('hidden'))renderSchedulePage();}
 
 let dayCtx=null;
 function openDayEdit(e,di){if(e)e.stopPropagation();dayCtx={mode:'edit',di};document.getElementById('day-sheet-title').textContent='Rename Workout';document.getElementById('day-name-input').value=CFG[di].label;document.getElementById('day-del-btn').style.display=data.length>1?'':'none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
@@ -2653,13 +2658,10 @@ function saveDay(){
   if(dayCtx.mode==='edit'){CFG[dayCtx.di].label=name;}
   else{CFG.push({label:name,color:'#C8A96E'});data.push([]);setsDone.push([]);activeDay=CFG.length-1;newIdx=CFG.length-1;}
   closeDaySheet();persist();render();
-  // Navigate to Program tab and expand new workout
-  setPage('program');
-  if(newIdx!==null){_pbExpanded.clear();_pbExpanded.add(newIdx);}
-  renderPbWorkoutListMain();
+  const pg=document.getElementById('page-schedule');if(pg&&!pg.classList.contains('hidden'))renderSchedulePage();
 }
 function remapSchedAfterDelete(di){return weekSched.map(v=>{if(v===null||v===undefined)return null;if(v===di)return null;if(v>di)return v-1;return v;});}
-function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);weekSched=remapSchedAfterDelete(di);if(activeDay===di||activeDay>=data.length)activeDay=0;const newCfgIdx=weekSched[selectedWeekIdx];if(newCfgIdx===null||newCfgIdx===undefined||newCfgIdx>=CFG.length){const firstWorkoutWi=weekSched.findIndex(v=>v!==null&&v!==undefined&&v<CFG.length);if(firstWorkoutWi!==-1)selectedWeekIdx=firstWorkoutWi;}closeDaySheet();persist();render();setPage('program');renderPbWorkoutListMain();});}
+function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);weekSched=remapSchedAfterDelete(di);if(activeDay===di||activeDay>=data.length)activeDay=0;const newCfgIdx=weekSched[selectedWeekIdx];if(newCfgIdx===null||newCfgIdx===undefined||newCfgIdx>=CFG.length){const firstWorkoutWi=weekSched.findIndex(v=>v!==null&&v!==undefined&&v<CFG.length);if(firstWorkoutWi!==-1)selectedWeekIdx=firstWorkoutWi;}closeDaySheet();persist();render();});}
 
 function addSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];ex.sets++;const lo=(ex.setOvr&&ex.setOvr[ex.sets-2])||{};if(!ex.setOvr)ex.setOvr=[];ex.setOvr[ex.sets-1]={reps:lo.reps??ex.reps,weight:lo.weight??ex.weight};if(!Array.isArray(setsDone[di][ei]))setsDone[di][ei]=Array(ex.sets).fill(false);else setsDone[di][ei]=[...setsDone[di][ei],false];persist();renderTable();updateDelExBtn();}
 function removeSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];if(ex.sets<=1)return;ex.sets--;if(ex.setOvr)ex.setOvr=ex.setOvr.slice(0,ex.sets);if(Array.isArray(setsDone[di]?.[ei]))setsDone[di][ei]=setsDone[di][ei].slice(0,ex.sets);persist();renderTable();updateDelExBtn();}
@@ -2924,12 +2926,9 @@ function saveNewWorkout() {
   activeDay = ci;
   persist();
   closeNewWorkoutSheet();
-  // Switch to Program tab and expand new workout
+  // Switch to Workout tab and show the new workout
   render();
-  setPage('program');
-  _pbExpanded.clear();
-  _pbExpanded.add(ci);
-  renderPbWorkoutListMain();
+  setPage('workout');
   showToast('Workout created', 'ok');
 }
 
@@ -3561,11 +3560,6 @@ const PROGRAMS = {
   },
 };
 
-function renderProgramsSection() {
-  const container = document.getElementById('programs-section');
-  if (!container) return;
-  container.innerHTML = '';
-}
 
 function openTemplatesSheet() {
   renderTemplatesList();
@@ -3739,13 +3733,9 @@ function loadTemplate(category, progName) {
         syncSets();
         persist();
         closeTemplatesSheet();
-        setPage('program');
-        renderProgramsSection();
-        _pbExpanded.clear();
-        _pbExpanded.add(firstNewIdx);
         activeDay = firstNewIdx;
         render();
-        renderPbWorkoutListMain();
+        setPage('workout');
         showToast(`${totalEx} exerciți${totalEx===1?'u':'i'} adăugate în program!`, 'ok');
       }
     );
@@ -3768,8 +3758,7 @@ function loadTemplate(category, progName) {
         persist();
         closeTemplatesSheet();
         render();
-        setPage('program');
-        renderProgramsSection();
+        setPage('workout');
         showToast(`Program "${progName}" loaded!`, 'ok');
       }
     );
