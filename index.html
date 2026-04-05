@@ -1290,6 +1290,17 @@ body.light .set-row { background: var(--surf); }
       <button onclick="closeSchedSheet();openNewWorkoutSheet();" style="width:100%;margin-top:8px;padding:12px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;">+ New workout</button>
     </div>
 
+    <!-- Playbooks -->
+    <div style="margin-top:32px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="flex:1;height:1px;background:var(--line)"></div>
+        <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:.22em;text-transform:uppercase">Playbooks</div>
+        <div style="flex:1;height:1px;background:var(--line)"></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.04em;line-height:1.7;margin-bottom:14px;opacity:.7">Ready-made programs — load one to replace your current split.</div>
+      <div id="sched-playbooks"></div>
+    </div>
+
   </div>
 </div>
 
@@ -2277,6 +2288,35 @@ function renderSchedSheet(){
   const wl=document.getElementById('sched-workout-list');
   if(wl)wl.innerHTML=CFG.map((cfg,ci)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf2);border:1px solid var(--line);border-radius:var(--r);gap:8px"><span style="font-family:var(--serif);font-size:14px;color:var(--text)">${escHtml(cfg.label)}</span><button onclick="closeSchedSheet();openDayEdit(null,${ci});" style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 12px;color:var(--muted2);cursor:pointer;">Rename</button></div>`).join('');
   renderSchedWorkoutManage();
+  renderPlaybooks();
+}
+
+function renderPlaybooks() {
+  const c = document.getElementById('sched-playbooks');
+  if (!c) return;
+  let html = '';
+  for (const [category, programs] of Object.entries(PROGRAMS)) {
+    const isAddon = category === 'Abs';
+    html += `<div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;padding:10px 0 6px;display:flex;align-items:center;gap:8px">
+      ${escHtml(category)}
+      ${isAddon ? `<span style="font-size:7px;background:rgba(200,169,110,.12);color:var(--gold3);border:1px solid rgba(200,169,110,.25);border-radius:20px;padding:2px 8px;letter-spacing:.1em">ADD-ON</span>` : ''}
+    </div>`;
+    for (const [progName, prog] of Object.entries(programs)) {
+      const wCount = prog.workouts.length;
+      const safeCategory = JSON.stringify(category).replace(/"/g,'&quot;');
+      const safeProgName = JSON.stringify(progName).replace(/"/g,'&quot;');
+      html += `<button onclick="closeSchedSheet();previewTemplate(${safeCategory},${safeProgName})"
+        style="width:100%;text-align:left;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;cursor:pointer;display:block;transition:border-color .2s,background .2s"
+        onmouseover="this.style.borderColor='var(--line3)'" onmouseout="this.style.borderColor='var(--line2)'">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font-family:var(--serif);font-size:16px;color:var(--text);letter-spacing:.02em">${escHtml(progName)}</div>
+          <div style="font-family:var(--mono);font-size:7.5px;color:${isAddon ? 'var(--gold)' : 'var(--gold3)'};letter-spacing:.1em;flex-shrink:0">${isAddon ? '➕ ' : ''}${wCount}×</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.04em;line-height:1.6;margin-top:4px">${escHtml(prog.desc)}</div>
+      </button>`;
+    }
+  }
+  c.innerHTML = html;
 }
 
 function renderSchedWorkoutManage() {
@@ -3524,29 +3564,7 @@ const PROGRAMS = {
 function renderProgramsSection() {
   const container = document.getElementById('programs-section');
   if (!container) return;
-  let html = `
-    <button onclick="openNewWorkoutSheet();" style="width:100%;padding:13px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--muted);cursor:pointer;text-transform:uppercase;margin-bottom:18px">+ New workout</button>
-    <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:4px">Program Templates</div>`;
-  for (const [category, programs] of Object.entries(PROGRAMS)) {
-    const isAddon = category === 'Abs';
-    html += `<div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;padding:10px 0 6px;display:flex;align-items:center;gap:8px">
-      ${escHtml(category)}
-      ${isAddon ? `<span style="font-size:7px;background:rgba(200,169,110,.12);color:var(--gold3);border:1px solid rgba(200,169,110,.25);border-radius:20px;padding:2px 8px;letter-spacing:.1em">ADD-ON</span>` : ''}
-    </div>`;
-    for (const [progName, prog] of Object.entries(programs)) {
-      const wCount = prog.workouts.length;
-      const safeCategory = JSON.stringify(category).replace(/"/g,'&quot;');
-      const safeProgName = JSON.stringify(progName).replace(/"/g,'&quot;');
-      html += `
-        <button onclick="previewTemplate(${safeCategory},${safeProgName})"
-          style="width:100%;text-align:left;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,background .2s;display:block">
-          <div style="font-family:var(--serif);font-size:16px;color:var(--text);letter-spacing:.02em;margin-bottom:4px">${escHtml(progName)}</div>
-          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.06em;line-height:1.6">${escHtml(prog.desc)}</div>
-          <div style="font-family:var(--mono);font-size:7.5px;color:${isAddon ? 'var(--gold)' : 'var(--gold3)'};letter-spacing:.1em;margin-top:6px">${isAddon ? '➕ ' : ''}${wCount} workout${wCount!==1?'s':''}</div>
-        </button>`;
-    }
-  }
-  container.innerHTML = html;
+  container.innerHTML = '';
 }
 
 function openTemplatesSheet() {
