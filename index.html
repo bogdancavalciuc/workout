@@ -1250,12 +1250,12 @@ body.light .set-row { background: var(--surf); }
 </div>
 
 <!-- REPLACE EXERCISE SHEET -->
-<div class="ov" id="ov-replace" onclick="if(event.target===this)closeReplaceSheet()">
+<div class="ov" id="ov-replace" onclick="if(event.target===this)cancelReplaceSheet()">
   <div class="sh" style="max-height:88vh;overflow-y:auto;padding-bottom:32px">
     <div class="shh"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
       <div class="shl" style="margin-bottom:0">Replace Exercise</div>
-      <button onclick="closeReplaceSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
+      <button onclick="cancelReplaceSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
     </div>
     <div style="padding:0 0 12px">
       <input id="replace-search" type="text" placeholder="Search exercises..." autocomplete="off" spellcheck="false"
@@ -2664,6 +2664,11 @@ function openReplaceSheet(di, ei, e) {
 
 function closeReplaceSheet() {
   document.getElementById('ov-replace').classList.remove('open');
+  // replaceCtx is cleared by selectReplaceEx after it finishes, or on manual cancel
+}
+
+function cancelReplaceSheet() {
+  document.getElementById('ov-replace').classList.remove('open');
   replaceCtx = null;
 }
 
@@ -2696,6 +2701,7 @@ function filterReplaceList(q) { renderReplaceList(q); }
 function selectReplaceEx(name) {
   if (!replaceCtx) return;
   const {di, ei} = replaceCtx;
+  replaceCtx = null;
   data[di][ei].name = name;
   persist();
   closeReplaceSheet();
