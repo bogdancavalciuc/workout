@@ -1126,10 +1126,15 @@ body.light .set-row { background: var(--surf); }
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
         <div class="shl" style="margin-bottom:2px">Exercise Library</div>
-        <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase">Manage custom exercises</div>
+        <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase">All exercises · custom ones can be deleted</div>
       </div>
       <button onclick="closeLibManage()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Close</button>
     </div>
+
+    <!-- Search filter -->
+    <input id="lib-search-filter" type="text" placeholder="Search exercises…" autocomplete="off" spellcheck="false"
+      style="width:100%;background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r);padding:11px 14px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;-webkit-appearance:none;transition:border-color .2s;margin-bottom:16px;"
+      oninput="renderLibCustomList()">
 
     <!-- Add new custom exercise -->
     <div style="background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r2);padding:16px;margin-bottom:20px">
@@ -1158,7 +1163,7 @@ body.light .set-row { background: var(--surf); }
       </div>
     </div>
 
-    <!-- Custom exercises list -->
+    <!-- All exercises list -->
     <div id="lib-custom-list"></div>
   </div>
 </div>
@@ -1274,29 +1279,40 @@ function deleteCustomEx(group, name) {
 function renderLibCustomList() {
   const c = document.getElementById('lib-custom-list');
   if (!c) return;
-  const groups = Object.keys(customExLib);
-  if (!groups.length) {
-    c.innerHTML = `<div style="text-align:center;padding:32px 20px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.08em;opacity:.6">No custom exercises yet.<br>Add one above.</div>`;
-    return;
-  }
+  const lib = getFullLibrary();
+  const groups = Object.keys(lib);
+  const searchInput = document.getElementById('lib-search-filter');
+  const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
   let html = '';
+  let totalShown = 0;
   groups.forEach(group => {
+    const exercises = lib[group] || [];
+    const filtered = q ? exercises.filter(e => e.toLowerCase().includes(q) || group.toLowerCase().includes(q)) : exercises;
+    if (!filtered.length) return;
+    totalShown += filtered.length;
     html += `<div style="font-family:var(--mono);font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold3);padding:14px 0 6px;opacity:.8">${escHtml(group)}</div>`;
-    customExLib[group].forEach(name => {
+    filtered.forEach(name => {
+      const isCustom = customExLib[group]?.includes(name);
       html += `<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surf2);border:1px solid var(--line);border-radius:var(--r);margin-bottom:5px">
         <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(name)}</span>
-        <span class="custom-ex-tag">Custom</span>
-        <button onclick="deleteCustomEx(${JSON.stringify(group)},${JSON.stringify(name)})"
+        ${isCustom ? `<button onclick="deleteCustomEx(${JSON.stringify(group)},${JSON.stringify(name)})"
           style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:5px 10px;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s"
           onmouseover="this.style.color='var(--danger)';this.style.borderColor='var(--danger)'"
-          onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--line2)'">✕</button>
+          onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--line2)'">✕</button>` : ''}
       </div>`;
     });
   });
+  if (!totalShown && q) {
+    html = `<div style="text-align:center;padding:32px 20px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.08em;opacity:.6">No exercises found for "${escHtml(q)}"</div>`;
+  } else if (!totalShown) {
+    html = `<div style="text-align:center;padding:32px 20px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.08em;opacity:.6">No exercises in library.</div>`;
+  }
   c.innerHTML = html;
 }
 
 function openLibManage() {
+  const sf = document.getElementById('lib-search-filter');
+  if (sf) sf.value = '';
   renderLibCustomList();
   document.getElementById('ov-lib-manage').classList.add('open');
 }
@@ -1879,7 +1895,7 @@ function renderAddLibList(query) {
     filtered.forEach(ex => {
       const isSel = ex === addLibSelected;
       const isCustom = customExLib[group]?.includes(ex);
-      html += `<button class="replace-ex-btn${isSel?' current-ex':''}" onclick='selectAddLibEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isCustom?'<span class="custom-ex-tag">custom</span>':''}${isSel?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${isSel?' current-ex':''}" onclick='selectAddLibEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isSel?' ✓':''}</button>`;
     });
   }
 
@@ -2044,6 +2060,7 @@ function renderSchedulePage() {
           <div class="sched-workout-card-actions">
             <div class="sched-color-swatch" style="background:${color}" onclick="openColorPicker(event,${ci})" title="Change colour"></div>
             <button class="swc-action-btn dup" onclick="duplicateWorkout(${ci})" title="Duplicate">⎘</button>
+            <button class="swc-action-btn" onclick="openEditWorkoutExercises(${ci})">Edit</button>
             <button class="swc-action-btn" onclick="schedRenameWorkout(${ci})">Rename</button>
             ${CFG.length > 1 ? `<button class="swc-action-btn danger" onclick="schedDeleteWorkout(${ci})">×</button>` : ''}
           </div>
@@ -2488,6 +2505,242 @@ function registerPWA(){try{const mf={name:'Consistency',short_name:'Consistency'
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(registerPWA);}else{registerPWA();}
 
 render();updateBackupLabel();_lastBackupLabelUpdate=Date.now();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EDIT WORKOUT EXERCISES (Schedule tab)
+// ══════════════════════════════════════════════════════════════════════════════
+let _eweTargetCi = null;   // which workout (CFG index) we're editing
+let _ewePendingEx = null;  // exercise name being configured
+let _eweEditIdx = null;    // index in data[ci] if editing existing, null if adding
+
+function openEditWorkoutExercises(ci) {
+  _eweTargetCi = ci;
+  _ewePendingEx = null;
+  _eweEditIdx = null;
+  document.getElementById('ewe-title').textContent = CFG[ci]?.label || 'Edit Workout';
+  document.getElementById('ewe-search').value = '';
+  document.getElementById('ewe-step-list').style.display = '';
+  document.getElementById('ewe-step-config').style.display = 'none';
+  document.getElementById('ov-edit-workout-ex').classList.add('open');
+  eweRenderExList();
+  eweRenderLib('');
+}
+
+function closeEditWorkoutExercises() {
+  document.getElementById('ov-edit-workout-ex').classList.remove('open');
+  _eweTargetCi = null;
+  _ewePendingEx = null;
+  _eweEditIdx = null;
+}
+
+function eweRenderExList() {
+  const ci = _eweTargetCi;
+  const c = document.getElementById('ewe-ex-list');
+  const exs = data[ci] || [];
+  if (!exs.length) {
+    c.innerHTML = `<div style="font-family:var(--mono);font-size:8.5px;color:var(--muted);letter-spacing:.1em;padding:12px 0 4px;text-align:center;opacity:.6">No exercises yet — add from the list below</div>`;
+    return;
+  }
+  c.innerHTML = `<div style="background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;margin-bottom:4px">
+    ${exs.map((ex, i) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;${i>0?'border-top:1px solid var(--line)':''}">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px">${String(i+1).padStart(2,'0')}</span>
+        <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px">${escHtml(ex.weight)}</span>
+        <button onclick="eweOpenConfig(${JSON.stringify(ex.name)},${i})" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:4px 10px;font-family:var(--mono);font-size:9px;color:var(--muted2);cursor:pointer;transition:color .15s,border-color .15s"
+          onmouseover="this.style.color='var(--gold)';this.style.borderColor='var(--gold3)'"
+          onmouseout="this.style.color='var(--muted2)';this.style.borderColor='var(--line2)'">edit</button>
+        <button onclick="eweRemoveEx(${i})" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;margin-left:2px">×</button>
+      </div>`).join('')}
+  </div>`;
+}
+
+function eweRemoveEx(idx) {
+  const ci = _eweTargetCi;
+  data[ci].splice(idx, 1);
+  setsDone[ci].splice(idx, 1);
+  syncSets();
+  persist();
+  eweRenderExList();
+  renderSchedulePage();
+  showToast('Exercise removed', 'ok');
+}
+
+function eweRenderLib(query) {
+  const container = document.getElementById('ewe-lib-list');
+  const q = query.trim().toLowerCase();
+  const lib = getFullLibrary();
+  let html = '', anyResults = false;
+  for (const [group, exercises] of Object.entries(lib)) {
+    const filtered = q ? exercises.filter(ex => ex.toLowerCase().includes(q)) : exercises;
+    if (!filtered.length) continue;
+    anyResults = true;
+    html += `<div class="replace-group-label">${escHtml(group)}</div>`;
+    filtered.forEach(ex => {
+      const already = (data[_eweTargetCi] || []).some(e => e.name === ex);
+      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick='eweOpenConfig(${JSON.stringify(ex)},null)'>${escHtml(ex)}${already?' ✓':''}</button>`;
+    });
+  }
+  if (!anyResults && q) html = `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No exercises found</div>`;
+  container.innerHTML = html;
+
+  const customRow = document.getElementById('ewe-custom-row');
+  const customBtn = document.getElementById('ewe-custom-btn');
+  const trimmed = query.trim();
+  const allEx = getAllExercises();
+  const inLib = trimmed && allEx.some(e => e.toLowerCase() === trimmed.toLowerCase());
+  if (trimmed && !inLib) {
+    customBtn.textContent = `+ Add "${trimmed}" as custom`;
+    customBtn.onclick = () => eweOpenConfig(trimmed, null);
+    customRow.style.display = 'block';
+  } else {
+    customRow.style.display = 'none';
+  }
+}
+
+function eweFilterLib(q) { eweRenderLib(q); }
+
+function eweOpenConfig(name, editIdx) {
+  if (!name) return;
+  // Auto-save to custom lib if new
+  const allEx = getAllExercises();
+  if (!allEx.some(e => e.toLowerCase() === name.toLowerCase())) {
+    if (!customExLib['Custom']) customExLib['Custom'] = [];
+    customExLib['Custom'].push(name);
+    saveCustomEx();
+    showToast(`"${name}" saved to library`, 'ok');
+  }
+  _ewePendingEx = name;
+  _eweEditIdx = editIdx; // null = adding new, number = editing existing
+  document.getElementById('ewe-config-name').textContent = name;
+  const ci = _eweTargetCi;
+  // Pre-fill: if editing existing use its values, else check if already in workout
+  let defaults = { sets: 3, reps: 12, weight: 'BW' };
+  if (editIdx !== null && editIdx !== undefined && data[ci][editIdx]) {
+    const ex = data[ci][editIdx];
+    defaults = { sets: ex.sets, reps: ex.reps, weight: ex.weight };
+  } else {
+    const existing = (data[ci] || []).find(e => e.name === name);
+    if (existing) defaults = { sets: existing.sets, reps: existing.reps, weight: existing.weight };
+  }
+  document.getElementById('ewe-sets').value = defaults.sets;
+  document.getElementById('ewe-reps').value = defaults.reps;
+  document.getElementById('ewe-weight').value = defaults.weight;
+  document.getElementById('ewe-confirm-btn').textContent = (editIdx !== null && editIdx !== undefined) ? 'Save Changes' : '+ Add to Workout';
+  document.getElementById('ewe-step-list').style.display = 'none';
+  document.getElementById('ewe-step-config').style.display = '';
+  document.getElementById('edit-workout-sh').scrollTop = 0;
+}
+
+function eweBackToList() {
+  _ewePendingEx = null;
+  _eweEditIdx = null;
+  document.getElementById('ewe-step-config').style.display = 'none';
+  document.getElementById('ewe-step-list').style.display = '';
+  eweRenderExList();
+  eweRenderLib(document.getElementById('ewe-search').value);
+  document.getElementById('edit-workout-sh').scrollTop = 0;
+}
+
+function eweConfirmConfig() {
+  if (!_ewePendingEx) return;
+  const name = _ewePendingEx.trim();
+  if (!name) return;
+  const ci = _eweTargetCi;
+  const sets = parseInt(document.getElementById('ewe-sets').value) || 3;
+  const reps = parseInt(document.getElementById('ewe-reps').value) || 12;
+  const rawW = document.getElementById('ewe-weight').value.trim();
+  const weight = rawW !== '' ? (isNaN(parseFloat(rawW)) ? rawW.toUpperCase() : parseFloat(rawW)+'KG') : 'BW';
+
+  if (_eweEditIdx !== null && _eweEditIdx !== undefined) {
+    // Editing existing exercise
+    data[ci][_eweEditIdx].sets = sets;
+    data[ci][_eweEditIdx].reps = reps;
+    data[ci][_eweEditIdx].weight = weight;
+    showToast('Exercise updated', 'ok');
+  } else {
+    // Adding new exercise
+    const idx = (data[ci] || []).findIndex(e => e.name === name);
+    if (idx >= 0) {
+      data[ci][idx] = { ...data[ci][idx], sets, reps, weight };
+      showToast('Exercise updated', 'ok');
+    } else {
+      const id = data[ci].length ? Math.max(...data[ci].map(e => e.id)) + 1 : 1;
+      data[ci].push({ id, name, sets, reps, weight });
+      showToast('Exercise added', 'ok');
+    }
+  }
+  syncSets();
+  persist();
+  renderSchedulePage();
+  eweBackToList();
+}
 </script>
+
+<!-- ════════════════════════════════════════════════════════════════
+     EDIT WORKOUT EXERCISES SHEET
+════════════════════════════════════════════════════════════════ -->
+<div class="ov" id="ov-edit-workout-ex" onclick="if(event.target===this)closeEditWorkoutExercises()">
+  <div class="sh" id="edit-workout-sh" style="max-height:92vh;overflow-y:auto;padding-bottom:40px">
+    <div class="shh"></div>
+
+    <!-- Step 1: Exercise list view -->
+    <div id="ewe-step-list">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div>
+          <div class="shl" style="margin-bottom:0;font-size:18px" id="ewe-title">Edit Workout</div>
+          <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Tap "edit" to modify · × to remove · add from list below</div>
+        </div>
+        <button onclick="closeEditWorkoutExercises()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Close</button>
+      </div>
+
+      <div id="ewe-ex-list" style="margin-bottom:12px"></div>
+
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 14px">
+        <div style="flex:1;height:1px;background:var(--line)"></div>
+        <span style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase">Add exercise</span>
+        <div style="flex:1;height:1px;background:var(--line)"></div>
+      </div>
+
+      <input id="ewe-search" type="text" placeholder="Search or type new exercise…" autocomplete="off" spellcheck="false"
+        style="width:100%;background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r);padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;-webkit-appearance:none;transition:border-color .2s;margin-bottom:4px;"
+        oninput="eweFilterLib(this.value)">
+      <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.06em;padding:6px 2px 10px;opacity:.6">Tap to configure sets/reps/weight</div>
+
+      <div id="ewe-lib-list"></div>
+
+      <div id="ewe-custom-row" style="display:none;padding-top:8px">
+        <button id="ewe-custom-btn" class="replace-ex-btn" style="border-color:var(--gold3);color:var(--gold3)"></button>
+      </div>
+    </div>
+
+    <!-- Step 2: Configure exercise (add or edit) -->
+    <div id="ewe-step-config" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <button onclick="eweBackToList()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 14px;font-family:var(--mono);font-size:11px;color:var(--muted2);cursor:pointer;">←</button>
+        <div class="shl" style="margin-bottom:0;font-size:18px;flex:1" id="ewe-config-name">Bench Press</div>
+      </div>
+      <div class="add-lib-selected-wrap">
+        <div class="add-lib-config">
+          <div class="add-lib-field">
+            <span class="add-lib-label">Sets</span>
+            <input class="add-lib-input" type="number" id="ewe-sets" min="1" max="20" value="3" inputmode="numeric">
+          </div>
+          <div class="add-lib-field">
+            <span class="add-lib-label">Reps</span>
+            <input class="add-lib-input" type="number" id="ewe-reps" min="1" max="100" value="12" inputmode="numeric">
+          </div>
+          <div class="add-lib-field">
+            <span class="add-lib-label">Weight</span>
+            <input class="add-lib-input" type="text" id="ewe-weight" value="BW" inputmode="decimal" style="text-align:center">
+          </div>
+        </div>
+      </div>
+      <button class="bsv" id="ewe-confirm-btn" onclick="eweConfirmConfig()" style="margin-top:16px">Save</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
