@@ -2009,7 +2009,7 @@ function renderSchedulePage() {
       const color = cfg?.color || '#C8A96E';
       const abbr = isRest ? '·' : (cfg?.label || '?').slice(0, 2).toUpperCase();
       const shortName = isRest ? 'Rest' : (cfg?.label || '?');
-      return `<div class="sched-week-cell${isToday ? ' swo-today' : ''}${isRest ? ' swo-rest' : ''}" onclick="openDayAssignPop(${wi}, this)" style="cursor:pointer">
+      return `<div class="sched-week-cell${isToday ? ' swo-today' : ''}${isRest ? ' swo-rest' : ''}" onclick="openDayAssignPop(${wi}, this, event)" style="cursor:pointer">
         <span class="sched-week-cell-day">${escHtml(dayName.slice(0,1))}</span>
         <div class="sched-week-cell-dot" style="background:${isRest ? 'var(--surf3)' : color+'28'};color:${isRest ? 'var(--muted)' : color}">${escHtml(abbr)}</div>
         <span class="sched-week-cell-name">${escHtml(shortName)}</span>
@@ -2696,7 +2696,8 @@ function eweConfirmConfig() {
 // ── Day assign popover (week overview cells) ─────────────────────────────────
 let _dayAssignWi = null;
 
-function openDayAssignPop(wi, cellEl) {
+function openDayAssignPop(wi, cellEl, e) {
+  if (e) e.stopPropagation();
   _dayAssignWi = wi;
   const pop = document.getElementById('day-assign-pop');
   const currentCfgIdx = weekSched[wi];
