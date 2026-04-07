@@ -2036,12 +2036,12 @@ function renderSchedulePage() {
         }).length;
         const statLabel = sessCount > 0 ? `↑ ${sessCount} session${sessCount>1?'s':''} this month` : 'No sessions yet';
         return `<div class="sched-workout-card" id="swc-${ci}"
-          draggable="true"
-          ondragstart="schedCardDragStart(event,${ci})"
           ondragover="schedCardDragOver(event,${ci})"
           ondrop="schedCardDrop(event,${ci})"
           ondragend="schedCardDragEnd()">
-          <div class="sched-workout-card-drag"><span></span><span></span><span></span></div>
+          <div class="sched-workout-card-drag" draggable="true"
+            ondragstart="schedCardDragStart(event,${ci})"
+            onclick="event.stopPropagation()"><span></span><span></span><span></span></div>
           <div class="sched-workout-card-body">
             <div class="sched-workout-card-name">${escHtml(cfg.label)}</div>
             <div class="sched-workout-card-meta">
@@ -2051,9 +2051,9 @@ function renderSchedulePage() {
           </div>
           <div class="sched-workout-card-actions">
             <div class="sched-color-swatch" style="background:${color}" onclick="openColorPicker(event,${ci})" title="Change colour"></div>
-            <button class="swc-action-btn" onclick="openEditWorkoutExercises(${ci})">Edit</button>
-            <button class="swc-action-btn" onclick="schedRenameWorkout(${ci})">Rename</button>
-            ${CFG.length > 1 ? `<button class="swc-action-btn danger" onclick="schedDeleteWorkout(${ci})">×</button>` : ''}
+            <button class="swc-action-btn" onclick="event.stopPropagation();openEditWorkoutExercises(${ci})">Edit</button>
+            <button class="swc-action-btn" onclick="event.stopPropagation();schedRenameWorkout(${ci})">Rename</button>
+            ${CFG.length > 1 ? `<button class="swc-action-btn danger" onclick="event.stopPropagation();schedDeleteWorkout(${ci})">×</button>` : ''}
           </div>
         </div>`;
       }).join('')
@@ -2698,6 +2698,8 @@ let _dayAssignWi = null;
 
 function openDayAssignPop(wi, cellEl, e) {
   if (e) e.stopPropagation();
+  _dayAssignJustOpened = true;
+  setTimeout(() => { _dayAssignJustOpened = false; }, 50);
   _dayAssignWi = wi;
   const pop = document.getElementById('day-assign-pop');
   const currentCfgIdx = weekSched[wi];
@@ -2739,7 +2741,10 @@ function dayAssignSelect(val) {
   renderSchedulePage();
 }
 
+let _dayAssignJustOpened = false;
+
 function closeDayAssignPop() {
+  if (_dayAssignJustOpened) return;
   document.getElementById('day-assign-pop').style.display = 'none';
   _dayAssignWi = null;
 }
