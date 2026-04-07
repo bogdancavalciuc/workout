@@ -771,6 +771,40 @@ body.light {
 }
 body.light { background-image: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(154,120,64,.05) 0%, transparent 60%); }
 body.light .set-row { background: var(--surf); }
+
+/* ── DAY ASSIGN POPOVER ──────────────────────────────────────────────────────── */
+.day-assign-pop {
+  position: fixed; z-index: 400;
+  background: var(--surf); border: 1px solid var(--line2);
+  border-radius: var(--r2); padding: 10px 8px 8px;
+  box-shadow: var(--shadow-lg); min-width: 160px;
+  animation: fadeIn .15s ease;
+}
+.day-assign-pop-title {
+  font-family: var(--mono); font-size: 7.5px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  padding: 0 6px 6px; border-bottom: 1px solid var(--line);
+}
+.day-assign-opt {
+  width: 100%; text-align: left; padding: 9px 10px;
+  background: none; border: none; border-radius: var(--r);
+  font-family: var(--serif); font-size: 14px; color: var(--text);
+  cursor: pointer; transition: background .12s; display: flex;
+  align-items: center; gap: 8px;
+}
+.day-assign-opt:hover { background: var(--surf2); }
+.day-assign-opt.selected { color: var(--gold); }
+.day-assign-opt-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.day-assign-rest {
+  width: 100%; text-align: left; padding: 8px 10px;
+  background: none; border: none; border-top: 1px solid var(--line);
+  margin-top: 4px; font-family: var(--mono); font-size: 8px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  cursor: pointer; border-radius: var(--r); transition: color .12s;
+}
+.day-assign-rest:hover { color: var(--danger); }
 </style>
 </head>
 <body>
@@ -883,16 +917,6 @@ body.light .set-row { background: var(--surf); }
     <div class="sched-week-overview" id="sched-week-overview"></div>
   </div>
 
-  <!-- Section: Assign days -->
-  <div style="margin-bottom:28px">
-    <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;opacity:.7">Assign a workout to each day</div>
-    <div class="sched-day-list" id="sched-day-list-page"></div>
-    <button class="sched-reset-week-btn" onclick="resetWeekToDefault()">
-      <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 7a5 5 0 1 0 1-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><polyline points="1,2 2,7 7,6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Reset to default schedule
-    </button>
-  </div>
-
   <!-- Section: Manage workouts -->
   <div>
     <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;opacity:.7">Workouts</div>
@@ -937,8 +961,6 @@ body.light .set-row { background: var(--surf); }
 </div>
 
 <div class="fw">
-  <button class="fab" id="fab">+ Add Exercise</button>
-  <button class="del-ex-btn" id="del-ex-btn" onclick="startDeleteActive()">Remove Exercise</button>
   <div class="footer-backup">
     <span class="footer-backup-sub" id="backup-last-label">No backup yet</span>
     <div class="backup-btns">
@@ -1451,8 +1473,7 @@ function setPage(p) {
   document.getElementById('page-workout').classList.toggle('hidden',p!=='workout');
   document.getElementById('page-schedule').classList.toggle('hidden',p!=='schedule');
   document.getElementById('page-progress').classList.toggle('hidden',p!=='progress');
-  document.getElementById('fab').style.display = p==='workout' ? '' : 'none';
-  document.getElementById('del-ex-btn').style.display = p==='workout' ? '' : 'none';
+  
   if (p==='progress') initProgress();
   if (p==='schedule') renderSchedulePage();
 }
@@ -1531,7 +1552,7 @@ function renderTable() {
         </div>
         <div class="ex-right">
           ${exDone?`<span style="font-size:13px">✓</span><span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.04em">Done</span>`:`<div class="chevron${isExp?' open':''}">▾</div>`}
-          <button class="ex-edit-btn" onclick="openReplaceSheet(${di},${ei},event)" title="Replace exercise"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7C2 4.24 4.24 2 7 2c1.6 0 3.02.74 3.97 1.9" stroke="var(--text)" stroke-width="1.2" stroke-linecap="round"/><path d="M12 7c0 2.76-2.24 5-5 5-1.6 0-3.02-.74-3.97-1.9" stroke="var(--text)" stroke-width="1.2" stroke-linecap="round"/><path d="M10.5 1.5L11.97 3.9 9.5 3.9" stroke="var(--text)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 12.5L2.03 10.1 4.5 10.1" stroke="var(--text)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+
         </div></div>
       <div class="sets-wrap${isExp?' open':''}"><div class="sets-inner"><div>
         <div class="sets-header"><span>Set</span><span>Previous</span><span>Reps</span><span>Kg</span><span></span></div>`;
@@ -1988,42 +2009,13 @@ function renderSchedulePage() {
       const color = cfg?.color || '#C8A96E';
       const abbr = isRest ? '·' : (cfg?.label || '?').slice(0, 2).toUpperCase();
       const shortName = isRest ? 'Rest' : (cfg?.label || '?');
-      return `<div class="sched-week-cell${isToday ? ' swo-today' : ''}${isRest ? ' swo-rest' : ''}">
+      return `<div class="sched-week-cell${isToday ? ' swo-today' : ''}${isRest ? ' swo-rest' : ''}" onclick="openDayAssignPop(${wi}, this)" style="cursor:pointer">
         <span class="sched-week-cell-day">${escHtml(dayName.slice(0,1))}</span>
         <div class="sched-week-cell-dot" style="background:${isRest ? 'var(--surf3)' : color+'28'};color:${isRest ? 'var(--muted)' : color}">${escHtml(abbr)}</div>
         <span class="sched-week-cell-name">${escHtml(shortName)}</span>
       </div>`;
     }).join('');
   }
-
-  // ── 2. Day assignment list with notes ────────────────────────────────────
-  const cl = document.getElementById('sched-day-list-page');
-  if (cl) cl.innerHTML = WEEK_DAYS.map((dayName, wi) => {
-    const cfgIdx = weekSched[wi], isToday = wi === todayIdx;
-    const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
-    const wkClass = isRest ? 'rest-v' : '';
-    const wkLabel = isRest ? 'Rest' : (CFG[cfgIdx]?.label || '?');
-    const noteVal = escHtml(_dayNotes[wi] || '');
-    const opts = ['<option value="rest"' + (isRest ? ' selected' : '') + '>— Rest —</option>']
-      .concat(CFG.map((cfg, ci) => `<option value="${ci}"${cfgIdx === ci ? ' selected' : ''}>${escHtml(cfg.label)}</option>`)).join('');
-    return `<div class="sched-day-row${isToday ? ' today-row' : ''}">
-      <div class="sched-day-row-top">
-        <div class="sched-day-info">
-          <span class="sched-day-label${isToday ? ' today-lbl' : ''}">${escHtml(dayName)}${isToday ? ' · Today' : ''}</span>
-          <span class="sched-workout-val ${wkClass}">${escHtml(wkLabel)}</span>
-        </div>
-        <select class="sched-select" onchange="setDayWorkout(${wi},this.value)">${opts}</select>
-      </div>
-      <textarea class="sched-day-note" rows="1" placeholder="Add a note for ${escHtml(dayName)}…"
-        oninput="saveDayNote(${wi},this.value);autoResizeNote(this)"
-        onfocus="autoResizeNote(this)">${noteVal}</textarea>
-    </div>`;
-  }).join('');
-
-  // auto-resize textareas after render
-  setTimeout(() => {
-    document.querySelectorAll('.sched-day-note').forEach(t => autoResizeNote(t));
-  }, 0);
 
   // ── 3. Manage workouts with drag-reorder, color, duplicate, stats ────────
   const cm = document.getElementById('sched-workout-manage-page');
@@ -2250,7 +2242,7 @@ function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=day
 function addSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];ex.sets++;const lo=(ex.setOvr&&ex.setOvr[ex.sets-2])||{};if(!ex.setOvr)ex.setOvr=[];ex.setOvr[ex.sets-1]={reps:lo.reps??ex.reps,weight:lo.weight??ex.weight};if(!Array.isArray(setsDone[di][ei]))setsDone[di][ei]=Array(ex.sets).fill(false);else setsDone[di][ei]=[...setsDone[di][ei],false];persist();renderTable();updateDelExBtn();}
 function removeSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];if(ex.sets<=1)return;ex.sets--;if(ex.setOvr)ex.setOvr=ex.setOvr.slice(0,ex.sets);if(Array.isArray(setsDone[di]?.[ei]))setsDone[di][ei]=setsDone[di][ei].slice(0,ex.sets);persist();renderTable();updateDelExBtn();}
 function startDeleteActive(){const di=activeDay;for(const k of expanded){const p=k.split('-').map(Number);if(p[0]===di){deleteConfirm={di:p[0],ei:p[1]};renderTable();return;}}}
-function updateDelExBtn(){const btn=document.getElementById('del-ex-btn');if(!btn)return;const di=activeDay;let has=false;for(const k of expanded){const p=k.split('-').map(Number);if(p[0]===di){has=true;break;}}btn.classList.toggle('visible',has);}
+function updateDelExBtn(){}
 
 let _lastBackupLabelUpdate=0;
 function render(){
@@ -2260,11 +2252,9 @@ function render(){
   const now=Date.now();
   if(now-_lastBackupLabelUpdate>30000){updateBackupLabel();_lastBackupLabelUpdate=now;}
   const activeDayIsValid=activeDay!==null&&activeDay!==undefined&&activeDay>=0&&activeDay<data.length;
-  const fab=document.getElementById('fab'),delBtn=document.getElementById('del-ex-btn');
-  if(fab)fab.style.display=(isRestDay&&!activeDayIsValid)?'none':'';
+
   if(delBtn&&isRestDay)delBtn.classList.remove('visible');
 }
-document.getElementById('fab').onclick=()=>doAdd(activeDay);
 
 function saveEx(){const name=document.getElementById('fn').value.trim();if(!name){document.getElementById('fn').focus();return;}if(name.length>60){showToast('Name too long (max 60 chars)','err');return;}const sets=parseInt(document.getElementById('fs').value)||3,reps=parseInt(document.getElementById('fr').value)||12,rawW=document.getElementById('fw2').value.trim(),weight=(rawW!==''&&rawW!==null)?(isNaN(parseFloat(rawW))?rawW.toUpperCase():parseFloat(rawW)+'KG'):'BW';const{di}=sheetCtx,id=data[di].length?Math.max(...data[di].map(e=>e.id))+1:1;data[di].push({id,name,sets,reps,weight});expanded.add(`${di}-${data[di].length-1}`);syncSets();document.getElementById('ov').classList.remove('open');persist();render();}
 function maybeClose(e){if(e.target===document.getElementById('ov'))document.getElementById('ov').classList.remove('open');}
@@ -2702,6 +2692,58 @@ function eweConfirmConfig() {
   renderSchedulePage();
   eweBackToList();
 }
+
+// ── Day assign popover (week overview cells) ─────────────────────────────────
+let _dayAssignWi = null;
+
+function openDayAssignPop(wi, cellEl) {
+  _dayAssignWi = wi;
+  const pop = document.getElementById('day-assign-pop');
+  const currentCfgIdx = weekSched[wi];
+  const dayName = WEEK_DAYS[wi];
+
+  let html = `<div class="day-assign-pop-title">${dayName}</div>`;
+  CFG.forEach((cfg, ci) => {
+    const isSel = currentCfgIdx === ci;
+    const color = cfg.color || '#C8A96E';
+    html += `<button class="day-assign-opt${isSel ? ' selected' : ''}" onclick="dayAssignSelect(${ci})">
+      <span class="day-assign-opt-dot" style="background:${color}"></span>
+      ${escHtml(cfg.label)}
+      ${isSel ? '<span style="margin-left:auto;font-size:11px">✓</span>' : ''}
+    </button>`;
+  });
+  const isRest = currentCfgIdx === null || currentCfgIdx === undefined || currentCfgIdx >= CFG.length;
+  html += `<button class="day-assign-rest${isRest ? '" style="color:var(--muted2)' : ''}" onclick="dayAssignSelect('rest')">
+    ${isRest ? '✓ ' : ''}Rest day
+  </button>`;
+  pop.innerHTML = html;
+
+  // Position popover near the cell
+  const rect = cellEl.getBoundingClientRect();
+  pop.style.display = 'block';
+  const popW = 170;
+  let left = rect.left + rect.width / 2 - popW / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - popW - 8));
+  let top = rect.bottom + 6;
+  if (top + 220 > window.innerHeight) top = rect.top - 220;
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+  pop.style.minWidth = popW + 'px';
+}
+
+function dayAssignSelect(val) {
+  if (_dayAssignWi === null) return;
+  setDayWorkout(_dayAssignWi, val === 'rest' ? 'rest' : String(val));
+  closeDayAssignPop();
+  renderSchedulePage();
+}
+
+function closeDayAssignPop() {
+  document.getElementById('day-assign-pop').style.display = 'none';
+  _dayAssignWi = null;
+}
+
+document.addEventListener('click', closeDayAssignPop);
 </script>
 
 <!-- ════════════════════════════════════════════════════════════════
@@ -2768,5 +2810,8 @@ function eweConfirmConfig() {
     </div>
   </div>
 </div>
+
+<!-- DAY ASSIGN POPOVER -->
+<div id="day-assign-pop" class="day-assign-pop" style="display:none" onclick="event.stopPropagation()"></div>
 </body>
 </html>
