@@ -2059,7 +2059,6 @@ function renderSchedulePage() {
           </div>
           <div class="sched-workout-card-actions">
             <div class="sched-color-swatch" style="background:${color}" onclick="openColorPicker(event,${ci})" title="Change colour"></div>
-            <button class="swc-action-btn dup" onclick="duplicateWorkout(${ci})" title="Duplicate">⎘</button>
             <button class="swc-action-btn" onclick="openEditWorkoutExercises(${ci})">Edit</button>
             <button class="swc-action-btn" onclick="schedRenameWorkout(${ci})">Rename</button>
             ${CFG.length > 1 ? `<button class="swc-action-btn danger" onclick="schedDeleteWorkout(${ci})">×</button>` : ''}
@@ -2281,6 +2280,20 @@ function updateBackupLabel(){const el=document.getElementById('backup-last-label
 function showToast(msg,type){const t=document.getElementById('import-toast');t.textContent=msg;t.className=`import-toast ${type} show`;setTimeout(()=>{t.className=`import-toast ${type}`;},2800);}
 function dismissNudge(){document.getElementById('backup-nudge')?.classList.remove('show');}
 
+// ── Replace exercise from Edit Workout sheet ────────────────────────────────
+function eweOpenReplaceFor(idx) {
+  const ci = _eweTargetCi;
+  if (ci === null || ci === undefined) return;
+  // Use existing replaceCtx mechanism but override the callback
+  replaceCtx = { di: ci, ei: idx, _fromEwe: true };
+  document.getElementById('replace-search').value = '';
+  renderReplaceList('');
+  // Close the edit sheet first, then open replace sheet
+  document.getElementById('ov-edit-workout-ex').classList.remove('open');
+  document.getElementById('ov-replace').classList.add('open');
+  setTimeout(() => document.getElementById('replace-search').focus(), 300);
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // REPLACE EXERCISE SHEET
 // ══════════════════════════════════════════════════════════════════════════════
@@ -2314,7 +2327,7 @@ function renderReplaceList(query) {
     filtered.forEach(ex => {
       const isCurrent = ex === currentName;
       const isCustom = customExLib[group]?.includes(ex);
-      html += `<button class="replace-ex-btn${isCurrent?' current-ex':''}" onclick='selectReplaceEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isCustom?'<span class="custom-ex-tag">custom</span>':''}${isCurrent?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${isCurrent?' current-ex':''}" onclick='selectReplaceEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isCurrent?' ✓':''}</button>`;
     });
   }
 
@@ -2326,15 +2339,28 @@ function filterReplaceList(q) { renderReplaceList(q); }
 
 function selectReplaceEx(name) {
   if (!replaceCtx) return;
-  const {di, ei} = replaceCtx;
+  const {di, ei, _fromEwe} = replaceCtx;
   replaceCtx = null;
   data[di][ei].name = name;
   persist();
   closeReplaceSheet();
-  activeDay = di;
-  const si = weekSched.findIndex(v => v === di);
-  if (si !== -1) selectedWeekIdx = si;
-  render();
+  if (_fromEwe) {
+    // Return to the edit workout exercises sheet
+    renderSchedulePage();
+    _eweTargetCi = di;
+    document.getElementById('ewe-title').textContent = CFG[di]?.label || 'Edit Workout';
+    document.getElementById('ewe-search').value = '';
+    document.getElementById('ewe-step-list').style.display = '';
+    document.getElementById('ewe-step-config').style.display = 'none';
+    document.getElementById('ov-edit-workout-ex').classList.add('open');
+    eweRenderExList();
+    eweRenderLib('');
+  } else {
+    activeDay = di;
+    const si = weekSched.findIndex(v => v === di);
+    if (si !== -1) selectedWeekIdx = si;
+    render();
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -2548,9 +2574,9 @@ function eweRenderExList() {
         <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
         <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
         <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px">${escHtml(ex.weight)}</span>
-        <button onclick="eweOpenConfig(${JSON.stringify(ex.name)},${i})" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:4px 10px;font-family:var(--mono);font-size:9px;color:var(--muted2);cursor:pointer;transition:color .15s,border-color .15s"
+        <button onclick="eweOpenReplaceFor(${i})" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:4px 8px;font-family:var(--mono);font-size:9px;color:var(--muted2);cursor:pointer;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:5px"
           onmouseover="this.style.color='var(--gold)';this.style.borderColor='var(--gold3)'"
-          onmouseout="this.style.color='var(--muted2)';this.style.borderColor='var(--line2)'">edit</button>
+          onmouseout="this.style.color='var(--muted2)';this.style.borderColor='var(--line2)'"><svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 7C2 4.24 4.24 2 7 2c1.6 0 3.02.74 3.97 1.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M12 7c0 2.76-2.24 5-5 5-1.6 0-3.02-.74-3.97-1.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M10.5 1.5L11.97 3.9 9.5 3.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 12.5L2.03 10.1 4.5 10.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button onclick="eweRemoveEx(${i})" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;margin-left:2px">×</button>
       </div>`).join('')}
   </div>`;
