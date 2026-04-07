@@ -226,9 +226,10 @@ body {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 8px 2px 7px; border-radius: var(--r);
   border: 1px solid var(--line); background: var(--surf2);
-  gap: 5px; cursor: default; transition: border-color .2s, background .2s;
+  gap: 5px; cursor: pointer; transition: border-color .2s, background .2s;
   min-height: 58px; position: relative; overflow: hidden;
 }
+.sched-week-cell:active { background: var(--surf3); border-color: var(--line3); }
 .sched-week-cell.swo-today { border-color: var(--gold3); background: rgba(200,169,110,.06); }
 .sched-week-cell.swo-rest { opacity: .45; }
 .sched-week-cell-day {
@@ -772,39 +773,61 @@ body.light {
 body.light { background-image: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(154,120,64,.05) 0%, transparent 60%); }
 body.light .set-row { background: var(--surf); }
 
-/* ── DAY ASSIGN POPOVER ──────────────────────────────────────────────────────── */
-.day-assign-pop {
-  position: fixed; z-index: 400;
-  background: var(--surf); border: 1px solid var(--line2);
-  border-radius: var(--r2); padding: 10px 8px 8px;
-  box-shadow: var(--shadow-lg); min-width: 160px;
-  animation: fadeIn .15s ease;
+/* ── DAY ASSIGN BOTTOM SHEET ─────────────────────────────────────────────────── */
+.day-assign-pop { display: none; } /* legacy popover hidden */
+
+#ov-day-assign { display:none; position:fixed; inset:0; z-index:500; background:rgba(4,6,4,.75); backdrop-filter:blur(8px); align-items:flex-end; }
+#ov-day-assign.open { display:flex; animation:fadeIn .18s ease; }
+.day-assign-sh {
+  width:100%; max-width:480px; margin:0 auto;
+  background:var(--surf); border-radius:20px 20px 0 0;
+  border-top:1px solid var(--line2); padding:0 20px 40px;
+  animation:sheetUp .28s cubic-bezier(.22,1,.36,1);
+  max-height:80vh; overflow-y:auto;
 }
-.day-assign-pop-title {
-  font-family: var(--mono); font-size: 7.5px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
-  padding: 0 6px 6px; border-bottom: 1px solid var(--line);
+.day-assign-sh-handle { width:36px; height:4px; border-radius:2px; background:var(--line3); margin:12px auto 20px; }
+.day-assign-sh-header {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;
 }
-.day-assign-opt {
-  width: 100%; text-align: left; padding: 9px 10px;
-  background: none; border: none; border-radius: var(--r);
-  font-family: var(--serif); font-size: 14px; color: var(--text);
-  cursor: pointer; transition: background .12s; display: flex;
-  align-items: center; gap: 8px;
+.day-assign-sh-title {
+  font-family:var(--serif); font-size:22px; font-weight:300; letter-spacing:.04em; color:var(--text);
 }
-.day-assign-opt:hover { background: var(--surf2); }
-.day-assign-opt.selected { color: var(--gold); }
-.day-assign-opt-dot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+.day-assign-sh-sub {
+  font-family:var(--mono); font-size:7.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:3px;
 }
-.day-assign-rest {
-  width: 100%; text-align: left; padding: 8px 10px;
-  background: none; border: none; border-top: 1px solid var(--line);
-  margin-top: 4px; font-family: var(--mono); font-size: 8px;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
-  cursor: pointer; border-radius: var(--r); transition: color .12s;
+.day-assign-close {
+  background:none; border:1px solid var(--line2); border-radius:var(--r);
+  padding:8px 16px; font-family:var(--mono); font-size:8px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--muted2); cursor:pointer;
 }
-.day-assign-rest:hover { color: var(--danger); }
+.day-assign-grid { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.day-assign-card {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 16px; border-radius:var(--r2);
+  background:var(--surf2); border:1.5px solid var(--line);
+  cursor:pointer; transition:border-color .15s, background .15s;
+}
+.day-assign-card:active { background:var(--surf3); }
+.day-assign-card.is-selected { border-color:var(--gold3); background:rgba(200,169,110,.07); }
+.day-assign-card-dot {
+  width:12px; height:12px; border-radius:50%; flex-shrink:0;
+  border:2px solid rgba(255,255,255,.15);
+}
+.day-assign-card-body { flex:1; }
+.day-assign-card-name { font-family:var(--serif); font-size:16px; font-weight:400; color:var(--text); }
+.day-assign-card-meta { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:.04em; margin-top:3px; }
+.day-assign-card-check { font-size:14px; color:var(--gold); opacity:0; transition:opacity .15s; }
+.day-assign-card.is-selected .day-assign-card-check { opacity:1; }
+.day-assign-rest-btn {
+  width:100%; padding:13px 16px; background:none;
+  border:1px solid var(--line2); border-radius:var(--r2);
+  font-family:var(--mono); font-size:8.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); cursor:pointer;
+  transition:border-color .15s, color .15s; margin-top:4px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.day-assign-rest-btn.is-selected { color:var(--text2); border-color:var(--line3); }
+.day-assign-rest-btn:active { color:var(--danger); border-color:var(--danger); }
 </style>
 </head>
 <body>
@@ -913,7 +936,10 @@ body.light .set-row { background: var(--surf); }
 
   <!-- Week overview mini-calendar -->
   <div style="margin-bottom:26px">
-    <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;opacity:.7">This week</div>
+    <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;opacity:.7;display:flex;align-items:center;justify-content:space-between">
+      <span>This week</span>
+      <span style="opacity:.6;font-size:7px">Tap a day to change</span>
+    </div>
     <div class="sched-week-overview" id="sched-week-overview"></div>
   </div>
 
@@ -2693,60 +2719,61 @@ function eweConfirmConfig() {
   eweBackToList();
 }
 
-// ── Day assign popover (week overview cells) ─────────────────────────────────
+// ── Day assign bottom sheet (week overview cells) ────────────────────────────
 let _dayAssignWi = null;
 
 function openDayAssignPop(wi, cellEl, e) {
   if (e) e.stopPropagation();
-  _dayAssignJustOpened = true;
-  setTimeout(() => { _dayAssignJustOpened = false; }, 50);
   _dayAssignWi = wi;
-  const pop = document.getElementById('day-assign-pop');
   const currentCfgIdx = weekSched[wi];
   const dayName = WEEK_DAYS[wi];
 
-  let html = `<div class="day-assign-pop-title">${dayName}</div>`;
-  CFG.forEach((cfg, ci) => {
+  // Title
+  document.getElementById('day-assign-sh-title').textContent = dayName;
+
+  // Build workout cards
+  const grid = document.getElementById('day-assign-grid');
+  grid.innerHTML = CFG.map((cfg, ci) => {
     const isSel = currentCfgIdx === ci;
     const color = cfg.color || '#C8A96E';
-    html += `<button class="day-assign-opt${isSel ? ' selected' : ''}" onclick="dayAssignSelect(${ci})">
-      <span class="day-assign-opt-dot" style="background:${color}"></span>
-      ${escHtml(cfg.label)}
-      ${isSel ? '<span style="margin-left:auto;font-size:11px">✓</span>' : ''}
-    </button>`;
-  });
-  const isRest = currentCfgIdx === null || currentCfgIdx === undefined || currentCfgIdx >= CFG.length;
-  html += `<button class="day-assign-rest${isRest ? '" style="color:var(--muted2)' : ''}" onclick="dayAssignSelect('rest')">
-    ${isRest ? '✓ ' : ''}Rest day
-  </button>`;
-  pop.innerHTML = html;
+    const exCount = (data[ci] || []).length;
+    return `<div class="day-assign-card${isSel ? ' is-selected' : ''}" onclick="dayAssignSelectSheet(${ci})">
+      <div class="day-assign-card-dot" style="background:${color}"></div>
+      <div class="day-assign-card-body">
+        <div class="day-assign-card-name">${escHtml(cfg.label)}</div>
+        <div class="day-assign-card-meta">${exCount} exercise${exCount !== 1 ? 's' : ''}</div>
+      </div>
+      <span class="day-assign-card-check">✓</span>
+    </div>`;
+  }).join('');
 
-  // Position popover near the cell
-  const rect = cellEl.getBoundingClientRect();
-  pop.style.display = 'block';
-  const popW = 170;
-  let left = rect.left + rect.width / 2 - popW / 2;
-  left = Math.max(8, Math.min(left, window.innerWidth - popW - 8));
-  let top = rect.bottom + 6;
-  if (top + 220 > window.innerHeight) top = rect.top - 220;
-  pop.style.left = left + 'px';
-  pop.style.top = top + 'px';
-  pop.style.minWidth = popW + 'px';
+  // Rest button state
+  const isRest = currentCfgIdx === null || currentCfgIdx === undefined || currentCfgIdx >= CFG.length;
+  const restBtn = document.getElementById('day-assign-rest-btn');
+  const restCheck = document.getElementById('day-assign-rest-check');
+  restBtn.classList.toggle('is-selected', isRest);
+  restCheck.style.opacity = isRest ? '1' : '0';
+
+  document.getElementById('ov-day-assign').classList.add('open');
 }
 
-function dayAssignSelect(val) {
+function dayAssignSelectSheet(val) {
   if (_dayAssignWi === null) return;
   setDayWorkout(_dayAssignWi, val === 'rest' ? 'rest' : String(val));
-  closeDayAssignPop();
+  closeDayAssignSheet();
   renderSchedulePage();
+  renderTabs();
+}
+
+function closeDayAssignSheet() {
+  document.getElementById('ov-day-assign').classList.remove('open');
+  _dayAssignWi = null;
 }
 
 let _dayAssignJustOpened = false;
 
 function closeDayAssignPop() {
-  if (_dayAssignJustOpened) return;
-  document.getElementById('day-assign-pop').style.display = 'none';
-  _dayAssignWi = null;
+  // legacy no-op (popover replaced by sheet)
 }
 
 document.addEventListener('click', closeDayAssignPop);
@@ -2817,7 +2844,26 @@ document.addEventListener('click', closeDayAssignPop);
   </div>
 </div>
 
-<!-- DAY ASSIGN POPOVER -->
-<div id="day-assign-pop" class="day-assign-pop" style="display:none" onclick="event.stopPropagation()"></div>
+<!-- DAY ASSIGN POPOVER (legacy, hidden) -->
+<div id="day-assign-pop" class="day-assign-pop" style="display:none"></div>
+
+<!-- DAY ASSIGN BOTTOM SHEET -->
+<div id="ov-day-assign" onclick="if(event.target===this)closeDayAssignSheet()">
+  <div class="day-assign-sh">
+    <div class="day-assign-sh-handle"></div>
+    <div class="day-assign-sh-header">
+      <div>
+        <div class="day-assign-sh-title" id="day-assign-sh-title">Monday</div>
+        <div class="day-assign-sh-sub">Assign workout for this day</div>
+      </div>
+      <button class="day-assign-close" onclick="closeDayAssignSheet()">Close</button>
+    </div>
+    <div class="day-assign-grid" id="day-assign-grid"></div>
+    <button class="day-assign-rest-btn" id="day-assign-rest-btn" onclick="dayAssignSelectSheet('rest')">
+      <span>Rest day</span>
+      <span id="day-assign-rest-check" style="font-size:14px;color:var(--gold)">✓</span>
+    </button>
+  </div>
+</div>
 </body>
 </html>
