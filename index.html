@@ -107,8 +107,6 @@ body {
 }
 .theme-btn:active { border-color: var(--gold3); color: var(--gold); }
 
-#nw-day-count-grid button:active { border-color: var(--gold3) !important; background: var(--surf2) !important; color: var(--gold) !important; }
-
 .timer-pill {
   display: flex; align-items: center; gap: 7px;
   border: 1px solid var(--line2); border-radius: var(--r);
@@ -894,9 +892,9 @@ body.light .set-row { background: var(--surf); }
     </div>
   </div>
   <div class="page-nav">
-    <div class="pn active" onclick="setPage('workout')">Workout</div>
-    <div class="pn" onclick="setPage('schedule')">Schedule</div>
-    <div class="pn" onclick="setPage('progress')">Progress</div>
+    <div class="pn active" data-page="workout" onclick="setPage('workout')">Workout</div>
+    <div class="pn" data-page="schedule" onclick="setPage('schedule')">Schedule</div>
+    <div class="pn" data-page="progress" onclick="setPage('progress')">Progress</div>
   </div>
 </div>
 
@@ -1495,7 +1493,7 @@ function fireConfetti() {
 }
 
 function setPage(p) {
-  document.querySelectorAll('.pn').forEach(el=>el.classList.toggle('active',el.textContent.toLowerCase()===p));
+  document.querySelectorAll('.pn').forEach(el=>el.classList.toggle('active',el.dataset.page===p));
   document.getElementById('page-workout').classList.toggle('hidden',p!=='workout');
   document.getElementById('page-schedule').classList.toggle('hidden',p!=='schedule');
   document.getElementById('page-progress').classList.toggle('hidden',p!=='progress');
@@ -2078,6 +2076,7 @@ function renderSchedulePage() {
           <div class="sched-workout-card-actions">
             <div class="sched-color-swatch" style="background:${color}" onclick="openColorPicker(event,${ci})" title="Change colour"></div>
             <button class="swc-action-btn" onclick="event.stopPropagation();openEditWorkoutExercises(${ci})">Edit</button>
+            <button class="swc-action-btn dup" onclick="event.stopPropagation();duplicateWorkout(${ci})">Dup</button>
             <button class="swc-action-btn" onclick="event.stopPropagation();schedRenameWorkout(${ci})">Rename</button>
             ${CFG.length > 1 ? `<button class="swc-action-btn danger" onclick="event.stopPropagation();schedDeleteWorkout(${ci})">×</button>` : ''}
           </div>
@@ -2257,8 +2256,9 @@ function saveDay(){
   const name=document.getElementById('day-name-input').value.trim();
   if(!name){document.getElementById('day-name-input').focus();return;}
   if(name.length>40){showToast('Name too long (max 40 chars)','err');return;}
-  if(dayCtx.mode==='edit'){CFG[dayCtx.di].label=name;}
-  else{CFG.push({label:name,color:'#C8A96E'});data.push([]);setsDone.push([]);activeDay=CFG.length-1;}
+  if(dayCtx && dayCtx.mode==='edit'){
+    CFG[dayCtx.di].label=name;
+  }
   closeDaySheet();persist();render();
   const pg=document.getElementById('page-schedule');if(pg&&!pg.classList.contains('hidden'))renderSchedulePage();
 }
@@ -2279,6 +2279,7 @@ function render(){
   if(now-_lastBackupLabelUpdate>30000){updateBackupLabel();_lastBackupLabelUpdate=now;}
   const activeDayIsValid=activeDay!==null&&activeDay!==undefined&&activeDay>=0&&activeDay<data.length;
 
+  const delBtn = document.querySelector('.del-ex-btn');
   if(delBtn&&isRestDay)delBtn.classList.remove('visible');
 }
 
@@ -2594,6 +2595,9 @@ function eweRenderExList() {
           onmouseover="this.style.color='var(--gold)';this.style.borderColor='var(--gold3)'"
           onmouseout="this.style.color='var(--muted2)';this.style.borderColor='var(--line2)'"><svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 7C2 4.24 4.24 2 7 2c1.6 0 3.02.74 3.97 1.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M12 7c0 2.76-2.24 5-5 5-1.6 0-3.02-.74-3.97-1.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M10.5 1.5L11.97 3.9 9.5 3.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 12.5L2.03 10.1 4.5 10.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button onclick="eweRemoveEx(${i})" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;margin-left:2px">×</button>
+        <button onclick="eweEditEx(${i})" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:4px 8px;font-family:var(--mono);font-size:9px;color:var(--muted2);cursor:pointer;transition:color .15s,border-color .15s"
+          onmouseover="this.style.color='var(--gold)';this.style.borderColor='var(--gold3)'"
+          onmouseout="this.style.color='var(--muted2)';this.style.borderColor='var(--line2)'">edit</button>
       </div>`).join('')}
   </div>`;
 }
@@ -2607,6 +2611,14 @@ function eweRemoveEx(idx) {
   eweRenderExList();
   renderSchedulePage();
   showToast('Exercise removed', 'ok');
+}
+
+function eweEditEx(idx) {
+  const ci = _eweTargetCi;
+  if (ci === null || ci === undefined) return;
+  const ex = data[ci][idx];
+  if (!ex) return;
+  eweOpenConfig(ex.name, idx);
 }
 
 function eweRenderLib(query) {
@@ -2791,7 +2803,7 @@ document.addEventListener('click', closeDayAssignPop);
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div>
           <div class="shl" style="margin-bottom:0;font-size:18px" id="ewe-title">Edit Workout</div>
-          <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Tap "edit" to modify · × to remove · add from list below</div>
+          <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Tap "edit" to modify sets/reps · × to remove · add from list below</div>
         </div>
         <button onclick="closeEditWorkoutExercises()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Close</button>
       </div>
