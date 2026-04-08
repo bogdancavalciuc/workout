@@ -145,43 +145,48 @@ body {
 
 /* ── DAY TABS ────────────────────────────────────────────────────────────────── */
 .day-tabs {
-  display: flex; gap: 5px; margin-bottom: 14px;
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; padding-bottom: 2px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px; margin-bottom: 14px;
 }
-.day-tabs::-webkit-scrollbar { display: none; }
 .dt {
-  flex: 1 1 0 !important; min-width: 0 !important;
-  padding: 8px 2px 7px !important; gap: 4px !important;
-  border-radius: var(--r) !important;
-  background: transparent; border: 1px solid var(--line);
+  padding: 8px 2px 7px;
+  border-radius: var(--r);
+  background: var(--surf2); border: 1px solid var(--line);
   text-align: center; cursor: pointer;
-  transition: all .18s cubic-bezier(.4,0,.2,1);
+  transition: border-color .2s, background .2s;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  position: relative; overflow: hidden;
+  gap: 5px; min-height: 58px; position: relative; overflow: hidden;
 }
-.dt::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(200,169,110,.08) 0%, transparent 60%);
-  opacity: 0; transition: opacity .2s;
-}
-.dt.active { background: var(--surf); border-color: var(--gold3); box-shadow: 0 0 12px rgba(200,169,110,.08); }
-.dt.active::before { opacity: 1; }
+.dt:active { background: var(--surf3); border-color: var(--line3); }
+.dt.active { border-color: var(--gold3); background: rgba(200,169,110,.06); }
+.dt.today-tab { border-color: var(--gold3); background: rgba(200,169,110,.06); }
+.dt.rest-tab { opacity: .45; }
 .dt-day-name {
-  font-family: var(--mono); font-size: 7.5px; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--muted); position: relative; line-height: 1;
+  font-family: var(--mono); font-size: 7px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); line-height: 1;
 }
 .dt.active .dt-day-name { color: var(--gold); }
-.dt.today-tab .dt-day-name { color: var(--text2); }
+.dt.today-tab .dt-day-name { color: var(--gold); }
 .dt-dot {
-  width: 4px; height: 4px; border-radius: 50%;
-  background: var(--line3); transition: background .2s;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 7px; font-weight: 500;
+  letter-spacing: -.02em; transition: background .2s, color .2s;
+  background: var(--surf3); color: var(--muted);
 }
-.dt.has-workout .dt-dot { background: var(--line3); }
-.dt.active.has-workout .dt-dot { background: var(--gold); }
-.dt.today-tab .dt-dot { background: var(--muted2); opacity: .7; }
-.dt.today-tab.active .dt-dot { background: var(--gold); opacity: 1; }
-.dt.rest-tab .dt-dot { display: none; }
+.dt.active .dt-dot { }
+.dt.rest-tab .dt-dot { background: var(--surf3); color: var(--muted); font-size: 9px; }
+.dt-workout-name {
+  font-family: var(--mono); font-size: 6.5px; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--muted2);
+  text-align: center; line-height: 1.2; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0 2px; width: 100%;
+}
+.dt.active .dt-workout-name { color: var(--gold2); }
+.dt.today-tab .dt-workout-name { color: var(--gold2); }
+.dt.rest-tab .dt-workout-name { color: var(--muted); opacity: .5; font-size: 6px; }
 .dt-done-check {
   position: absolute; top: 3px; right: 3px;
   width: 7px; height: 7px; border-radius: 50%;
@@ -211,8 +216,6 @@ body {
   padding: 3px 8px; border: 1px solid rgba(200,169,110,.2); border-radius: 20px;
 }
 .day-info-vol { font-family: var(--mono); font-size: 8px; letter-spacing: .06em; color: var(--muted); }
-.day-tabs { gap: 4px !important; }
-
 /* ── SCHEDULE SHEET ──────────────────────────────────────────────────────────── */
 
 /* Week overview mini-calendar */
@@ -1509,15 +1512,21 @@ function renderTabs() {
     const cfgIdx=weekSched[wi], isToday=wi===todayIdx;
     const isRest=cfgIdx===null||cfgIdx===undefined||cfgIdx>=CFG.length;
     const isActive=wi===selectedWeekIdx, isDone=!isRest&&isAllDone(cfgIdx);
+    const cfg = isRest ? null : CFG[cfgIdx];
+    const color = cfg?.color || '#C8A96E';
+    const abbr = isRest ? '·' : (cfg?.label||'?').slice(0,2).toUpperCase();
+    const shortName = isRest ? 'Rest' : (cfg?.label||'?');
     const el=document.createElement('div');
-    const wColor = (!isRest && CFG[cfgIdx]?.color) ? CFG[cfgIdx].color : null;
-    el.className='dt'+(isActive?' active':'')+(isToday?' today-tab':'')+(isRest?' rest-tab':' has-workout')+(isDone?' day-completed':'');
-    el.innerHTML=`<span class="dt-day-name">${escHtml(dayName)}</span><div class="dt-dot"${wColor&&isActive?' style="background:'+wColor+'"':''}></div><div class="dt-done-check"></div>`;
+    el.className='dt'+(isActive?' active':'')+(isToday?' today-tab':'')+(isRest?' rest-tab':'')+(isDone?' day-completed':'');
+    el.innerHTML=`
+      <span class="dt-day-name">${escHtml(dayName.slice(0,1))}</span>
+      <div class="dt-dot" style="background:${isRest?'var(--surf3)':color+'28'};color:${isRest?'var(--muted)':color}">${escHtml(abbr)}</div>
+      <span class="dt-workout-name">${escHtml(shortName)}</span>
+      <div class="dt-done-check"></div>`;
     el.onclick=()=>{ selectedWeekIdx=wi; if (!isRest) { saveInlineEdit(); activeDay=cfgIdx; editingEx=null; deleteConfirm=null; expanded.clear(); } render(); };
     c.appendChild(el);
   });
   renderDayInfoBar();
-  setTimeout(()=>{ const active=c.querySelector('.dt.active'); if (active) active.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'}); },50);
 }
 
 function renderDayInfoBar() {
