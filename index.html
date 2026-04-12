@@ -74,7 +74,7 @@ body {
 
 /* ── HEADER ─────────────────────────────────────────────────────────────────── */
 .top {
-  padding: 52px 0 0;
+  padding: 44px 0 0;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -86,16 +86,27 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px 12px;
+  padding: 0 20px 10px;
 }
+.top-bar-left { display: flex; flex-direction: column; gap: 2px; }
 .top-bar-name {
   font-family: var(--serif);
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 400;
   letter-spacing: .07em;
   text-transform: uppercase;
   color: var(--text);
   line-height: 1;
+}
+.top-bar-meta {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 8px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+}
+.top-bar-today-badge {
+  font-family: var(--mono); font-size: 7px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--gold3);
+  padding: 1px 6px; border: 1px solid rgba(0,212,170,.25); border-radius: 20px;
 }
 
 .timer-pill {
@@ -140,7 +151,7 @@ body {
 .day-tabs {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px; margin-bottom: 14px;
+  gap: 5px; margin-bottom: 6px;
 }
 .dt {
   padding: 8px 2px 7px;
@@ -928,7 +939,10 @@ body {
 <div class="top">
   <!-- Workout name + timer bar -->
   <div class="top-bar" id="top-bar">
-    <span class="top-bar-name" id="pn-workout-name">Workout</span>
+    <div class="top-bar-left">
+      <span class="top-bar-name" id="pn-workout-name">Workout</span>
+      <div class="top-bar-meta" id="top-bar-meta"></div>
+    </div>
     <div class="timer-pill" id="timer-pill" onclick="toggleSessionTimer()">
       <button class="timer-play" id="st-play">
         <svg id="st-icon" width="7" height="7" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>
@@ -949,10 +963,9 @@ body {
 
 <!-- WORKOUT PAGE -->
 <div id="page-workout" style="padding:0 10px">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;margin-top:4px">
     <div class="day-tabs" id="day-tabs" style="margin-bottom:0;flex:1"></div>
   </div>
-  <div class="day-info-bar" id="day-info-bar"></div>
   <div id="done-banner" class="done-banner">
     <div class="done-banner-shimmer"></div>
     <div class="done-icon">🏆</div>
@@ -1745,19 +1758,25 @@ function renderTabs() {
 }
 
 function renderDayInfoBar() {
-  const bar=document.getElementById('day-info-bar'); if (!bar) return;
   const todayIdx=getTodayWeekIdx(), wi=selectedWeekIdx, cfgIdx=weekSched[wi];
   const isRest=cfgIdx===null||cfgIdx===undefined||cfgIdx>=CFG.length, isToday=wi===todayIdx;
-  if (isRest) { bar.className='day-info-bar rest-bar'; bar.innerHTML=`<span class="day-info-name rest-name">Rest day</span>${isToday?'<span class="day-info-today">Today</span>':''}`; }
-  else {
-    const cfg=CFG[cfgIdx]||{label:'?'};
-    bar.innerHTML=`<span class="day-info-name">${escHtml(cfg.label)}</span>${isToday?'<span class="day-info-today">Today</span>':''}`;
-  }
-  bar.className='day-info-bar'+(isRest?' rest-bar':'');
-  // Update top-bar name to show selected day's workout
+  // Update top-bar name
   const tabLabel=document.getElementById('pn-workout-name');
+  const metaEl=document.getElementById('top-bar-meta');
   if (tabLabel) {
     tabLabel.textContent = isRest ? 'Rest Day' : (CFG[cfgIdx]?.label || 'Workout');
+  }
+  if (metaEl) {
+    if (isRest) {
+      metaEl.innerHTML = isToday ? '<span class="top-bar-today-badge">Today</span>' : '';
+    } else {
+      const vol = calcVol(cfgIdx);
+      const volStr = vol > 0 ? fmtVol(vol) : '';
+      const exCount = (data[cfgIdx]||[]).length;
+      metaEl.innerHTML = (isToday ? '<span class="top-bar-today-badge">Today</span>' : '') +
+        (exCount ? `<span>${exCount} exercise${exCount!==1?'s':''}</span>` : '') +
+        (volStr ? `<span style="color:var(--gold3)">${volStr}</span>` : '');
+    }
   }
 }
 
