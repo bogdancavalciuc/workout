@@ -45,6 +45,7 @@
 
 /* ── RESET ──────────────────────────────────────────────────────────────────── */
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+input, textarea, select, button { text-transform: uppercase; }
 html { background:var(--bg); -webkit-font-smoothing:antialiased; }
 body {
   font-family: var(--serif);
@@ -55,6 +56,7 @@ body {
   margin: 0 auto;
   padding-bottom: 160px;
   background-image: radial-gradient(ellipse 60% 30% at 50% 0%, rgba(0,212,170,.04) 0%, transparent 60%);
+  text-transform: uppercase;
 }
 ::-webkit-scrollbar { width: 2px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -72,47 +74,48 @@ body {
 
 /* ── HEADER ─────────────────────────────────────────────────────────────────── */
 .top {
-  padding: 52px 24px 0;
+  padding: 52px 0 0;
   position: sticky;
   top: 0;
   z-index: 50;
-  background: linear-gradient(to bottom, var(--bg) 75%, transparent);
+  background: linear-gradient(to bottom, var(--bg) 82%, transparent);
 }
-.brand {
+
+/* Workout name + timer row above the tabs */
+.top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  padding: 0 20px 12px;
 }
-.brand-wordmark { display: flex; flex-direction: row; align-items: center; gap: 8px; }
-.brand-title {
+.top-bar-name {
   font-family: var(--serif);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 400;
-  letter-spacing: .08em;
+  letter-spacing: .07em;
   text-transform: uppercase;
   color: var(--text);
   line-height: 1;
 }
-.brand-controls { display: flex; align-items: center; gap: 8px; }
 
 .timer-pill {
-  display: flex; align-items: center; gap: 7px;
+  display: flex; align-items: center; gap: 6px;
   border: 1px solid var(--line2); border-radius: var(--r);
-  padding: 0 10px 0 6px; cursor: pointer; height: 36px;
+  padding: 0 10px 0 6px; cursor: pointer; height: 32px;
   transition: border-color .2s, background .2s; background: var(--surf);
+  flex-shrink: 0;
 }
 .timer-pill:active { background: var(--surf2); }
-.timer-pill.running { border-color: var(--gold3); background: rgba(200,169,110,.06); }
+.timer-pill.running { border-color: var(--gold3); background: rgba(0,212,170,.06); }
 .timer-play {
-  width: 22px; height: 22px; border-radius: var(--r);
+  width: 18px; height: 18px; border-radius: 4px;
   border: none; background: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   color: var(--muted); transition: all .15s; flex-shrink: 0;
 }
 .timer-pill.running .timer-play { color: var(--gold); }
 .timer-val {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--muted);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--muted);
 }
 .timer-pill.running .timer-val { color: var(--gold); }
 
@@ -923,19 +926,17 @@ body {
 
 <!-- HEADER -->
 <div class="top">
-  <div class="brand">
-    <div class="brand-wordmark">
-      <div class="brand-title">Consistency</div>
-    </div>
-    <div class="brand-controls">
-      <div class="timer-pill" id="timer-pill" onclick="toggleSessionTimer()">
-        <button class="timer-play" id="st-play">
-          <svg id="st-icon" width="8" height="8" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>
-        </button>
-        <span class="timer-val" id="st-val">00:00</span>
-      </div>
+  <!-- Workout name + timer bar -->
+  <div class="top-bar" id="top-bar">
+    <span class="top-bar-name" id="pn-workout-name">Workout</span>
+    <div class="timer-pill" id="timer-pill" onclick="toggleSessionTimer()">
+      <button class="timer-play" id="st-play">
+        <svg id="st-icon" width="7" height="7" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>
+      </button>
+      <span class="timer-val" id="st-val">00:00</span>
     </div>
   </div>
+  <!-- Tab nav -->
   <div class="page-nav">
     <div class="pn active" data-page="workout" onclick="setPage('workout')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setPage('workout');}" role="tab" tabindex="0">Workout</div>
     <div class="pn" data-page="schedule" onclick="setPage('schedule')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setPage('schedule');}" role="tab" tabindex="0">Schedule</div>
@@ -1268,7 +1269,7 @@ body {
             <option value="Triceps">Triceps</option>
             <option value="Quads">Quads</option>
             <option value="Hamstrings">Hamstrings</option>
-            <option value="Glutes & Adductors">Glutes</option>
+            <option value="Glutes & Adductors">Glutes & Adductors</option>
             <option value="Calves">Calves</option>
             <option value="Core">Core</option>
           </select>
@@ -1322,9 +1323,9 @@ const store = {
 const DEF_CFG = [{label:'Push',color:'#C8A96E'},{label:'Pull',color:'#C8A96E'},{label:'Legs',color:'#C8A96E'}];
 const DEF_SCHED = [0, null, 1, null, 2, null, null];
 const DEF = [
-  [{id:1,name:'Incline Bench Press',sets:3,reps:12,weight:'27.5KG'},{id:2,name:'Machine Chest Fly',sets:3,reps:12,weight:'52.5KG'},{id:3,name:'Barbell Overhead Press',sets:3,reps:12,weight:'35KG'},{id:4,name:'DB Lateral Raises',sets:3,reps:15,weight:'8KG'},{id:5,name:'Triceps Push Down',sets:3,reps:12,weight:'40KG'}],
-  [{id:1,name:'Supinated Lat Pulldown',sets:3,reps:12,weight:'47.5KG'},{id:2,name:'Pronated Cable Row',sets:3,reps:12,weight:'45KG'},{id:3,name:'Biceps Curls',sets:3,reps:12,weight:'15KG'},{id:4,name:'Rope Trap Shrug',sets:3,reps:15,weight:'50KG'},{id:5,name:'Hyperextensions',sets:3,reps:15,weight:'BW'}],
-  [{id:1,name:'Barbell Back Squat',sets:3,reps:8,weight:'75KG'},{id:2,name:'Deadlift',sets:3,reps:8,weight:'75KG'},{id:3,name:'Standing Calf Raise',sets:3,reps:20,weight:'170KG'},{id:4,name:'Leg Press',sets:3,reps:12,weight:'110KG'},{id:5,name:'Leg Curl Machine',sets:3,reps:12,weight:'50KG'}],
+  [{id:1,name:'Incline Smith Machine Chest Press',sets:3,reps:12,weight:'50KG'},{id:2,name:'Barbell Overhead Press',sets:3,reps:12,weight:'30KG'},{id:3,name:'Machine Chest Press',sets:3,reps:12,weight:'50KG'},{id:4,name:'DB Lateral Raises',sets:3,reps:12,weight:'6KG'},{id:5,name:'Triceps Pushdown',sets:3,reps:12,weight:'36KG'}],
+  [{id:1,name:'Underhand Lat Pulldown',sets:3,reps:12,weight:'45KG'},{id:2,name:'Barbell Row',sets:3,reps:12,weight:'40KG'},{id:3,name:'Overhand Cable Row',sets:3,reps:12,weight:'36KG'},{id:4,name:'Cable Facepulls',sets:3,reps:12,weight:'28KG'},{id:5,name:'DB Curls',sets:3,reps:12,weight:'12KG'}],
+  [{id:1,name:'Barbell Back Squat',sets:3,reps:12,weight:'55KG'},{id:2,name:'Barbell Romanian Deadlift',sets:3,reps:12,weight:'55KG'},{id:3,name:'DB Bulgarian Split Squat',sets:3,reps:12,weight:'8KG'},{id:4,name:'Lying Leg Curl Machine',sets:3,reps:12,weight:'36KG'},{id:5,name:'Smith Calf Raises',sets:3,reps:12,weight:'60KG'}],
 ];
 
 let CFG           = store.get(KEYS.cfg)    || DEF_CFG;
@@ -1367,36 +1368,36 @@ if (!history.length) {
 
   // ── PUSH sessions (Mondays-ish, every 7 days, 13 sessions) ──────────────────
   const pushWeights = [
-    // [InclBench, ChestFly, OHP, LateralRaise, TricepsPD]
-    [20,  40, 25, 5,  30],  // week 13 ago
-    [20,  40, 25, 5,  30],
-    [20,  42.5,27.5,5,32.5],
-    [22.5,42.5,27.5,6,32.5],
-    [22.5,45, 27.5,6,34],
-    [22.5,45, 30,  6,34],
-    [25,  45, 30,  6,36],
-    [25,  47.5,30, 6,36],
-    [25,  47.5,32.5,7,36],
-    [25,  47.5,32.5,7,38],
-    [27.5,50, 32.5,7,38],
-    [27.5,50, 35,  7,40],
-    [27.5,52.5,35, 8,40],  // most recent
+    // [InclSmith, OHP, MachineChest, LateralRaise, TricepsPD]
+    [40,  22, 40, 5,  28],
+    [42.5,22, 42.5,5, 28],
+    [42.5,24, 42.5,5, 30],
+    [45,  24, 45,  6, 30],
+    [45,  26, 45,  6, 32],
+    [45,  26, 47.5,6, 32],
+    [47.5,28, 47.5,6, 34],
+    [47.5,28, 47.5,7, 34],
+    [47.5,28, 50,  7, 34],
+    [50,  30, 50,  7, 36],
+    [50,  30, 50,  7, 36],
+    [50,  30, 50,  8, 36],
+    [50,  30, 50,  6, 36],  // most recent
   ];
-  const pushNotes = [null,null,'Chest felt pumped',null,null,'Struggled on last OHP set',null,'Good session',null,null,'New PR on bench!',null,'Felt strong'];
+  const pushNotes = [null,null,'Chest felt pumped',null,null,'Struggled on last OHP set',null,'Good session',null,null,'New PR on smith press!',null,'Felt strong'];
   pushWeights.forEach((w, i) => {
-    const daysAgo = (12 - i) * 7 + 1; // oldest = 85 days ago, newest = 1 day ago
+    const daysAgo = (12 - i) * 7 + 1;
     const d = _demoDate(daysAgo);
-    const allReps = i < 2 ? 10 : 12; // first 2 sessions slightly lower reps
+    const allReps = i < 2 ? 10 : 12;
     const entry = {
       dk: _dk(d), ts: d.getTime(), date: _label(d),
       day: 'Push',
-      vol: Math.round((w[0]*allReps*3 + w[1]*allReps*3 + w[2]*allReps*3 + w[3]*allReps*3 + w[4]*allReps*3)),
+      vol: Math.round((w[0]*allReps*3 + w[2]*allReps*3 + w[1]*allReps*3 + w[3]*allReps*3 + w[4]*allReps*3)),
       exercises: [
-        {name:'Incline Bench Press',   sets:3,reps:allReps,weight:w[0]+'KG', setOvr:_ovr(3,allReps,w[0]+'KG')},
-        {name:'Machine Chest Fly',     sets:3,reps:allReps,weight:w[1]+'KG', setOvr:_ovr(3,allReps,w[1]+'KG')},
-        {name:'Barbell Overhead Press',sets:3,reps:allReps,weight:w[2]+'KG', setOvr:_ovr(3,allReps,w[2]+'KG')},
-        {name:'DB Lateral Raises',     sets:3,reps:15,     weight:w[3]+'KG', setOvr:_ovr(3,15,w[3]+'KG')},
-        {name:'Triceps Push Down',     sets:3,reps:12,     weight:w[4]+'KG', setOvr:_ovr(3,12,w[4]+'KG')},
+        {name:'Incline Smith Machine Chest Press', sets:3,reps:allReps,weight:w[0]+'KG', setOvr:_ovr(3,allReps,w[0]+'KG')},
+        {name:'Barbell Overhead Press',            sets:3,reps:allReps,weight:w[1]+'KG', setOvr:_ovr(3,allReps,w[1]+'KG')},
+        {name:'Machine Chest Press',               sets:3,reps:allReps,weight:w[2]+'KG', setOvr:_ovr(3,allReps,w[2]+'KG')},
+        {name:'DB Lateral Raises',                 sets:3,reps:12,     weight:w[3]+'KG', setOvr:_ovr(3,12,w[3]+'KG')},
+        {name:'Triceps Pushdown',                  sets:3,reps:12,     weight:w[4]+'KG', setOvr:_ovr(3,12,w[4]+'KG')},
       ],
     };
     if (pushNotes[i]) entry.note = pushNotes[i];
@@ -1405,22 +1406,22 @@ if (!history.length) {
 
   // ── PULL sessions (Wednesdays-ish, every 7 days, 13 sessions) ───────────────
   const pullWeights = [
-    // [LatPD, CableRow, BicepsCurl, Shrug, Hyperext(BW)]
-    [35, 30, 10, 35],
-    [35, 30, 10, 35],
-    [37.5,32.5,10,37.5],
-    [37.5,32.5,12,37.5],
-    [40, 35, 12, 40],
-    [40, 35, 12, 40],
-    [42.5,37.5,12,42.5],
-    [42.5,37.5,13,42.5],
-    [42.5,40, 13,45],
-    [45, 40, 13,45],
-    [45, 42.5,14,47.5],
-    [47.5,42.5,14,47.5],
-    [47.5,45, 15,50],
+    // [UndhandLatPD, BBRow, OvhandCableRow, Facepulls, DBCurls]
+    [35, 30, 26, 20, 9],
+    [35, 30, 26, 20, 9],
+    [37.5,32,  28, 22, 9],
+    [37.5,32,  28, 22,10],
+    [40,  34,  30, 24,10],
+    [40,  34,  30, 24,10],
+    [42.5,36,  32, 24,11],
+    [42.5,36,  32, 26,11],
+    [42.5,38,  34, 26,11],
+    [45,  38,  34, 26,12],
+    [45,  40,  36, 28,12],
+    [45,  40,  36, 28,12],
+    [45,  40,  36, 28,12],
   ];
-  const pullNotes = [null,null,null,'Back felt tight, went lighter on rows',null,null,'Great pump on pulldowns',null,null,'Hit 14kg curls for first time',null,'Felt solid',null];
+  const pullNotes = [null,null,null,'Back felt tight, went lighter on rows',null,null,'Great pump on pulldowns',null,null,'Hit 12kg curls finally',null,'Felt solid',null];
   pullWeights.forEach((w, i) => {
     const daysAgo = (12 - i) * 7 + 3;
     const d = _demoDate(daysAgo);
@@ -1428,13 +1429,13 @@ if (!history.length) {
     const entry = {
       dk: _dk(d), ts: d.getTime(), date: _label(d),
       day: 'Pull',
-      vol: Math.round(w[0]*allReps*3 + w[1]*allReps*3 + w[2]*allReps*3 + w[3]*15*3),
+      vol: Math.round(w[0]*allReps*3 + w[1]*allReps*3 + w[2]*allReps*3 + w[3]*12*3 + w[4]*12*3),
       exercises: [
-        {name:'Supinated Lat Pulldown',sets:3,reps:allReps,weight:w[0]+'KG', setOvr:_ovr(3,allReps,w[0]+'KG')},
-        {name:'Pronated Cable Row',    sets:3,reps:allReps,weight:w[1]+'KG', setOvr:_ovr(3,allReps,w[1]+'KG')},
-        {name:'Biceps Curls',         sets:3,reps:12,     weight:w[2]+'KG', setOvr:_ovr(3,12,w[2]+'KG')},
-        {name:'Rope Trap Shrug',      sets:3,reps:15,     weight:w[3]+'KG', setOvr:_ovr(3,15,w[3]+'KG')},
-        {name:'Hyperextensions',      sets:3,reps:15,     weight:'BW',       setOvr:_ovr(3,15,'BW')},
+        {name:'Underhand Lat Pulldown', sets:3,reps:allReps,weight:w[0]+'KG', setOvr:_ovr(3,allReps,w[0]+'KG')},
+        {name:'Barbell Row',            sets:3,reps:allReps,weight:w[1]+'KG', setOvr:_ovr(3,allReps,w[1]+'KG')},
+        {name:'Overhand Cable Row',     sets:3,reps:allReps,weight:w[2]+'KG', setOvr:_ovr(3,allReps,w[2]+'KG')},
+        {name:'Cable Facepulls',        sets:3,reps:12,     weight:w[3]+'KG', setOvr:_ovr(3,12,w[3]+'KG')},
+        {name:'DB Curls',               sets:3,reps:12,     weight:w[4]+'KG', setOvr:_ovr(3,12,w[4]+'KG')},
       ],
     };
     if (pullNotes[i]) entry.note = pullNotes[i];
@@ -1443,36 +1444,35 @@ if (!history.length) {
 
   // ── LEGS sessions (Fridays-ish, every 7 days, 13 sessions) ──────────────────
   const legsWeights = [
-    // [Squat, Deadlift, CalfRaise, LegPress, LegCurl]
-    [60, 60, 120, 80, 35],
-    [60, 60, 120, 80, 35],
-    [62.5,62.5,130,85,37.5],
-    [62.5,65, 130,85,37.5],
-    [65, 65, 140,90,40],
-    [65, 67.5,140,90,40],
-    [67.5,67.5,150,95,42.5],
-    [67.5,70, 150,95,42.5],
-    [70, 70, 150,100,45],
-    [70, 72.5,160,100,45],
-    [72.5,72.5,160,105,47.5],
-    [72.5,75, 160,105,47.5],
-    [75, 75, 170,110,50],
+    // [BBSquat, BBRomanian, DBBulgarian, LegCurl, SmithCalf]
+    [45, 45, 6,  28, 50],
+    [45, 45, 6,  28, 50],
+    [47.5,47.5,6,30, 52.5],
+    [47.5,50, 6, 30, 52.5],
+    [50, 50, 8, 32, 55],
+    [50, 52.5,8, 32, 55],
+    [52.5,52.5,8,34, 57.5],
+    [52.5,55, 8, 34, 57.5],
+    [55, 55, 8, 34, 60],
+    [55, 55, 8, 36, 60],
+    [55, 55,10, 36, 60],
+    [55, 55,10, 36, 60],
+    [55, 55, 8, 36, 60],
   ];
-  const legsNotes = [null,null,null,null,'Quads on fire',null,null,'Hit 70kg squat finally!',null,null,'Legs day is getting serious',null,'Strong session'];
+  const legsNotes = [null,null,null,null,'Quads on fire',null,null,'Hit 55kg squat!',null,null,'Legs day is getting serious',null,'Strong session'];
   legsWeights.forEach((w, i) => {
     const daysAgo = (12 - i) * 7 + 5;
     const d = _demoDate(daysAgo);
-    const squatReps = i < 3 ? 6 : 8;
     const entry = {
       dk: _dk(d), ts: d.getTime(), date: _label(d),
       day: 'Legs',
-      vol: Math.round(w[0]*squatReps*3 + w[1]*squatReps*3 + w[2]*20*3 + w[3]*12*3 + w[4]*12*3),
+      vol: Math.round(w[0]*12*3 + w[1]*12*3 + w[2]*12*3 + w[3]*12*3 + w[4]*12*3),
       exercises: [
-        {name:'Barbell Back Squat',   sets:3,reps:squatReps,weight:w[0]+'KG', setOvr:_ovr(3,squatReps,w[0]+'KG')},
-        {name:'Deadlift',             sets:3,reps:squatReps,weight:w[1]+'KG', setOvr:_ovr(3,squatReps,w[1]+'KG')},
-        {name:'Standing Calf Raise',  sets:3,reps:20,       weight:w[2]+'KG', setOvr:_ovr(3,20,w[2]+'KG')},
-        {name:'Leg Press',            sets:3,reps:12,       weight:w[3]+'KG', setOvr:_ovr(3,12,w[3]+'KG')},
-        {name:'Leg Curl Machine',     sets:3,reps:12,       weight:w[4]+'KG', setOvr:_ovr(3,12,w[4]+'KG')},
+        {name:'Barbell Back Squat',         sets:3,reps:12,weight:w[0]+'KG', setOvr:_ovr(3,12,w[0]+'KG')},
+        {name:'Barbell Romanian Deadlift',  sets:3,reps:12,weight:w[1]+'KG', setOvr:_ovr(3,12,w[1]+'KG')},
+        {name:'DB Bulgarian Split Squat',   sets:3,reps:12,weight:w[2]+'KG', setOvr:_ovr(3,12,w[2]+'KG')},
+        {name:'Lying Leg Curl Machine',     sets:3,reps:12,weight:w[3]+'KG', setOvr:_ovr(3,12,w[3]+'KG')},
+        {name:'Smith Calf Raises',          sets:3,reps:12,weight:w[4]+'KG', setOvr:_ovr(3,12,w[4]+'KG')},
       ],
     };
     if (legsNotes[i]) entry.note = legsNotes[i];
@@ -1709,7 +1709,9 @@ function setPage(p) {
   document.getElementById('page-workout').classList.toggle('hidden',p!=='workout');
   document.getElementById('page-schedule').classList.toggle('hidden',p!=='schedule');
   document.getElementById('page-progress').classList.toggle('hidden',p!=='progress');
-  
+  // Show top-bar only on workout page
+  const tb=document.getElementById('top-bar');
+  if (tb) tb.style.display = p==='workout' ? '' : 'none';
   if (p==='progress') initProgress();
   if (p==='schedule') renderSchedulePage();
 }
@@ -1748,11 +1750,15 @@ function renderDayInfoBar() {
   const isRest=cfgIdx===null||cfgIdx===undefined||cfgIdx>=CFG.length, isToday=wi===todayIdx;
   if (isRest) { bar.className='day-info-bar rest-bar'; bar.innerHTML=`<span class="day-info-name rest-name">Rest day</span>${isToday?'<span class="day-info-today">Today</span>':''}`; }
   else {
-    const cfg=CFG[cfgIdx]||{label:'?'}, vol=calcVol(cfgIdx), hasBW=data[cfgIdx]?.some(e=>isNaN(parseFloat(e.weight)));
-    const volStr=vol>0?`<span class="day-info-vol">${escHtml(fmtVol(vol))}${hasBW?' +BW':''}</span>`:(hasBW?'<span class="day-info-vol">BW</span>':'');
-    bar.innerHTML=`<span class="day-info-name">${escHtml(cfg.label)}</span>${volStr}${isToday?'<span class="day-info-today">Today</span>':''}`;
+    const cfg=CFG[cfgIdx]||{label:'?'};
+    bar.innerHTML=`<span class="day-info-name">${escHtml(cfg.label)}</span>${isToday?'<span class="day-info-today">Today</span>':''}`;
   }
   bar.className='day-info-bar'+(isRest?' rest-bar':'');
+  // Update top-bar name to show selected day's workout
+  const tabLabel=document.getElementById('pn-workout-name');
+  if (tabLabel) {
+    tabLabel.textContent = isRest ? 'Rest Day' : (CFG[cfgIdx]?.label || 'Workout');
+  }
 }
 
 function renderTable() {
@@ -1775,8 +1781,7 @@ function renderTable() {
   const di=activeDay, exs=data[di], allDone=isAllDone(di);
   document.getElementById('done-banner').classList.toggle('show',allDone);
   if (allDone) {
-    const vol=calcVol(di), volStr=vol>0?' · '+fmtVol(vol):'';
-    document.getElementById('done-sub').textContent=exs.length+' exercises · '+(CFG[di]?.label||'')+volStr;
+    document.getElementById('done-sub').textContent=exs.length+' exercises · '+(CFG[di]?.label||'');
     const nk=getNoteKey(di), ne=document.getElementById('session-note-input');
     if (ne) ne.value=sessionNotes[nk]||'';
   }
@@ -1792,15 +1797,18 @@ function renderTable() {
     let bestOrm=0;
     for (let si=0;si<ex.sets;si++) { const r=getSetReps(ex,si),w=getSetWeight(ex,si),o=calc1RM(w,r); if (o&&o>bestOrm) bestOrm=o; }
     if (isDel) { html+=`<div class="ex-block" style="animation-delay:${ei*40}ms"><div class="del-confirm"><span class="del-txt">Delete "${escHtml(ex.name)}"?</span><button class="del-btn del-no" onclick="cancelDelete()">Cancel</button><button class="del-btn del-yes" onclick="confirmDelete(${di},${ei})">Delete</button></div></div>`; return; }
-    if (isHidden) { html+=`<div class="ex-block" id="exb-${di}-${ei}" style="display:none"></div>`; return; }
+    if (isHidden) { html+=`<div class="ex-block" id="exb-hidden-${di}-${ei}" style="display:none"></div>`; return; }
     const doneSets=sArr.filter(Boolean).length;
     const progressBadge=doneSets>0&&!exDone?`<span class="ex-progress-badge">${doneSets}/${ex.sets}</span>`:'';
-    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms" draggable="true" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
+    const isEditingThis = editingEx && editingEx.di===di && editingEx.ei===ei;
+    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms" draggable="${isEditingThis?'false':'true'}" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
     {
-      html+=`<div class="ex-name-row${exDone?' done-all':''}" onclick="toggleExpand(${di},${ei})">
+      html+=`<div class="ex-name-row${exDone?' done-all':''}" onclick="${isEditingThis?'':'toggleExpand('+di+','+ei+')'}">
         <div class="drag-num" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
         <div class="ex-main">
-          <div class="en">${escHtml(ex.name)}</div>
+          ${isEditingThis
+            ? `<input class="ie-input" id="ie-name" type="text" value="${escHtml(ex.name)}" maxlength="60" autocomplete="off" spellcheck="false" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter')saveInlineEdit();if(event.key==='Escape'){editingEx=null;renderTable();}">`
+            : `<div class="en">${escHtml(ex.name)}</div>`}
           <div class="ex-badges">
             <span class="ex-badge">${ex.sets}×${ex.reps}</span>
             <span class="ex-badge">${escHtml(ex.weight)}</span>
@@ -1809,7 +1817,11 @@ function renderTable() {
           </div>
         </div>
         <div class="ex-right">
-          ${exDone?`<span style="font-size:13px">✓</span><span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.04em">Done</span>`:`<div class="chevron${isExp?' open':''}">▾</div>`}
+          ${isEditingThis
+            ? `<button class="ex-edit-btn" onclick="event.stopPropagation();saveInlineEdit()" style="opacity:1;color:var(--gold)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10.5V12h1.5l5.25-5.25-1.5-1.5L2 10.5zm7.5-6.75a.4.4 0 000-.57l-.93-.93a.4.4 0 00-.57 0l-.72.72 1.5 1.5.72-.72z" fill="currentColor"/></svg></button>`
+            : exDone
+              ? `<span style="font-size:13px">✓</span><span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.04em">Done</span>`
+              : `<button class="ex-edit-btn" onclick="startEdit(${di},${ei},event)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10.5V12h1.5l5.25-5.25-1.5-1.5L2 10.5zm7.5-6.75a.4.4 0 000-.57l-.93-.93a.4.4 0 00-.57 0l-.72.72 1.5 1.5.72-.72z" fill="currentColor"/></svg></button>`}
 
         </div></div>
       <div class="sets-wrap${isExp?' open':''}"><div class="sets-inner"><div>
@@ -1883,7 +1895,7 @@ function getSetWeight(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weig
 function saveSetOvr(di,ei,si,field,val){const ex=data[di][ei];if(!ex.setOvr)ex.setOvr=[];if(!ex.setOvr[si])ex.setOvr[si]={};if(field==='reps'){const v=parseInt(val);ex.setOvr[si].reps=(!isNaN(v)&&v>0&&v<=999)?v:ex.reps;}else{const t=String(val).trim().toUpperCase();ex.setOvr[si].weight=t.length>0?t:ex.weight;}persist();}
 function getNoteKey(di){const label=CFG[di]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));return h?`hist-${h.ts}`:`${di}-${today}`;}
 function saveSessionNote(){const nk=getNoteKey(activeDay),v=document.getElementById('session-note-input')?.value||'';sessionNotes[nk]=v;const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)h.note=v;persist();}
-function startEdit(di,ei,e){if(e)e.stopPropagation();if(editingEx&&(editingEx.di!==di||editingEx.ei!==ei))saveInlineEdit();expanded.add(`${di}-${ei}`);deleteConfirm=null;editingEx={di,ei};renderTable();}
+function startEdit(di,ei,e){if(e)e.stopPropagation();if(editingEx&&(editingEx.di!==di||editingEx.ei!==ei))saveInlineEdit();expanded.add(`${di}-${ei}`);deleteConfirm=null;editingEx={di,ei};renderTable();setTimeout(()=>{const inp=document.getElementById('ie-name');if(inp){inp.focus();inp.select();}},50);}
 function saveInlineEdit(){if(!editingEx)return;const{di,ei}=editingEx,inp=document.getElementById('ie-name'),n=inp?inp.value.trim():'';if(n&&n.length<=60)data[di][ei].name=n;else if(n.length>60){showToast('Name too long (max 60 chars)','err');return;}persist();editingEx=null;render();}
 function cancelDelete(){deleteConfirm=null;renderTable();}
 function confirmDelete(di,ei){data[di].splice(ei,1);setsDone[di].splice(ei,1);expanded.delete(`${di}-${ei}`);const nRE={};Object.keys(restEnabled).forEach(k=>{const p=k.split('-');const kdi=parseInt(p[0]),kei=parseInt(p[1]);if(kdi!==di){nRE[k]=restEnabled[k];return;}if(kei<ei)nRE[k]=restEnabled[k];else if(kei>ei)nRE[`${di}-${kei-1}`]=restEnabled[k];});restEnabled=nRE;deleteConfirm=null;persist();render();}
@@ -1970,10 +1982,6 @@ function renderHistoryPage() {
     const isExp = _histExpanded.has(id);
     const color = (CFG.find(c => c.label === session.day)?.color) || '#C8A96E';
     const exs = session.exercises || [];
-    const vol = session.vol || exs.reduce((s, ex) => {
-      const k = parseFloat(ex.weight); return s + (isNaN(k) ? 0 : k * ex.sets * ex.reps);
-    }, 0);
-    const volStr = vol > 0 ? fmtVol(vol) : '—';
     const exCount = exs.length;
 
     const bodyRows = exs.map(ex => {
@@ -2000,7 +2008,6 @@ function renderHistoryPage() {
           <div class="hist-session-date">${escHtml(session.date || session.dk || '')}</div>
           <div class="hist-session-sub">${escHtml(session.day)} · ${exCount} exercise${exCount!==1?'s':''}</div>
         </div>
-        <div class="hist-session-vol">${escHtml(volStr)}</div>
         <div class="hist-session-chevron">▾</div>
       </div>
       <div class="hist-session-body">
@@ -2291,80 +2298,87 @@ function renderProgress() {
 // ══════════════════════════════════════════════════════════════════════════════
 const EXERCISE_LIBRARY = {
   "Chest": [
-    "Flat Barbell Bench Press","Flat DB/Machine Press","Incline Barbell Bench Press","Incline DB/Machine Press","Decline DB/Machine Press",
-    "Cable Low-to-High Fly","Cable High-to-Low Fly","Cable Crossover","Chest Fly Machine",
-    "Dips (Chest)","Push-ups","Incline Push-ups","Decline Push-ups","Diamond Push-ups"
+    "Flat Barbell Bench Press","Flat DB Press","Flat Machine Press","Incline Barbell Bench Press","Incline DB Press","Incline Machine Press",
+    "Decline Barbell Bench Press","Decline DB Press","Decline Machine Press",
+    "Cable Low-to-High Fly","Cable High-to-Low Fly","Cable Crossover","Cable Fly (Neutral)","Chest Fly Machine",
+    "Pec Deck Machine","DB Pullover","Cable Pullover",
+    "Dips (Chest)","Push-ups","Incline Push-ups","Decline Push-ups","Diamond Push-ups","Wide Push-ups",
+    "Smith Machine Bench Press","Smith Machine Incline Press"
   ],
   "Back": [
-    "Conventional Deadlift","Rack Pull","Overhand Lat Pulldown","Underhand Lat Pulldown","Neutral Grip Lat Pulldown","One-Arm Pulldown",
-    "Pull-ups","Chin-ups","Neutral Grip Pull-ups",
-    "Neutral Grip Cable Row","Underhand Cable Row","One-Arm Cable Row","Wide Grip Seated Cable Row",
-    "BB Row","DB Single-Arm Row","T-Bar Row","Machine High Row","DB High Row",
-    "Straight-Arm Cable Pullover","Face Pull","DB/BB Shrug","Lumbar Hyperextension","Good Morning"
+    "Conventional Deadlift","Rack Pull","Deficit Deadlift",
+    "Overhand Lat Pulldown","Underhand Lat Pulldown","Neutral Grip Lat Pulldown","One-Arm Pulldown","Wide Grip Lat Pulldown","Close Grip Lat Pulldown",
+    "Pull-ups","Chin-ups","Neutral Grip Pull-ups","Weighted Pull-ups","Assisted Pull-ups",
+    "Neutral Grip Cable Row","Underhand Cable Row","One-Arm Cable Row","Wide Grip Seated Cable Row","High Cable Row","Low Cable Row",
+    "BB Bent-Over Row","DB Single-Arm Row","T-Bar Row","Chest-Supported Row","Machine High Row","DB High Row","Pendlay Row",
+    "Straight-Arm Cable Pulldown","DB Pullover","Cable Pullover",
+    "Face Pull","DB/BB Shrug","Cable Shrug","Machine Shrug","Trap Bar Shrug",
+    "Lumbar Hyperextension","Good Morning","Reverse Hyperextension"
   ],
   "Shoulders": [
-    "Barbell Overhead Press","DB/Machine Overhead Press","Arnold Press","Smith Machine Overhead Press",
-    "DB Lateral Raises","Cable Lateral Fly","Upright Row (BB/Cable)","Plate Front Raise","DB Front Raise",
-    "Cable/Machine Rear Delt Fly","Cable Facepull","Cable Upright Row",
-    "Banded External Rotation","DB/Cable Y Raises"
+    "Barbell Overhead Press","DB Overhead Press","Machine Shoulder Press","Arnold Press","Smith Machine Overhead Press","Push Press",
+    "DB Lateral Raises","Cable Lateral Fly","Machine Lateral Raise","Banded Lateral Raise",
+    "Upright Row (BB/Cable)","Plate Front Raise","DB Front Raise","Cable Front Raise",
+    "Cable Rear Delt Fly","Machine Rear Delt Fly","DB Bent-Over Rear Delt Fly","Reverse Pec Deck",
+    "Cable Facepull","Band Pull-Apart","DB/Cable Y Raises","Prone Y Raises",
+    "Banded External Rotation","DB External Rotation"
   ],
   "Biceps": [
-    "EZ Bar Curls","BB Curls","DB Curls","DB Incline Curls","DB Hammer Curl","DB Spider Curl",
-    "EZ Bar Reverse Grip Curls","BB Reverse Curl","DB One-Arm Isometric Curl",
-    "Preacher Curl (EZ/Machine)","Concentration Curl","Cable Curls","Cable Hammer Curl","Chin-up (Biceps)"
+    "EZ Bar Curls","Barbell Curls","DB Curls","DB Alternating Curls","DB Incline Curls","DB Hammer Curl","DB Spider Curl",
+    "DB Cross-Body Hammer Curl","DB Zottman Curl",
+    "EZ Bar Reverse Grip Curls","BB Reverse Curl",
+    "Preacher Curl (EZ Bar)","Preacher Curl (DB)","Machine Preacher Curl",
+    "Concentration Curl","Cable Curls","Cable Hammer Curl","Cable Rope Curl","High Cable Curl","Low Cable Curl",
+    "Chin-up (Biceps)","Machine Curl"
   ],
   "Triceps": [
-    "Close-Grip Bench Press","Rope Triceps Pushdown","Cable Overhead Triceps Extension",
-    "Overhead DB Triceps Extension","Overhead DB Triceps Extension (Unilateral)",
-    "DB Skullcrushers","EZ Bar Skullcrushers","Cross-Body Cable Triceps Extension",
-    "Katana Cable Extension","DB Kickbacks","Cable Triceps Kickback",
-    "Dips (Triceps)","Bench Dips","Triceps Pushdown Machine"
+    "Close-Grip Bench Press","Smith Machine Close-Grip Press",
+    "Rope Triceps Pushdown","V-Bar Triceps Pushdown","Straight Bar Pushdown","Reverse Grip Pushdown",
+    "Cable Overhead Triceps Extension","Rope Overhead Extension",
+    "Overhead DB Triceps Extension (Both)","Overhead DB Triceps Extension (Unilateral)",
+    "DB Skullcrushers","EZ Bar Skullcrushers","Floor Press (Triceps)",
+    "Cross-Body Cable Triceps Extension","Katana Cable Extension",
+    "DB Kickbacks","Cable Triceps Kickback","Machine Triceps Extension",
+    "Dips (Triceps)","Bench Dips","Weighted Dips"
   ],
   "Quads": [
-    "BB Back Squat","Front Squat","Sumo Squat","Smith Machine Squat","Goblet Squat",
-    "Hack Squat / Pendulum Squat","Leg Press","Leg Extension Machine",
-    "DB Split Squat","DB Bulgarian Split Squat","DB Reverse Lunge","Walking Lunges","DB Step Ups",
-    "Sissy Squat","Wall Sit"
+    "BB Back Squat","Front Squat","Sumo Squat","Smith Machine Squat","Goblet Squat","Zercher Squat",
+    "Hack Squat Machine","Pendulum Squat","V-Squat",
+    "Leg Press","Narrow Stance Leg Press","Wide Stance Leg Press","Single Leg Press",
+    "Leg Extension Machine","Single Leg Extension",
+    "DB Split Squat","DB Bulgarian Split Squat","DB Reverse Lunge","DB Forward Lunge","Walking Lunges","DB Step Ups",
+    "Sissy Squat","Cyclist Squat","Wall Sit"
   ],
   "Hamstrings": [
-    "Conventional Deadlift","Sumo Deadlift","DB/BB Romanian Deadlift","Stiff-Leg Deadlift",
-    "Good Morning","Nordic Curl",
-    "Lying Leg Curl Machine","Seated Leg Curl Machine","Hamstring Curl Machine","Unilateral Hamstring Curl Machine"
+    "Conventional Deadlift","Sumo Deadlift","DB Romanian Deadlift","BB Romanian Deadlift","Stiff-Leg Deadlift","Single Leg RDL",
+    "Good Morning","Nordic Curl","Glute-Ham Raise",
+    "Lying Leg Curl Machine","Seated Leg Curl Machine","Single Leg Lying Curl","Single Leg Seated Curl",
+    "Cable Pull-Through","DB Leg Curl","Swiss Ball Leg Curl"
   ],
   "Glutes & Adductors": [
-    "BB Hip Thrust","Machine Hip Thrust","DB Hip Thrust","Cable Kickback","Donkey Kicks",
-    "Alternative Unilateral Glute Bridges","One Leg Hip Bridge","Frog Pumps",
-    "Glute Hip Hyperextension","Lateral Band Walk","Banded Crab Walk",
-    "Hip Adduction Machine","Hip Abduction Machine","Machine Adductions","Machine Abductions",
-    "Banded Clamshells","Banded Hip Abduction","Cable/Banded Hip Abductions","Cable Hip Extensions (Mule Kickback)",
-    "Physioball Isometric Adductions"
+    "BB Hip Thrust","Machine Hip Thrust","DB Hip Thrust","Single Leg Hip Thrust",
+    "Cable Kickback","Machine Kickback","Donkey Kicks","Cable Hip Extension",
+    "Glute Bridge","Single Leg Glute Bridge","Frog Pumps","X-Band Walk",
+    "Glute-Ham Raise","Reverse Hyperextension","Glute Hip Hyperextension",
+    "Lateral Band Walk","Banded Crab Walk","Banded Squat Walk",
+    "Hip Adduction Machine","Hip Abduction Machine","Cable Hip Abduction","Banded Clamshells","Banded Hip Abduction",
+    "Sumo Deadlift (Glute Focus)","Step-Up (Glute Focus)"
   ],
   "Calves": [
-    "Standing Calf Raise","Seated Calf Raise Machine","Donkey Calf Raise",
-    "DB Unilateral Calf Raises","Single Leg DB Calf Raises","DB Calf Raises",
-    "Machine/Leg Press Bilateral Calf Raises","Leg Press Calf Raises","Machine Calf Raises/Smith Calf Raises",
-    "Jump Rope (Calves)"
+    "Standing Calf Raise (Machine)","Seated Calf Raise Machine","Donkey Calf Raise",
+    "Single Leg Calf Raise (DB)","DB Calf Raises","Smith Machine Calf Raise",
+    "Leg Press Calf Raise","Hack Squat Calf Raise",
+    "Tibialis Raise","Calf Raise on Step"
   ],
   "Core": [
-    "Plank","Side Plank","Hollow Body Hold","Dead Bug","Dragon Flag","Ab Wheel Rollout",
-    "Hanging Leg Raise","Captain's Chair Leg Raises","Decline Sit-up","V-Up","Bicycle Crunch",
-    "Russian Twist","Cable Pallof Press","Rope Crunch","Rope Oblique Crunch","Cable Rope Crunches",
-    "Woodcutters","Side Plank Crunch","Rotation Mountain Climbers","Starfish Crunch",
-    "Two Up One Down","Physioball Stirs","Medicine Ball/Sandbag Transfers"
-  ],
-  "Olympic / Power": [
-    "Power Clean","Hang Power Clean","Power Snatch","Hang Power Snatch",
-    "Clean & Jerk","Push Press","Push Jerk","Barbell Hip Thrust"
-  ],
-  "Cardio": [
-    "Treadmill Run","Treadmill Walk (Incline)","Rowing Machine","Assault Bike","Stationary Bike",
-    "Stair Climber","Elliptical","Jump Rope","Battle Ropes","Box Jumps","Sled Push","Sled Pull"
-  ],
-  "Mobility & Stretching": [
-    "Hip Flexor Stretch","Couch Stretch","Pigeon Pose","90/90 Hip Stretch",
-    "World's Greatest Stretch","Thoracic Spine Rotation","Cat-Cow","Child's Pose",
-    "Hamstring Stretch","Quad Stretch","Calf Stretch","Shoulder Cross-Body Stretch",
-    "Doorway Chest Stretch","Lat Stretch","Wrist Circles","Ankle Circles"
+    "Plank","Side Plank","Long Lever Plank","Weighted Plank",
+    "Hollow Body Hold","Dead Bug","Dragon Flag","Ab Wheel Rollout","Barbell Rollout",
+    "Hanging Leg Raise","Hanging Knee Raise","Captain's Chair Leg Raises","Toes to Bar",
+    "Decline Sit-up","Weighted Crunch","Decline Crunch","V-Up","Bicycle Crunch",
+    "Russian Twist","Weighted Russian Twist",
+    "Cable Pallof Press","Pallof Press (Band)","Cable Woodchopper","Band Woodchopper",
+    "Rope Crunch","Rope Oblique Crunch","Cable Rope Crunches",
+    "Landmine Rotation","Landmine Oblique Crunch","Medicine Ball Slam","Suitcase Carry"
   ],
 };
 
@@ -2519,15 +2533,6 @@ function renderSchedulePage() {
         const usedDays = weekSched.filter(v => v === ci).length;
         const exCount = (data[ci] || []).length;
         const color = cfg.color || '#C8A96E';
-        // Count sessions this month from history
-        const now = new Date();
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const sessCount = history.filter(h => {
-          if (h.day !== cfg.label) return false;
-          const ts = h.ts ? new Date(h.ts) : null;
-          return ts && ts >= monthStart;
-        }).length;
-        const statLabel = sessCount > 0 ? `↑ ${sessCount} session${sessCount>1?'s':''} this month` : 'No sessions yet';
         return `<div class="sched-workout-card" id="swc-${ci}"
           ondragover="schedCardDragOver(event,${ci})"
           ondrop="schedCardDrop(event,${ci})"
@@ -3047,6 +3052,8 @@ function closeEditWorkoutExercises() {
   _eweEditIdx = null;
 }
 
+let _eweDragSrc = null;
+
 function eweRenderExList() {
   const ci = _eweTargetCi;
   const c = document.getElementById('ewe-ex-list');
@@ -3055,9 +3062,22 @@ function eweRenderExList() {
     c.innerHTML = `<div style="font-family:var(--mono);font-size:8.5px;color:var(--muted);letter-spacing:.1em;padding:12px 0 4px;text-align:center;opacity:.6">No exercises yet — add from the list below</div>`;
     return;
   }
-  c.innerHTML = `<div style="background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;margin-bottom:4px">
+  c.innerHTML = `<div id="ewe-sortable" style="background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;margin-bottom:4px">
     ${exs.map((ex, i) => `
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;${i>0?'border-top:1px solid var(--line)':''}">
+      <div id="ewe-row-${i}" draggable="true"
+        ondragstart="eweRowDragStart(event,${i})"
+        ondragover="eweRowDragOver(event,${i})"
+        ondrop="eweRowDrop(event,${i})"
+        ondragend="eweRowDragEnd()"
+        ontouchstart="eweTouchStart(event,${i})"
+        ontouchmove="eweTouchMove(event)"
+        ontouchend="eweTouchEnd(event,${i})"
+        style="display:flex;align-items:center;gap:8px;padding:10px 14px;${i>0?'border-top:1px solid var(--line)':''}transition:opacity .15s,background .15s;">
+        <div style="display:flex;flex-direction:column;gap:3px;padding:4px 3px;cursor:grab;flex-shrink:0;opacity:.4;touch-action:none">
+          <span style="display:block;width:14px;height:1.5px;background:var(--muted);border-radius:1px"></span>
+          <span style="display:block;width:14px;height:1.5px;background:var(--muted);border-radius:1px"></span>
+          <span style="display:block;width:14px;height:1.5px;background:var(--muted);border-radius:1px"></span>
+        </div>
         <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px">${String(i+1).padStart(2,'0')}</span>
         <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
         <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
@@ -3071,6 +3091,87 @@ function eweRenderExList() {
           onmouseout="this.style.color='var(--muted2)';this.style.borderColor='var(--line2)'">edit</button>
       </div>`).join('')}
   </div>`;
+}
+
+function eweRowDragStart(e, idx) {
+  _eweDragSrc = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.getElementById(`ewe-row-${idx}`); if (el) el.style.opacity = '0.3'; }, 0);
+}
+function eweRowDragOver(e, idx) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('#ewe-sortable > div').forEach((r, i) => {
+    r.style.borderTop = (i > 0 && i === idx && _eweDragSrc !== idx) ? '2px solid var(--gold)' : (i > 0 ? '1px solid var(--line)' : '');
+    r.style.background = (i === idx && _eweDragSrc !== idx) ? 'rgba(0,212,170,.05)' : '';
+  });
+}
+function eweRowDrop(e, idx) {
+  e.preventDefault();
+  const ci = _eweTargetCi;
+  if (_eweDragSrc === null || _eweDragSrc === idx) { eweRowDragEnd(); return; }
+  const src = _eweDragSrc, dst = idx;
+  const [exItem] = data[ci].splice(src, 1); data[ci].splice(dst, 0, exItem);
+  const [sdItem] = setsDone[ci].splice(src, 1); setsDone[ci].splice(dst, 0, sdItem);
+  const nRE = {};
+  Object.keys(restEnabled).forEach(k => {
+    const parts = k.split('-'), kdi = parseInt(parts[0]), kei = parseInt(parts[1]);
+    if (kdi !== ci) { nRE[k] = restEnabled[k]; return; }
+    let newEi = kei;
+    if (kei === src) newEi = dst;
+    else if (src < dst && kei > src && kei <= dst) newEi = kei - 1;
+    else if (src > dst && kei < src && kei >= dst) newEi = kei + 1;
+    nRE[`${ci}-${newEi}`] = restEnabled[k];
+  });
+  restEnabled = nRE;
+  _eweDragSrc = null;
+  persist(); render(); eweRenderExList();
+  eweRenderLib(document.getElementById('ewe-search').value);
+}
+function eweRowDragEnd() {
+  _eweDragSrc = null;
+  document.querySelectorAll('#ewe-sortable > div').forEach((r, i) => {
+    r.style.opacity = '1'; r.style.background = '';
+    r.style.borderTop = i > 0 ? '1px solid var(--line)' : '';
+  });
+}
+let _eweTouchSrc = null, _eweTouchLastIdx = null;
+function eweTouchStart(e, idx) {
+  if (!e.target.closest('div[style*="cursor:grab"]')) return;
+  e.preventDefault(); _eweTouchSrc = idx; _eweTouchLastIdx = idx;
+  const row = document.getElementById(`ewe-row-${idx}`);
+  const ghost = row.cloneNode(true); ghost.id = 'ewe-touch-ghost';
+  ghost.style.cssText = `position:fixed;left:0;top:0;width:${row.offsetWidth}px;opacity:0.75;background:var(--surf2);border:1px solid var(--gold3);border-radius:var(--r);z-index:9999;pointer-events:none;`;
+  document.body.appendChild(ghost);
+  const t = e.touches[0];
+  ghost.style.transform = `translate(${t.clientX - row.offsetWidth/2}px,${t.clientY - 28}px)`;
+  row.style.opacity = '0.3';
+}
+function eweTouchMove(e) {
+  if (_eweTouchSrc === null) return; e.preventDefault();
+  const t = e.touches[0], ghost = document.getElementById('ewe-touch-ghost');
+  const row0 = document.getElementById('ewe-row-0');
+  if (ghost && row0) ghost.style.transform = `translate(${t.clientX - row0.offsetWidth/2}px,${t.clientY - 28}px)`;
+  const ci = _eweTargetCi, exs = data[ci] || [];
+  for (let i = 0; i < exs.length; i++) {
+    const r = document.getElementById(`ewe-row-${i}`); if (!r) continue;
+    const rect = r.getBoundingClientRect();
+    if (t.clientY >= rect.top && t.clientY < rect.bottom && i !== _eweTouchLastIdx) {
+      _eweTouchLastIdx = i;
+      document.querySelectorAll('#ewe-sortable > div').forEach((row, ri) => {
+        row.style.borderTop = (ri > 0 && ri === i && _eweTouchSrc !== i) ? '2px solid var(--gold)' : (ri > 0 ? '1px solid var(--line)' : '');
+        row.style.background = (ri === i && _eweTouchSrc !== i) ? 'rgba(0,212,170,.05)' : '';
+      }); break;
+    }
+  }
+}
+function eweTouchEnd(e, idx) {
+  if (_eweTouchSrc === null) return;
+  const ghost = document.getElementById('ewe-touch-ghost'); if (ghost) ghost.remove();
+  if (_eweTouchLastIdx !== null && _eweTouchLastIdx !== _eweTouchSrc) {
+    eweRowDrop({ preventDefault: () => {} }, _eweTouchLastIdx);
+  } else { eweRowDragEnd(); }
+  _eweTouchSrc = null; _eweTouchLastIdx = null;
 }
 
 function eweRemoveEx(idx) {
