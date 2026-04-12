@@ -159,8 +159,8 @@ body {
 }
 .dt:active { background: var(--surf3); border-color: var(--line3); }
 .dt:focus-visible { outline: 2px solid var(--gold3); outline-offset: 2px; }
-.dt.active { border-color: var(--gold3); background: rgba(0,212,170,.08); box-shadow: 0 0 14px rgba(0,212,170,.15); }
-.dt.today-tab { border-color: var(--gold3); background: rgba(0,212,170,.08); }
+.dt.active { border: 2.5px solid var(--gold3); background: rgba(0,212,170,.08); box-shadow: 0 0 14px rgba(0,212,170,.15); }
+.dt.today-tab { border: 2.5px solid var(--gold3); background: rgba(0,212,170,.08); }
 .dt.rest-tab { opacity: .45; }
 .dt-day-name {
   font-family: var(--mono); font-size: 15px; font-weight: 700;
@@ -448,7 +448,7 @@ body {
 .ex-block.drag-over { border-color: var(--gold); box-shadow: 0 0 14px rgba(0,212,170,.15); }
 .tbl-wrap:has(.dragging) .ex-block:not(.dragging) { opacity: .45; transition: opacity .15s; }
 .ex-name-row {
-  display: flex; align-items: center; padding: 15px 16px 15px 12px;
+  display: flex; align-items: center; padding: 10px 16px 10px 12px;
   gap: 11px; cursor: pointer; user-select: none;
   transition: background .15s; position: relative;
 }
@@ -1879,9 +1879,9 @@ function renderTable() {
     if (isDel) { html+=`<div class="ex-block" style="animation-delay:${ei*40}ms"><div class="del-confirm"><span class="del-txt">Delete "${escHtml(ex.name)}"?</span><button class="del-btn del-no" onclick="cancelDelete()">Cancel</button><button class="del-btn del-yes" onclick="confirmDelete(${di},${ei})">Delete</button></div></div>`; return; }
     if (isHidden) { html+=`<div class="ex-block" id="exb-hidden-${di}-${ei}" style="display:none"></div>`; return; }
     const doneSets=sArr.filter(Boolean).length;
-    const progressBadge=doneSets>0&&!exDone?`<span class="ex-progress-badge">${doneSets}/${ex.sets}</span>`:'';
+    const progressBadge='';
     const isEditingThis = editingEx && editingEx.di===di && editingEx.ei===ei;
-    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms;border-left:2px solid ${exDone ? 'var(--line3)' : 'var(--line2)'}" draggable="${isEditingThis?'false':'true'}" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
+    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms" draggable="${isEditingThis?'false':'true'}" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
     {
       html+=`<div class="ex-name-row${exDone?' done-all':''}" onclick="${isEditingThis?'':'toggleExpand('+di+','+ei+')'}">
         <div class="drag-num" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
@@ -1927,10 +1927,7 @@ function renderTable() {
             <div class="set-check-wrap"><button class="set-check${done?' checked':''}" id="sc-${di}-${ei}-${si}" onclick="toggleSet(event,${di},${ei},${si})"><svg width="11" height="9" viewBox="0 0 12 10" fill="none"><path d="M1 4.8L4.5 8.5L11 1" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           </div></div>`;
       }
-      const progPct = ex.sets > 0 ? Math.round((doneSets/ex.sets)*100) : 0;
-      html+=`<div class="ex-progress-bar" style="height:2px;background:var(--line);position:relative;overflow:hidden">
-        <div style="position:absolute;left:0;top:0;height:100%;width:${progPct}%;background:var(--gold);transition:width .4s cubic-bezier(.4,0,.2,1);opacity:${exDone?'.5':'1'}"></div>
-      </div>`;
+
       html+=`<div class="set-controls">
         <button class="set-ctrl-btn set-ctrl-add" onclick="addSet(event,${di},${ei})">+ Add</button>
         <button class="set-ctrl-btn set-ctrl-rem" onclick="removeSet(event,${di},${ei})" ${ex.sets<=1?'disabled':''}>− Remove</button>
