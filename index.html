@@ -311,30 +311,6 @@ body {
 .swc-action-btn.dup:hover { border-color: var(--success); color: var(--success); }
 
 /* Color swatch */
-.sched-color-swatch {
-  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
-  border: 2px solid rgba(255,255,255,.12); cursor: pointer;
-  transition: transform .15s, box-shadow .15s; position: relative;
-}
-.sched-color-swatch:hover { transform: scale(1.15); box-shadow: 0 0 8px rgba(200,169,110,.3); }
-
-/* Color picker popover */
-.color-picker-pop {
-  position: fixed; z-index: 9999;
-  background: var(--surf2); border: 1px solid var(--line2);
-  border-radius: var(--r2); padding: 12px;
-  box-shadow: var(--shadow-lg); display: none;
-}
-.color-picker-pop.open { display: block; animation: cpIn .15s ease; }
-@keyframes cpIn { from { opacity:0; transform:scale(.92); } to { opacity:1; transform:scale(1); } }
-.color-picker-swatches { display: grid; grid-template-columns: repeat(5,1fr); gap: 7px; }
-.cp-swatch {
-  width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
-  border: 2px solid transparent; transition: transform .15s, border-color .15s;
-}
-.cp-swatch:hover { transform: scale(1.15); }
-.cp-swatch.selected { border-color: var(--text); }
-
 /* Session stats on workout cards */
 .sched-session-stat {
   font-family: var(--mono); font-size: 7.5px; color: var(--gold3);
@@ -965,12 +941,6 @@ body {
       + New Workout
     </button>
   </div>
-</div>
-
-<!-- Color picker popover (shared) -->
-<div id="color-picker-pop" class="color-picker-pop" onclick="event.stopPropagation()">
-  <div style="font-family:var(--mono);font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Workout colour</div>
-  <div class="color-picker-swatches" id="cp-swatches"></div>
 </div>
 
 <!-- PROGRESS PAGE -->
@@ -2590,13 +2560,6 @@ function confirmAddFromLib() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 // Palette for workout colors
-const WORKOUT_COLORS = [
-  '#C8A96E','#E0C48A','#A88850',
-  '#6AAF7A','#4A9A5A','#8BD4A0',
-  '#6A9EBF','#4A7FAF','#8BBFD4',
-  '#C06A7A','#BF7A5A','#9A7ACA',
-  '#AAA87A','#C8C890','#7ACAC8',
-];
 
 let _dayNotes = store.get('kis8_day_notes') || {};
 function saveDayNotes() { store.set('kis8_day_notes', _dayNotes); }
@@ -2646,7 +2609,6 @@ function renderSchedulePage() {
             <div class="sched-workout-card-name">${escHtml(cfg.label)}</div>
           </div>
           <div class="sched-workout-card-actions">
-            <div class="sched-color-swatch" style="background:${color}" onclick="openColorPicker(event,${ci})" title="Change colour"></div>
             <button class="swc-action-btn" onclick="event.stopPropagation();openEditWorkoutExercises(${ci})">Edit</button>
             <button class="swc-action-btn" onclick="event.stopPropagation();schedRenameWorkout(${ci})">Rename</button>
             ${CFG.length > 1 ? `<button class="swc-action-btn danger" onclick="event.stopPropagation();schedDeleteWorkout(${ci})">×</button>` : ''}
@@ -2672,36 +2634,6 @@ function autoResizeNote(el) {
   el.style.height = 'auto';
   el.style.height = (el.scrollHeight) + 'px';
 }
-
-// ── Color picker ─────────────────────────────────────────────────────────────
-let _cpTargetCi = null;
-function openColorPicker(e, ci) {
-  e.stopPropagation();
-  _cpTargetCi = ci;
-  const pop = document.getElementById('color-picker-pop');
-  const swatches = document.getElementById('cp-swatches');
-  const currentColor = CFG[ci]?.color || '#C8A96E';
-  swatches.innerHTML = WORKOUT_COLORS.map(c =>
-    `<div class="cp-swatch${c === currentColor ? ' selected' : ''}" style="background:${c}" onclick="setWorkoutColor(${ci},'${c}')"></div>`
-  ).join('');
-  // Position near swatch
-  const rect = e.target.getBoundingClientRect();
-  pop.style.left = Math.min(rect.left, window.innerWidth - 190) + 'px';
-  pop.style.top = (rect.bottom + 8) + 'px';
-  pop.classList.add('open');
-}
-function setWorkoutColor(ci, color) {
-  CFG[ci].color = color;
-  persist();
-  closeColorPicker();
-  renderSchedulePage();
-  renderTabs();
-}
-function closeColorPicker() {
-  document.getElementById('color-picker-pop')?.classList.remove('open');
-  _cpTargetCi = null;
-}
-document.addEventListener('click', () => closeColorPicker());
 
 // ── Workout card drag-and-drop reorder ───────────────────────────────────────
 function schedCardDragStart(e, ci) {
