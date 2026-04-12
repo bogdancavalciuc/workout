@@ -1253,7 +1253,7 @@ const store = {
   setRaw(key, value) { try { localStorage.setItem(key, value); return true; } catch { return false; } },
 };
 
-const DEF_CFG = [{label:'Push',color:'#C8A96E'},{label:'Pull',color:'#C8A96E'},{label:'Legs',color:'#C8A96E'}];
+const DEF_CFG = [{label:'Push'},{label:'Pull'},{label:'Legs'}];
 const DEF_SCHED = [0, null, 1, null, 2, null, null];
 const DEF = [
   [{id:1,name:'Incline Smith Machine Chest Press',sets:3,reps:12,weight:'50KG'},{id:2,name:'Barbell Overhead Press',sets:3,reps:12,weight:'30KG'},{id:3,name:'Machine Chest Press',sets:3,reps:12,weight:'50KG'},{id:4,name:'DB Lateral Raises',sets:3,reps:12,weight:'6KG'},{id:5,name:'Triceps Pushdown',sets:3,reps:12,weight:'36KG'}],
@@ -1767,7 +1767,6 @@ function renderTabs() {
     const isRest=cfgIdx===null||cfgIdx===undefined||cfgIdx>=CFG.length;
     const isActive=wi===selectedWeekIdx, isDone=!isRest&&isAllDone(cfgIdx);
     const cfg = isRest ? null : CFG[cfgIdx];
-    const color = cfg?.color || '#C8A96E';
     const abbr = isRest ? '·' : (cfg?.label||'?').slice(0,2).toUpperCase();
     const shortName = isRest ? 'Rest' : (cfg?.label||'?');
     const el=document.createElement('div');
@@ -1776,7 +1775,7 @@ function renderTabs() {
     el.setAttribute('tabindex','0');
     el.innerHTML=`
       <span class="dt-day-name">${escHtml(dayName.slice(0,1))}</span>
-      <div class="dt-dot" style="background:${isRest?'var(--surf3)':color+'28'};color:${isRest?'var(--muted)':color}">${escHtml(abbr)}</div>
+      <div class="dt-dot">${escHtml(abbr)}</div>
       <span class="dt-workout-name">${escHtml(shortName)}</span>
       <div class="dt-done-check"></div>`;
     const handler=()=>{ selectedWeekIdx=wi; if (!isRest) { saveInlineEdit(); activeDay=cfgIdx; editingEx=null; deleteConfirm=null; expanded.clear(); } render(); };
@@ -2035,7 +2034,6 @@ function renderHistoryPage() {
   c.innerHTML = sorted.map((session, idx) => {
     const id = `hist-${session.ts || session.dk || idx}`;
     const isExp = _histExpanded.has(id);
-    const color = (CFG.find(c => c.label === session.day)?.color) || '#C8A96E';
     const exs = session.exercises || [];
     const exCount = exs.length;
 
@@ -2096,14 +2094,7 @@ function renderProgressOverview() {
       const dk = dayKey(day);
       const sessions = fh.filter(h => (h.dk===dk||(h.ts&&dayKey(new Date(h.ts))===dk)));
       const count = sessions.length;
-      // Get color from CFG by matching session day label
-      let color = null;
-      if (sessions.length > 0) {
-        const dayLabel = sessions[0].day;
-        const cfg = CFG.find(c => c.label === dayLabel);
-        color = cfg?.color || null;
-      }
-      weekSessions.push({ dk, count, color });
+      weekSessions.push({ dk, count });
     }
     weeks.push(weekSessions);
   }
@@ -2137,9 +2128,7 @@ function renderProgressOverview() {
     `<div class="heat-col">${week.map(d => {
       const intensity = d.count===0?0:Math.ceil((d.count/maxCount)*3);
       const isToday = d.dk===dayKey(new Date());
-      const alpha = intensity===1?'33':intensity===2?'66':intensity===3?'CC':'';
-      const bgStyle = d.color && intensity>0 ? `background:${d.color}${alpha}` : '';
-      return `<div class="heat-cell heat-${intensity}${isToday?' heat-today':''}" ${bgStyle?`style="${bgStyle}"`:''}></div>`;
+      return `<div class="heat-cell heat-${intensity}${isToday?' heat-today':''}"></div>`;
     }).join('')}</div>`
   ).join('');
 
@@ -2574,12 +2563,11 @@ function renderSchedulePage() {
       const isToday = wi === todayIdx;
       const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
       const cfg = isRest ? null : CFG[cfgIdx];
-      const color = cfg?.color || '#C8A96E';
       const abbr = isRest ? '·' : (cfg?.label || '?').slice(0, 2).toUpperCase();
       const shortName = isRest ? 'Rest' : (cfg?.label || '?');
       return `<div class="sched-week-cell${isToday ? ' swo-today' : ''}${isRest ? ' swo-rest' : ''}" onclick="openDayAssignPop(${wi}, this, event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDayAssignPop(${wi},this,event);}" role="button" tabindex="0" style="cursor:pointer">
         <span class="sched-week-cell-day">${escHtml(dayName.slice(0,1))}</span>
-        <div class="sched-week-cell-dot" style="background:${isRest ? 'var(--surf3)' : color+'28'};color:${isRest ? 'var(--muted)' : color}">${escHtml(abbr)}</div>
+        <div class="sched-week-cell-dot" style="background:${isRest ? 'var(--surf3)' : 'var(--surf3)'};color:${isRest ? 'var(--muted)' : 'var(--muted2)'}">${escHtml(abbr)}</div>
         <span class="sched-week-cell-name">${escHtml(shortName)}</span>
       </div>`;
     }).join('');
@@ -2593,7 +2581,6 @@ function renderSchedulePage() {
       cm.innerHTML = CFG.map((cfg, ci) => {
         const usedDays = weekSched.filter(v => v === ci).length;
         const exCount = (data[ci] || []).length;
-        const color = cfg.color || '#C8A96E';
         return `<div class="sched-workout-card" id="swc-${ci}"
           ondragover="schedCardDragOver(event,${ci})"
           ondrop="schedCardDrop(event,${ci})"
@@ -2690,7 +2677,7 @@ function schedCardDragEnd() {
 function duplicateWorkout(ci) {
   const src = CFG[ci];
   const newLabel = src.label + ' (Copy)';
-  CFG.push({ label: newLabel, color: src.color || '#C8A96E' });
+  CFG.push({ label: newLabel });
   data.push(JSON.parse(JSON.stringify(data[ci])));
   setsDone.push(data[data.length-1].map(ex => Array(ex.sets).fill(false)));
   syncSets();
@@ -3036,7 +3023,7 @@ function saveNewWorkout() {
   const name = document.getElementById('nw-exercises-title').textContent.trim();
   if (!name) return;
   const firstCi = CFG.length;
-  CFG.push({ label: name, color: '#C8A96E' });
+  CFG.push({ label: name });
   data.push(_nwExercises.map((ex, i) => ({ id: i+1, name: ex.name, sets: ex.sets, reps: ex.reps, weight: ex.weight })));
   setsDone.push([]);
   syncSets();
@@ -3353,7 +3340,6 @@ function openDayAssignPop(wi, cellEl, e) {
   const grid = document.getElementById('day-assign-grid');
   grid.innerHTML = CFG.map((cfg, ci) => {
     const isSel = currentCfgIdx === ci;
-    const color = cfg.color || '#C8A96E';
     const exCount = (data[ci] || []).length;
     return `<div class="day-assign-card${isSel ? ' is-selected' : ''}" onclick="dayAssignSelectSheet(${ci})">
       <div class="day-assign-card-body">
