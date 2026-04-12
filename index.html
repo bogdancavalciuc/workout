@@ -1897,15 +1897,16 @@ function toggleRestEnabled(di,ei,v){restEnabled[`${di}-${ei}`]=v;persist();}
 function toggleSet(e,di,ei,si){
   e.stopPropagation();if(editingEx)saveInlineEdit();
   const was=setsDone[di][ei][si];setsDone[di][ei][si]=!was;
+  const wasDoneBefore = !was && isAllDone(di) === false ? false : was ? false : null; // computed after toggle below
   if (!was){expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();const exNowDone=setsDone[di][ei].every(Boolean);if(exNowDone){hapticEx();}else{hapticSet();}const ex=data[di][ei];const isLast=si===ex.sets-1;if(restEnabled[`${di}-${ei}`]!==false&&!isLast)setTimeout(()=>openRestTimer(ex.name,si+1,restDefaultDuration),200);}else{haptic([5,30,5]);}
-  if(isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}
+  if(!was && isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}
   persist();render();
   requestAnimationFrame(()=>{const b=document.getElementById(`sc-${di}-${ei}-${si}`);if(b&&!was){b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),300);}});
 }
 function quickLogAll(e,di,ei,isCurrentlyAllDone){
   e.stopPropagation();
   if(isCurrentlyAllDone){setsDone[di][ei]=setsDone[di][ei].map(()=>false);haptic([5,30,5]);persist();render();}
-  else{confirmAction('Mark all sets done?',`This will complete all ${data[di][ei].sets} sets of "${data[di][ei].name}".`,'Mark done','',()=>{setsDone[di][ei]=setsDone[di][ei].map(()=>true);expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();hapticEx();if(isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}persist();render();});}
+  else{confirmAction('Mark all sets done?',`This will complete all ${data[di][ei].sets} sets of "${data[di][ei].name}".`,'Mark done','',()=>{const wasAlreadyAllDone=isAllDone(di);setsDone[di][ei]=setsDone[di][ei].map(()=>true);expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();hapticEx();if(!wasAlreadyAllDone&&isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}persist();render();});}
 }
 function getPrevSet(di,exName,si){const label=CFG[di]?.label,todayDk=dayKey(new Date());for(const h of history){if(h.day!==label)continue;const hDk=h.dk||(h.ts?dayKey(new Date(h.ts)):null);if(hDk===todayDk)continue;const ex=(h.exercises||[]).find(e=>e.name===exName);if(!ex)continue;return{reps:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps,weight:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight};}return null;}
 function getSetReps(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps;}
@@ -1996,7 +1997,7 @@ function renderHistoryPage() {
   const sorted = [...fh].sort((a, b) => (b.ts||0) - (a.ts||0));
 
   c.innerHTML = sorted.map((session, idx) => {
-    const id = `hist-${idx}`;
+    const id = `hist-${session.ts || session.dk || idx}`;
     const isExp = _histExpanded.has(id);
     const color = (CFG.find(c => c.label === session.day)?.color) || '#C8A96E';
     const exs = session.exercises || [];
@@ -2073,11 +2074,14 @@ function renderProgressOverview() {
   const maxCount = Math.max(...weeks.flat().map(d => d.count), 1);
 
   const allDks = [...new Set(fh.map(h => h.dk||(h.ts?dayKey(new Date(h.ts)):null)).filter(Boolean))].sort().reverse();
-  let streak = 0, prev = new Date();
+  let streak = 0;
+  const todayDk = dayKey(new Date());
+  // Only start streak from today if today has a session; otherwise start from most recent session day
+  let streakRef = allDks[0] === todayDk ? new Date() : (allDks[0] ? (() => { const p=allDks[0].split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); })() : new Date());
   for (const dk of allDks) {
     const parts = dk.split('-').map(Number);
     const d = new Date(parts[0], parts[1]-1, parts[2]);
-    if (Math.abs(prev - d) <= 1.5 * 86400000) { streak++; prev = d; } else break;
+    if (Math.abs(streakRef - d) <= 1.5 * 86400000) { streak++; streakRef = d; } else break;
   }
 
   const scheduledDaysPerWeek = weekSched.filter(v => v!==null&&v!==undefined).length;
@@ -3039,6 +3043,12 @@ function saveNewWorkout() {
   setsDone.push([]);
   syncSets();
   activeDay = firstCi;
+  // Auto-assign to today's slot if it is currently a rest day
+  const todayWi = getTodayWeekIdx();
+  if (weekSched[todayWi] === null || weekSched[todayWi] === undefined || weekSched[todayWi] >= CFG.length - 1) {
+    weekSched[todayWi] = firstCi;
+    selectedWeekIdx = todayWi;
+  }
   persist();
   closeNewWorkoutSheet();
   render();
@@ -3125,7 +3135,7 @@ function eweRowDragOver(e, idx) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
   document.querySelectorAll('#ewe-sortable > div').forEach((r, i) => {
-    r.style.borderTop = (i > 0 && i === idx && _eweDragSrc !== idx) ? '2px solid var(--gold)' : (i > 0 ? '1px solid var(--line)' : '');
+    r.style.borderTop = (i > 0 && i === idx && _eweDragSrc !== idx) ? '2px solid var(--gold)' : (i > 0 ? '1px solid var(--line2)' : '');
     r.style.background = (i === idx && _eweDragSrc !== idx) ? 'rgba(0,212,170,.05)' : '';
   });
 }
@@ -3304,9 +3314,12 @@ function eweConfirmConfig() {
 
   if (_eweEditIdx !== null && _eweEditIdx !== undefined) {
     // Editing existing exercise
-    data[ci][_eweEditIdx].sets = sets;
-    data[ci][_eweEditIdx].reps = reps;
-    data[ci][_eweEditIdx].weight = weight;
+    const ex = data[ci][_eweEditIdx];
+    ex.sets = sets;
+    ex.reps = reps;
+    ex.weight = weight;
+    // Trim setOvr to new set count so stale overrides don't persist
+    if (ex.setOvr && ex.setOvr.length > sets) ex.setOvr = ex.setOvr.slice(0, sets);
     showToast('Exercise updated', 'ok');
   } else {
     // Adding new exercise
