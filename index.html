@@ -109,26 +109,21 @@ body {
   padding: 1px 6px; border: 1px solid rgba(0,212,170,.25); border-radius: 20px;
 }
 
-.timer-pill {
-  display: flex; align-items: center; gap: 6px;
-  border: 1px solid var(--line2); border-radius: var(--r);
-  padding: 0 10px 0 6px; cursor: pointer; height: 32px;
-  transition: border-color .2s, background .2s; background: var(--surf);
-  flex-shrink: 0;
+/* Session timer ring */
+.session-ring-wrap {
+  position: relative; width: 44px; height: 44px; flex-shrink: 0; cursor: pointer;
 }
-.timer-pill:active { background: var(--surf2); }
-.timer-pill.running { border-color: var(--gold3); background: rgba(0,212,170,.06); }
-.timer-play {
-  width: 18px; height: 18px; border-radius: 4px;
-  border: none; background: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--muted); transition: all .15s; flex-shrink: 0;
+.session-ring-wrap svg { width: 100%; height: 100%; overflow: visible; transform: rotate(-90deg); }
+.session-ring-bg  { fill: none; stroke: var(--line2); stroke-width: 2.5; }
+.session-ring-prog { fill: none; stroke: var(--line3); stroke-width: 2.5; stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear, stroke .4s; }
+.session-ring-wrap.running .session-ring-prog { stroke: var(--gold); }
+.session-ring-val {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: -.02em;
+  color: var(--muted); line-height: 1; pointer-events: none;
 }
-.timer-pill.running .timer-play { color: var(--gold); }
-.timer-val {
-  font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--muted);
-}
-.timer-pill.running .timer-val { color: var(--gold); }
+.session-ring-wrap.running .session-ring-val { color: var(--gold); }
 
 /* ── NAV ─────────────────────────────────────────────────────────────────────── */
 .page-nav {
@@ -174,8 +169,6 @@ body {
 .dt.active .dt-day-name { color: var(--gold); }
 .dt.today-tab .dt-day-name { color: var(--gold); }
 .dt-dot { display: none; }
-
-.dt.active .dt-dot { }
 .dt.rest-tab .dt-dot { background: var(--surf3); color: var(--muted); font-size: 9px; }
 .dt-workout-name {
   font-family: var(--mono); font-size: 6.5px; letter-spacing: .04em;
@@ -546,7 +539,7 @@ body {
 }
 .set-input:focus { border-color: var(--gold3); background: var(--surf3); }
 .set-input.done { opacity: .25; pointer-events: none; }
-.set-check-wrap { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+.set-check-wrap { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; position: relative; }
 .set-check {
   width: 34px; height: 34px; border-radius: 50%;
   border: 1.5px solid var(--line3); background: var(--surf2); cursor: pointer;
@@ -759,31 +752,27 @@ body {
 .bsv { width: 100%; padding: 16px; border: none; border-radius: var(--r2); background: var(--gold); color: #000; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .1em; cursor: pointer; margin-top: 8px; text-transform: uppercase; transition: opacity .2s; }
 .bsv:active { opacity: .85; }
 
-/* Rest overlay */
-.rest-overlay { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(8,10,8,.97); backdrop-filter: blur(16px); flex-direction: column; align-items: center; justify-content: center; animation: fadeIn .25s ease; }
-.rest-overlay.active { display: flex; }
-.rest-set-label { font-family: var(--mono); font-size: 8px; letter-spacing: .28em; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
-.rest-svg-wrap { position: relative; width: 210px; height: 210px; margin-bottom: 22px; }
-.rest-circle-bg { fill: none; stroke: var(--line2); stroke-width: 4; }
-.rest-circle-prog { fill: none; stroke: var(--gold); stroke-width: 4; stroke-linecap: round; transform-origin: center; transform: rotate(-90deg); transition: stroke-dashoffset .95s linear, stroke .3s; }
-.rest-circle-prog.urgent { stroke: var(--danger); }
-.rest-time-display { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-.rest-time-val { font-family: var(--serif); font-size: 80px; font-weight: 400; letter-spacing: -.02em; color: var(--gold); line-height: 1; }
-.rest-time-unit { font-family: var(--mono); font-size: 8px; color: var(--muted); letter-spacing: .22em; text-transform: uppercase; }
-.rest-ex-name { font-family: var(--mono); font-size: 13px; font-weight: 600; font-style: normal; color: var(--text2); margin-bottom: 5px; opacity: .65; text-align: center; padding: 0 36px; }
-.rest-next-label { font-family: var(--mono); font-size: 7.5px; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 30px; }
-.rest-duration-row { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; padding: 0 16px; }
-.rest-dur-btn { font-family: var(--mono); font-size: 8.5px; letter-spacing: .12em; padding: 8px 16px; border-radius: 20px; border: 1px solid var(--line2); background: none; color: var(--muted2); cursor: pointer; transition: background .15s, border-color .15s, color .15s; text-transform: uppercase; }
-.rest-dur-btn.selected { background: var(--gold); border-color: var(--gold); color: var(--bg); }
-.rest-adjust-row { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-.rest-adj-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line2); background: none; color: var(--muted2); font-family: var(--serif); font-size: 20px; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color .15s, color .15s; }
-.rest-adj-btn:active { border-color: var(--gold); color: var(--gold); }
-.rest-adj-label { font-family: var(--mono); font-size: 7.5px; color: var(--muted); letter-spacing: .16em; text-transform: uppercase; min-width: 58px; text-align: center; }
-.rest-btns { display: flex; gap: 10px; }
-.rest-skip-btn { font-family: var(--mono); font-size: 8.5px; letter-spacing: .18em; padding: 14px 28px; border-radius: var(--r); border: 1px solid var(--line2); background: none; color: var(--muted2); cursor: pointer; text-transform: uppercase; transition: opacity .15s; }
-.rest-skip-btn:active { opacity: .6; }
-.rest-done-btn { font-family: var(--mono); font-size: 8.5px; letter-spacing: .18em; padding: 14px 28px; border-radius: var(--r); border: none; background: var(--gold); color: var(--bg); cursor: pointer; text-transform: uppercase; transition: opacity .15s; font-weight: 500; }
-.rest-done-btn:active { opacity: .8; }
+/* Rest ring — inline around the set-check button */
+.rest-ring-wrap {
+  position: absolute; inset: -7px; pointer-events: none; z-index: 10;
+}
+.rest-ring-wrap svg { width: 100%; height: 100%; overflow: visible; }
+.rest-ring-bg   { fill: none; stroke: var(--line2); stroke-width: 2.5; }
+.rest-ring-prog { fill: none; stroke: var(--gold); stroke-width: 2.5; stroke-linecap: round;
+  transform-origin: center; transform: rotate(-90deg);
+  transition: stroke-dashoffset .95s linear, stroke .3s; }
+.rest-ring-prog.urgent { stroke: var(--danger); }
+/* hide checkmark svg while resting, show circle filled */
+.set-check-wrap.resting .set-check { cursor: pointer; border-color: var(--gold); background: var(--gold); box-shadow: 0 0 12px rgba(0,212,170,.35); }
+.set-check-wrap.resting .set-check svg { opacity: 0; }
+/* number inside the button, color of bg so it looks cut out */
+.rest-ring-val {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--bg);
+  pointer-events: none; letter-spacing: -.02em; line-height: 1; z-index: 2;
+}
+.rest-ring-prog.urgent ~ * .rest-ring-val,
+.set-check-wrap.urgent-rest .rest-ring-val { color: var(--bg); }
 
 .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(4,6,4,.8); z-index: 600; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 24px; }
 .confirm-overlay.open { display: flex; animation: fadeIn .15s ease; }
@@ -885,38 +874,7 @@ body {
 </head>
 <body>
 
-<!-- REST OVERLAY -->
-<div class="rest-overlay" id="rest-overlay">
-  <div class="rest-set-label" id="rest-set-label">Set 1 complete</div>
-  <div class="rest-svg-wrap">
-    <svg width="210" height="210" viewBox="0 0 210 210">
-      <circle class="rest-circle-bg" cx="105" cy="105" r="94"/>
-      <circle class="rest-circle-prog" id="rest-circle" cx="105" cy="105" r="94" stroke-dasharray="591" stroke-dashoffset="0"/>
-    </svg>
-    <div class="rest-time-display">
-      <div class="rest-time-val" id="rest-time-val">90</div>
-      <div class="rest-time-unit">seconds</div>
-    </div>
-  </div>
-  <div class="rest-ex-name" id="rest-ex-name"></div>
-  <div class="rest-next-label">next set</div>
-  <div class="rest-duration-row">
-    <button class="rest-dur-btn" onclick="setRestDuration(30)">30s</button>
-    <button class="rest-dur-btn" onclick="setRestDuration(60)">60s</button>
-    <button class="rest-dur-btn selected" onclick="setRestDuration(90)">90s</button>
-    <button class="rest-dur-btn" onclick="setRestDuration(120)">2m</button>
-    <button class="rest-dur-btn" onclick="setRestDuration(180)">3m</button>
-  </div>
-  <div class="rest-adjust-row">
-    <button class="rest-adj-btn" onclick="adjustRest(-15)">−</button>
-    <span class="rest-adj-label">±15 sec</span>
-    <button class="rest-adj-btn" onclick="adjustRest(+15)">+</button>
-  </div>
-  <div class="rest-btns">
-    <button class="rest-skip-btn" onclick="closeRestTimer()">Skip</button>
-    <button class="rest-done-btn" onclick="closeRestTimer()">Done resting</button>
-  </div>
-</div>
+<!-- REST RING — injected inline by JS around active set-check -->
 
 <!-- CONFIRM -->
 <div class="confirm-overlay" id="confirm-overlay">
@@ -934,15 +892,21 @@ body {
 <div class="top">
   <!-- Workout name + timer bar -->
   <div class="top-bar" id="top-bar">
-    <div class="top-bar-left">
-      <span class="top-bar-name" id="pn-workout-name">Workout</span>
-      <div class="top-bar-meta" id="top-bar-meta"></div>
-    </div>
-    <div class="timer-pill" id="timer-pill" onclick="toggleSessionTimer()">
-      <button class="timer-play" id="st-play">
-        <svg id="st-icon" width="7" height="7" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>
-      </button>
-      <span class="timer-val" id="st-val">00:00</span>
+    <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+      <!-- Session timer ring -->
+      <div class="session-ring-wrap" id="session-ring-wrap" onclick="toggleSessionTimer()">
+        <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+          <circle class="session-ring-bg"   cx="22" cy="22" r="18"/>
+          <circle class="session-ring-prog" id="srp" cx="22" cy="22" r="18"
+            stroke-dasharray="113.1" stroke-dashoffset="113.1"/>
+        </svg>
+        <div class="session-ring-val" id="st-val">00</div>
+      </div>
+      <!-- Workout name + meta -->
+      <div class="top-bar-left">
+        <span class="top-bar-name" id="pn-workout-name">Workout</span>
+        <div class="top-bar-meta" id="top-bar-meta"></div>
+      </div>
     </div>
   </div>
   <!-- Tab nav -->
@@ -1658,44 +1622,154 @@ function hapticSet()     { haptic([12]); }
 function hapticEx()      { haptic([0,60,40,80,40,120]); }
 function hapticAllDone() { haptic([0,100,50,100,50,150]); }
 
+const SESSION_RING_CIRC = 2 * Math.PI * 18; // r=18 → ~113.1
 let sessionStart=null, sessionTick=null, sessionActive=false;
-function startSessionTimer() { if (sessionActive) return; sessionActive=true; sessionStart=Date.now(); sessionTick=setInterval(updateSessionUI,1000); updateSessionUI(); updatePlayBtn(); }
-function stopSessionTimer() { sessionActive=false; clearInterval(sessionTick); sessionTick=null; sessionStart=null; document.getElementById('st-val').textContent='00:00'; updatePlayBtn(); }
+
+function startSessionTimer() {
+  if (sessionActive) return;
+  sessionActive = true;
+  sessionStart = Date.now();
+  sessionTick = setInterval(updateSessionUI, 1000);
+  updateSessionUI();
+  updatePlayBtn();
+}
+function stopSessionTimer() {
+  sessionActive = false;
+  clearInterval(sessionTick); sessionTick = null; sessionStart = null;
+  document.getElementById('st-val').textContent = '00';
+  const srp = document.getElementById('srp');
+  if (srp) srp.style.strokeDashoffset = SESSION_RING_CIRC.toFixed(2);
+  updatePlayBtn();
+}
 function toggleSessionTimer() { sessionActive ? stopSessionTimer() : startSessionTimer(); }
-function updateSessionUI() { if (!sessionStart) return; const e=Math.floor((Date.now()-sessionStart)/1000); document.getElementById('st-val').textContent=String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0'); }
+
+function updateSessionUI() {
+  if (!sessionStart) return;
+  const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  // minutes label — show 00 until first minute completes, then 01, 02 …
+  document.getElementById('st-val').textContent = String(mins).padStart(2, '0');
+  // ring fills over the current minute (0–59 seconds → 0%–100%)
+  const pct = secs / 60;
+  const srp = document.getElementById('srp');
+  if (srp) srp.style.strokeDashoffset = (SESSION_RING_CIRC * (1 - pct)).toFixed(2);
+}
+
 function updatePlayBtn() {
-  const btn=document.getElementById('st-play'), icon=document.getElementById('st-icon'), pill=document.getElementById('timer-pill');
-  if (!btn||!icon) return;
-  if (sessionActive) { btn.classList.add('running'); pill?.classList.add('running'); icon.innerHTML='<rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/>'; }
-  else { btn.classList.remove('running'); pill?.classList.remove('running'); icon.innerHTML='<polygon points="2,1 11,6 2,11"/>'; }
+  const wrap = document.getElementById('session-ring-wrap');
+  if (wrap) wrap.classList.toggle('running', sessionActive);
 }
 
 let _audioCtx = null;
 function getAudioCtx() { if (!_audioCtx||_audioCtx.state==='closed') _audioCtx=new(window.AudioContext||window.webkitAudioContext)(); if (_audioCtx.state==='suspended') _audioCtx.resume(); return _audioCtx; }
 
 let restTick=null, restRemaining=0, restTotal=90;
-const CIRC = 2*Math.PI*94;
-function openRestTimer(exName, setNum, dur) {
-  if (restTick) { clearInterval(restTick); restTick=null; }
+let _restDi=null, _restEi=null, _restSi=null;
+
+const RING_R = 20; // radius matching the 48px set-check-wrap (inset -7px each side → ~21px)
+const RING_CIRC = 2 * Math.PI * RING_R;
+
+function _ringWrapId(di,ei,si){ return `rrw-${di}-${ei}-${si}`; }
+
+function openRestTimer(exName, setNum, dur, di, ei, si) {
+  closeRestTimer(); // clear any existing
+  _restDi=di; _restEi=ei; _restSi=si;
   restTotal=dur; restRemaining=dur;
-  document.getElementById('rest-ex-name').textContent=exName;
-  document.getElementById('rest-set-label').textContent=`Set ${setNum} complete`;
-  document.getElementById('rest-time-val').textContent=dur;
-  updateRestDurBtns(dur); updateRestCircle();
-  document.getElementById('rest-overlay').classList.add('active');
-  restTick=setInterval(tickRest,1000);
+
+  const checkBtn = document.getElementById(`sc-${di}-${ei}-${si}`);
+  const checkWrap = checkBtn?.parentElement;
+  if (!checkWrap) return;
+  checkWrap.classList.add('resting');
+
+  // Inject countdown number inside the button
+  const numEl = document.createElement('div');
+  numEl.className = 'rest-ring-val';
+  numEl.id = `rrv-${di}-${ei}-${si}`;
+  numEl.textContent = dur;
+  checkBtn.appendChild(numEl);
+
+  // Build ring SVG around the wrap
+  const id = _ringWrapId(di,ei,si);
+  const wrap = document.createElement('div');
+  wrap.className = 'rest-ring-wrap'; wrap.id = id;
+  wrap.innerHTML = `
+    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+      <circle class="rest-ring-bg" cx="24" cy="24" r="${RING_R}"/>
+      <circle class="rest-ring-prog" id="rrp-${di}-${ei}-${si}" cx="24" cy="24" r="${RING_R}"
+        stroke-dasharray="${RING_CIRC.toFixed(2)}" stroke-dashoffset="0"/>
+    </svg>`;
+  wrap.style.pointerEvents = 'auto';
+  wrap.addEventListener('click', (e)=>{ e.stopPropagation(); closeRestTimer(); });
+  checkWrap.appendChild(wrap);
+
+  _updateRing();
+  restTick = setInterval(tickRest, 1000);
 }
+
 function tickRest() {
   restRemaining--;
-  if (restRemaining===10) beepRestWarning();
-  if (restRemaining<=0) { restRemaining=0; clearInterval(restTick); restTick=null; document.getElementById('rest-time-val').textContent='0'; updateRestCircle(); beepRest(); setTimeout(closeRestTimer,800); return; }
-  document.getElementById('rest-time-val').textContent=restRemaining; updateRestCircle();
+  if (restRemaining === 10) beepRestWarning();
+  if (restRemaining <= 0) {
+    restRemaining = 0;
+    _updateRing();
+    beepRest();
+    clearInterval(restTick); restTick = null;
+    setTimeout(closeRestTimer, 600);
+    return;
+  }
+  _updateRing();
 }
-function updateRestCircle() { const c=document.getElementById('rest-circle'); c.style.strokeDasharray=CIRC; c.style.strokeDashoffset=CIRC*(1-restRemaining/Math.max(restTotal,1)); c.classList.toggle('urgent',restRemaining<=10&&restRemaining>0); }
-function closeRestTimer() { if (restTick) { clearInterval(restTick); restTick=null; } document.getElementById('rest-overlay').classList.remove('active'); }
-function setRestDuration(s) { restTotal=s; restRemaining=s; store.setRaw(KEYS.restDur,String(s)); restDefaultDuration=s; document.getElementById('rest-time-val').textContent=s; updateRestDurBtns(s); updateRestCircle(); if (restTick) { clearInterval(restTick); restTick=null; } restTick=setInterval(tickRest,1000); }
-function adjustRest(d) { restRemaining=Math.max(5,restRemaining+d); if (d>0&&restRemaining>restTotal) restTotal=restRemaining; document.getElementById('rest-time-val').textContent=restRemaining; updateRestCircle(); }
-function updateRestDurBtns(sel) { document.querySelectorAll('.rest-dur-btn').forEach(b => { const t=b.textContent.trim(); let v=parseInt(t); if (t.includes('m')) v*=60; b.classList.toggle('selected',v===sel); }); }
+
+function _updateRing() {
+  if (_restDi===null) return;
+  const prog = document.getElementById(`rrp-${_restDi}-${_restEi}-${_restSi}`);
+  const val  = document.getElementById(`rrv-${_restDi}-${_restEi}-${_restSi}`);
+  const btn  = document.getElementById(`sc-${_restDi}-${_restEi}-${_restSi}`);
+  if (!prog || !val) return;
+  const pct = restRemaining / Math.max(restTotal, 1);
+  prog.style.strokeDashoffset = (RING_CIRC * (1 - pct)).toFixed(2);
+  const urgent = restRemaining <= 10 && restRemaining > 0;
+  prog.classList.toggle('urgent', urgent);
+  // swap button color to danger when urgent
+  if (btn) {
+    btn.style.borderColor = urgent ? 'var(--danger)' : '';
+    btn.style.background  = urgent ? 'var(--danger)' : '';
+    btn.style.boxShadow   = urgent ? '0 0 12px rgba(255,59,92,.35)' : '';
+  }
+  val.textContent = restRemaining;
+}
+
+function closeRestTimer() {
+  if (restTick) { clearInterval(restTick); restTick = null; }
+  if (_restDi !== null) {
+    document.getElementById(_ringWrapId(_restDi, _restEi, _restSi))?.remove();
+    document.getElementById(`rrv-${_restDi}-${_restEi}-${_restSi}`)?.remove();
+    const checkWrap = document.getElementById(`sc-${_restDi}-${_restEi}-${_restSi}`)?.parentElement;
+    checkWrap?.classList.remove('resting');
+  }
+  _restDi=null; _restEi=null; _restSi=null;
+}
+
+function setRestDuration(s) {
+  restDefaultDuration = s;
+  store.setRaw(KEYS.restDur, String(s));
+  if (_restDi !== null) {
+    // restart with new duration on the same set
+    const di=_restDi, ei=_restEi, si=_restSi;
+    closeRestTimer();
+    openRestTimer('', si+1, s, di, ei, si);
+  }
+}
+
+function adjustRest(d) {
+  restRemaining = Math.max(5, restRemaining + d);
+  if (d > 0 && restRemaining > restTotal) restTotal = restRemaining;
+  _updateRing();
+}
+
+// stub — no more duration buttons UI needed
+function updateRestDurBtns() {}
 function beepRestWarning() { try { const ctx=getAudioCtx(),o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.frequency.value=660;o.type='sine'; const t=ctx.currentTime; g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.15,t+.01);g.gain.linearRampToValueAtTime(0,t+.12); o.start(t);o.stop(t+.15); } catch(e){} }
 function beepRest() { try { const ctx=getAudioCtx(),bt=ctx.currentTime; [0,120,240].forEach(d=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;o.type='sine';const t=bt+d/1000;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.3,t+.01);g.gain.linearRampToValueAtTime(0,t+.18);o.start(t);o.stop(t+.2);}); } catch(e){} }
 
@@ -1807,11 +1881,10 @@ function renderTable() {
     const doneSets=sArr.filter(Boolean).length;
     const progressBadge=doneSets>0&&!exDone?`<span class="ex-progress-badge">${doneSets}/${ex.sets}</span>`:'';
     const isEditingThis = editingEx && editingEx.di===di && editingEx.ei===ei;
-    const wColor = CFG[di]?.color || 'var(--gold3)';
-    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms;border-left:2px solid ${exDone ? wColor+'99' : wColor+'40'}" draggable="${isEditingThis?'false':'true'}" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
+    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms;border-left:2px solid ${exDone ? 'var(--line3)' : 'var(--line2)'}" draggable="${isEditingThis?'false':'true'}" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
     {
       html+=`<div class="ex-name-row${exDone?' done-all':''}" onclick="${isEditingThis?'':'toggleExpand('+di+','+ei+')'}">
-        <div class="drag-num" style="border-color:${wColor}40;color:${wColor}99" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
+        <div class="drag-num" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
         <div class="ex-main">
           ${isEditingThis
             ? `<input class="ie-input" id="ie-name" type="text" value="${escHtml(ex.name)}" maxlength="60" autocomplete="off" spellcheck="false" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter')saveInlineEdit();if(event.key==='Escape'){editingEx=null;renderTable();}">`
@@ -1847,16 +1920,16 @@ function renderTable() {
         html+=`<div class="set-row-outer" id="sro-${di}-${ei}-${si}">
           <div class="swipe-bg${done?' undo':''}" id="swbg-${di}-${ei}-${si}"><span class="swipe-check-icon">${done?'↩':'✓'}</span></div>
           <div class="set-row${done?' set-done':''}" id="sr-${di}-${ei}-${si}">
-            <span class="set-num${done?' done-num':''}" style="${done?'':'color:'+wColor}">${si+1}</span>
+            <span class="set-num${done?' done-num':''}">${si+1}</span>
             <span class="set-prev" style="display:flex;align-items:center;justify-content:center;gap:3px">${prevLabel}</span>
             <div class="set-input-wrap"><input type="number" inputmode="numeric" min="1" max="999" class="set-input${done?' done':''}" value="${escHtml(String(reps))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)"></div>
             <div class="set-input-wrap"><input type="text" inputmode="decimal" class="set-input${done?' done':''}" style="width:50px" value="${escHtml(String(wt))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)"></div>
-            <div class="set-check-wrap"><button class="set-check${done?' checked':''}" id="sc-${di}-${ei}-${si}" style="${done?'border-color:'+wColor+';background:'+wColor+';box-shadow:0 0 12px '+wColor+'55':''}" onclick="toggleSet(event,${di},${ei},${si})"><svg width="11" height="9" viewBox="0 0 12 10" fill="none"><path d="M1 4.8L4.5 8.5L11 1" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+            <div class="set-check-wrap"><button class="set-check${done?' checked':''}" id="sc-${di}-${ei}-${si}" onclick="toggleSet(event,${di},${ei},${si})"><svg width="11" height="9" viewBox="0 0 12 10" fill="none"><path d="M1 4.8L4.5 8.5L11 1" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           </div></div>`;
       }
       const progPct = ex.sets > 0 ? Math.round((doneSets/ex.sets)*100) : 0;
       html+=`<div class="ex-progress-bar" style="height:2px;background:var(--line);position:relative;overflow:hidden">
-        <div style="position:absolute;left:0;top:0;height:100%;width:${progPct}%;background:${wColor};transition:width .4s cubic-bezier(.4,0,.2,1);opacity:${exDone?'.5':'1'}"></div>
+        <div style="position:absolute;left:0;top:0;height:100%;width:${progPct}%;background:var(--gold);transition:width .4s cubic-bezier(.4,0,.2,1);opacity:${exDone?'.5':'1'}"></div>
       </div>`;
       html+=`<div class="set-controls">
         <button class="set-ctrl-btn set-ctrl-add" onclick="addSet(event,${di},${ei})">+ Add</button>
@@ -1898,7 +1971,7 @@ function toggleSet(e,di,ei,si){
   e.stopPropagation();if(editingEx)saveInlineEdit();
   const was=setsDone[di][ei][si];setsDone[di][ei][si]=!was;
   const wasDoneBefore = !was && isAllDone(di) === false ? false : was ? false : null; // computed after toggle below
-  if (!was){expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();const exNowDone=setsDone[di][ei].every(Boolean);if(exNowDone){hapticEx();}else{hapticSet();}const ex=data[di][ei];const isLast=si===ex.sets-1;if(restEnabled[`${di}-${ei}`]!==false&&!isLast)setTimeout(()=>openRestTimer(ex.name,si+1,restDefaultDuration),200);}else{haptic([5,30,5]);}
+  if (!was){expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();const exNowDone=setsDone[di][ei].every(Boolean);if(exNowDone){hapticEx();}else{hapticSet();}const ex=data[di][ei];const isLast=si===ex.sets-1;if(restEnabled[`${di}-${ei}`]!==false&&!isLast)setTimeout(()=>openRestTimer(ex.name,si+1,restDefaultDuration,di,ei,si),200);}else{haptic([5,30,5]);}
   if(!was && isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}
   persist();render();
   requestAnimationFrame(()=>{const b=document.getElementById(`sc-${di}-${ei}-${si}`);if(b&&!was){b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),300);}});
