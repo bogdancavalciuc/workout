@@ -827,10 +827,6 @@ body {
 }
 .day-assign-card:active { background:var(--surf3); }
 .day-assign-card.is-selected { border-color:var(--gold3); background:rgba(200,169,110,.07); }
-.day-assign-card-dot {
-  width:12px; height:12px; border-radius:50%; flex-shrink:0;
-  border:2px solid rgba(255,255,255,.15);
-}
 .day-assign-card-body { flex:1; }
 .day-assign-card-name { font-family:var(--serif); font-size:16px; font-weight:400; color:var(--text); }
 .day-assign-card-meta { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:.04em; margin-top:3px; }
@@ -3360,7 +3356,6 @@ function openDayAssignPop(wi, cellEl, e) {
     const color = cfg.color || '#C8A96E';
     const exCount = (data[ci] || []).length;
     return `<div class="day-assign-card${isSel ? ' is-selected' : ''}" onclick="dayAssignSelectSheet(${ci})">
-      <div class="day-assign-card-dot" style="background:${color}"></div>
       <div class="day-assign-card-body">
         <div class="day-assign-card-name">${escHtml(cfg.label)}</div>
         <div class="day-assign-card-meta">${exCount} exercise${exCount !== 1 ? 's' : ''}</div>
