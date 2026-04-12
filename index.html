@@ -221,18 +221,18 @@ body {
 /* Week overview mini-calendar */
 .sched-week-overview {
   display: grid; grid-template-columns: repeat(7, 1fr);
-  gap: 5px; margin-bottom: 22px;
+  gap: 5px; margin-bottom: 0;
 }
 .sched-week-cell {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 8px 2px 7px; border-radius: var(--r);
-  border: 1px solid var(--line); background: var(--surf2);
-  gap: 5px; cursor: pointer; transition: border-color .2s, background .2s;
-  min-height: 58px; position: relative; overflow: hidden;
+  padding: 8px 2px 7px; border-radius: 10px;
+  border: 1px solid var(--line2); background: var(--surf2);
+  gap: 5px; cursor: pointer; transition: border-color .2s, background .2s, box-shadow .2s;
+  min-height: 62px; position: relative; overflow: hidden;
 }
 .sched-week-cell:active { background: var(--surf3); border-color: var(--line3); }
 .sched-week-cell:focus-visible { outline: 2px solid var(--gold3); outline-offset: 2px; }
-.sched-week-cell.swo-today { border-color: var(--gold3); background: rgba(200,169,110,.06); }
+.sched-week-cell.swo-today { border-color: var(--gold3); background: rgba(0,212,170,.08); box-shadow: 0 0 14px rgba(0,212,170,.15); }
 .sched-week-cell.swo-rest { opacity: .45; }
 .sched-week-cell-day {
   font-family: var(--mono); font-size: 15px; font-weight: 700;
@@ -289,10 +289,10 @@ body {
 
 /* Workout card drag-and-drop */
 .sched-workout-card {
-  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
-  background: var(--surf2); border: 1px solid var(--line2);
+  display: flex; align-items: center; gap: 10px; padding: 15px 16px;
+  background: var(--surf); border: 1px solid var(--line2);
   border-radius: var(--r2); margin-bottom: 6px;
-  transition: border-color .15s, box-shadow .15s, opacity .15s;
+  transition: border-color .2s, box-shadow .2s, opacity .15s;
   cursor: grab; user-select: none;
 }
 .sched-workout-card:active { cursor: grabbing; }
@@ -453,6 +453,7 @@ body {
 .ex-block:last-of-type { }
 .ex-block.dragging { opacity: .35; }
 .ex-block.drag-over { border-color: var(--gold); box-shadow: 0 0 14px rgba(0,212,170,.15); }
+.tbl-wrap:has(.dragging) .ex-block:not(.dragging) { opacity: .45; transition: opacity .15s; }
 .ex-name-row {
   display: flex; align-items: center; padding: 15px 16px 15px 12px;
   gap: 11px; cursor: pointer; user-select: none;
@@ -983,21 +984,17 @@ body {
 <!-- ═══════════════════════════════════════════════════════════════════════════
      SCHEDULE PAGE — enhanced
 ═══════════════════════════════════════════════════════════════════════════ -->
-<div id="page-schedule" class="hidden" style="padding:0 24px 24px">
+<div id="page-schedule" class="hidden" style="padding:0 10px">
 
   <!-- Week overview mini-calendar -->
-  <div style="margin-bottom:26px">
-    <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;opacity:.7;display:flex;align-items:center;justify-content:space-between">
-      <span>This week</span>
-      <span style="opacity:.6;font-size:7px">Tap a day to change</span>
-    </div>
-    <div class="sched-week-overview" id="sched-week-overview"></div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;margin-top:4px">
+    <div class="sched-week-overview" id="sched-week-overview" style="margin-bottom:0;width:100%"></div>
   </div>
+  <div style="font-family:var(--mono);font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.45;text-align:center;margin-bottom:22px">Tap a day to change</div>
 
   <!-- Section: Manage workouts -->
+  <div id="sched-workout-manage-page"></div>
   <div>
-    <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;opacity:.7">Workouts</div>
-    <div id="sched-workout-manage-page"></div>
     <button onclick="openNewWorkoutSheet()"
       style="width:100%;margin-top:8px;padding:14px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:border-color .2s,color .2s"
       onmouseover="this.style.borderColor='var(--gold3)';this.style.color='var(--gold3)'"
@@ -1559,7 +1556,7 @@ function renderLibCustomList() {
     filtered.forEach(name => {
       const isCustom = customExLib[group]?.includes(name);
       html += `<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surf2);border:1px solid var(--line);border-radius:var(--r);margin-bottom:5px">
-        <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(name)}</span>
+        <span style="font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text);flex:1">${escHtml(name)}</span>
         ${isCustom ? `<button onclick="deleteCustomEx(${JSON.stringify(group)},${JSON.stringify(name)})"
           style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:5px 10px;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s"
           onmouseover="this.style.color='var(--danger)';this.style.borderColor='var(--danger)'"
@@ -1811,10 +1808,11 @@ function renderTable() {
     const doneSets=sArr.filter(Boolean).length;
     const progressBadge=doneSets>0&&!exDone?`<span class="ex-progress-badge">${doneSets}/${ex.sets}</span>`:'';
     const isEditingThis = editingEx && editingEx.di===di && editingEx.ei===ei;
-    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms" draggable="${isEditingThis?'false':'true'}" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
+    const wColor = CFG[di]?.color || 'var(--gold3)';
+    html+=`<div class="ex-block" id="exb-${di}-${ei}" style="animation-delay:${ei*40}ms;border-left:2px solid ${exDone ? wColor+'99' : wColor+'40'}" draggable="${isEditingThis?'false':'true'}" ondragstart="dragStart(event,${di},${ei})" ondragover="dragOver(event,${di},${ei})" ondrop="dragDrop(event,${di},${ei})" ondragend="dragEnd(event)">`;
     {
       html+=`<div class="ex-name-row${exDone?' done-all':''}" onclick="${isEditingThis?'':'toggleExpand('+di+','+ei+')'}">
-        <div class="drag-num" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
+        <div class="drag-num" style="border-color:${wColor}40;color:${wColor}99" onclick="event.stopPropagation()">${String(ei+1).padStart(2,'0')}</div>
         <div class="ex-main">
           ${isEditingThis
             ? `<input class="ie-input" id="ie-name" type="text" value="${escHtml(ex.name)}" maxlength="60" autocomplete="off" spellcheck="false" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter')saveInlineEdit();if(event.key==='Escape'){editingEx=null;renderTable();}">`
@@ -1850,13 +1848,17 @@ function renderTable() {
         html+=`<div class="set-row-outer" id="sro-${di}-${ei}-${si}">
           <div class="swipe-bg${done?' undo':''}" id="swbg-${di}-${ei}-${si}"><span class="swipe-check-icon">${done?'↩':'✓'}</span></div>
           <div class="set-row${done?' set-done':''}" id="sr-${di}-${ei}-${si}">
-            <span class="set-num${done?' done-num':''}">${si+1}</span>
+            <span class="set-num${done?' done-num':''}" style="${done?'':'color:'+wColor}">${si+1}</span>
             <span class="set-prev" style="display:flex;align-items:center;justify-content:center;gap:3px">${prevLabel}</span>
             <div class="set-input-wrap"><input type="number" inputmode="numeric" min="1" max="999" class="set-input${done?' done':''}" value="${escHtml(String(reps))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'reps',this.value)"></div>
             <div class="set-input-wrap"><input type="text" inputmode="decimal" class="set-input${done?' done':''}" style="width:50px" value="${escHtml(String(wt))}" onclick="event.stopPropagation()" onchange="saveSetOvr(${di},${ei},${si},'weight',this.value)"></div>
-            <div class="set-check-wrap"><button class="set-check${done?' checked':''}" id="sc-${di}-${ei}-${si}" onclick="toggleSet(event,${di},${ei},${si})"><svg width="11" height="9" viewBox="0 0 12 10" fill="none"><path d="M1 4.8L4.5 8.5L11 1" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+            <div class="set-check-wrap"><button class="set-check${done?' checked':''}" id="sc-${di}-${ei}-${si}" style="${done?'border-color:'+wColor+';background:'+wColor+';box-shadow:0 0 12px '+wColor+'55':''}" onclick="toggleSet(event,${di},${ei},${si})"><svg width="11" height="9" viewBox="0 0 12 10" fill="none"><path d="M1 4.8L4.5 8.5L11 1" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           </div></div>`;
       }
+      const progPct = ex.sets > 0 ? Math.round((doneSets/ex.sets)*100) : 0;
+      html+=`<div class="ex-progress-bar" style="height:2px;background:var(--line);position:relative;overflow:hidden">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${progPct}%;background:${wColor};transition:width .4s cubic-bezier(.4,0,.2,1);opacity:${exDone?'.5':'1'}"></div>
+      </div>`;
       html+=`<div class="set-controls">
         <button class="set-ctrl-btn set-ctrl-add" onclick="addSet(event,${di},${ei})">+ Add</button>
         <button class="set-ctrl-btn set-ctrl-rem" onclick="removeSet(event,${di},${ei})" ${ex.sets<=1?'disabled':''}>− Remove</button>
@@ -2056,8 +2058,16 @@ function renderProgressOverview() {
     for (let d = 0; d < 7; d++) {
       const day = new Date(now); day.setDate(now.getDate() - w*7 - (6-d));
       const dk = dayKey(day);
-      const count = fh.filter(h => (h.dk===dk||(h.ts&&dayKey(new Date(h.ts))===dk))).length;
-      weekSessions.push({ dk, count });
+      const sessions = fh.filter(h => (h.dk===dk||(h.ts&&dayKey(new Date(h.ts))===dk)));
+      const count = sessions.length;
+      // Get color from CFG by matching session day label
+      let color = null;
+      if (sessions.length > 0) {
+        const dayLabel = sessions[0].day;
+        const cfg = CFG.find(c => c.label === dayLabel);
+        color = cfg?.color || null;
+      }
+      weekSessions.push({ dk, count, color });
     }
     weeks.push(weekSessions);
   }
@@ -2088,7 +2098,9 @@ function renderProgressOverview() {
     `<div class="heat-col">${week.map(d => {
       const intensity = d.count===0?0:Math.ceil((d.count/maxCount)*3);
       const isToday = d.dk===dayKey(new Date());
-      return `<div class="heat-cell heat-${intensity}${isToday?' heat-today':''}"></div>`;
+      const alpha = intensity===1?'33':intensity===2?'66':intensity===3?'CC':'';
+      const bgStyle = d.color && intensity>0 ? `background:${d.color}${alpha}` : '';
+      return `<div class="heat-cell heat-${intensity}${isToday?' heat-today':''}" ${bgStyle?`style="${bgStyle}"`:''}></div>`;
     }).join('')}</div>`
   ).join('');
 
@@ -2929,7 +2941,7 @@ function nwRenderAdded() {
       ${_nwExercises.map((ex, i) => `
         <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;${i>0?'border-top:1px solid var(--line)':''}">
           <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px">${String(i+1).padStart(2,'0')}</span>
-          <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
+          <span style="font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text);flex:1">${escHtml(ex.name)}</span>
           <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
           <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px">${escHtml(ex.weight)}</span>
           <button onclick="nwRemoveEx(${i})" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;margin-left:4px">×</button>
@@ -3096,9 +3108,7 @@ function eweRenderExList() {
           <span style="display:block;width:14px;height:1.5px;background:var(--muted);border-radius:1px"></span>
         </div>
         <span style="font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px">${String(i+1).padStart(2,'0')}</span>
-        <span style="font-family:var(--serif);font-size:14px;color:var(--text);flex:1">${escHtml(ex.name)}</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">${ex.sets}×${ex.reps}</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px">${escHtml(ex.weight)}</span>
+        <span style="font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text);flex:1">${escHtml(ex.name)}</span>
         <button onclick="eweOpenReplaceFor(${i})" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:4px 8px;font-family:var(--mono);font-size:9px;color:var(--muted2);cursor:pointer;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:5px"
           onmouseover="this.style.color='var(--gold)';this.style.borderColor='var(--gold3)'"
           onmouseout="this.style.color='var(--muted2)';this.style.borderColor='var(--line2)'"><svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 7C2 4.24 4.24 2 7 2c1.6 0 3.02.74 3.97 1.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M12 7c0 2.76-2.24 5-5 5-1.6 0-3.02-.74-3.97-1.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M10.5 1.5L11.97 3.9 9.5 3.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 12.5L2.03 10.1 4.5 10.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -3399,7 +3409,7 @@ document.addEventListener('click', closeDayAssignPop);
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div>
           <div class="shl" style="margin-bottom:0;font-size:18px" id="ewe-title">Edit Workout</div>
-          <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Tap "edit" to modify sets/reps · × to remove · add from list below</div>
+          <div style="font-family:var(--mono);font-size:6px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:3px">Tap "edit" to modify sets/reps · × to remove · add from list below</div>
         </div>
         <button onclick="closeEditWorkoutExercises()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Close</button>
       </div>
