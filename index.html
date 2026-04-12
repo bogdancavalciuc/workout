@@ -990,7 +990,6 @@ body {
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;margin-top:4px">
     <div class="sched-week-overview" id="sched-week-overview" style="margin-bottom:0;width:100%"></div>
   </div>
-  <div style="font-family:var(--mono);font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.45;text-align:center;margin-bottom:22px">Tap a day to change</div>
 
   <!-- Section: Manage workouts -->
   <div id="sched-workout-manage-page"></div>
@@ -1174,7 +1173,7 @@ body {
 
     <!-- Step 2: Build exercises -->
     <div id="nw-step-exercises" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:0 24px">
         <div>
           <div class="shl" style="margin-bottom:0;font-size:18px" id="nw-exercises-title">Workout</div>
           <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Add exercises from the list</div>
@@ -3091,7 +3090,7 @@ function eweRenderExList() {
     c.innerHTML = `<div style="font-family:var(--mono);font-size:8.5px;color:var(--muted);letter-spacing:.1em;padding:12px 0 4px;text-align:center;opacity:.6">No exercises yet — add from the list below</div>`;
     return;
   }
-  c.innerHTML = `<div id="ewe-sortable" style="background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;margin-bottom:4px">
+  c.innerHTML = `<div id="ewe-sortable" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">
     ${exs.map((ex, i) => `
       <div id="ewe-row-${i}" draggable="true"
         ondragstart="eweRowDragStart(event,${i})"
@@ -3101,7 +3100,7 @@ function eweRenderExList() {
         ontouchstart="eweTouchStart(event,${i})"
         ontouchmove="eweTouchMove(event)"
         ontouchend="eweTouchEnd(event,${i})"
-        style="display:flex;align-items:center;gap:8px;padding:10px 14px;${i>0?'border-top:1px solid var(--line)':''}transition:opacity .15s,background .15s;">
+        style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--surf);border:1px solid var(--line2);border-radius:var(--r2);transition:opacity .15s,background .15s;">
         <div style="display:flex;flex-direction:column;gap:3px;padding:4px 3px;cursor:grab;flex-shrink:0;opacity:.4;touch-action:none">
           <span style="display:block;width:14px;height:1.5px;background:var(--muted);border-radius:1px"></span>
           <span style="display:block;width:14px;height:1.5px;background:var(--muted);border-radius:1px"></span>
@@ -3398,12 +3397,12 @@ document.addEventListener('click', closeDayAssignPop);
      EDIT WORKOUT EXERCISES SHEET
 ════════════════════════════════════════════════════════════════ -->
 <div class="ov" id="ov-edit-workout-ex" onclick="if(event.target===this)closeEditWorkoutExercises()">
-  <div class="sh" id="edit-workout-sh" style="max-height:92vh;overflow-y:auto;padding-bottom:40px">
+  <div class="sh" id="edit-workout-sh" style="max-height:92vh;overflow-y:auto;padding-bottom:40px;padding-left:0;padding-right:0;">
     <div class="shh"></div>
 
     <!-- Step 1: Exercise list view -->
     <div id="ewe-step-list">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:0 24px">
         <div>
           <div class="shl" style="margin-bottom:0;font-size:18px" id="ewe-title">Edit Workout</div>
           <div style="font-family:var(--mono);font-size:6px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:3px">Tap "edit" to modify sets/reps · × to remove · add from list below</div>
@@ -3411,29 +3410,29 @@ document.addEventListener('click', closeDayAssignPop);
         <button onclick="closeEditWorkoutExercises()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Close</button>
       </div>
 
-      <div id="ewe-ex-list" style="margin-bottom:12px"></div>
+      <div id="ewe-ex-list" style="margin-bottom:12px;padding:0 10px"></div>
 
       <!-- Divider -->
-      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 14px">
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 14px;padding:0 24px">
         <div style="flex:1;height:1px;background:var(--line)"></div>
         <span style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase">Add exercise</span>
         <div style="flex:1;height:1px;background:var(--line)"></div>
       </div>
 
-      <input id="ewe-search" type="text" placeholder="Search or type new exercise…" autocomplete="off" spellcheck="false"
+      <div style="padding:0 24px"><input id="ewe-search" type="text" placeholder="Search or type new exercise…" autocomplete="off" spellcheck="false"
         style="width:100%;background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r);padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;-webkit-appearance:none;transition:border-color .2s;margin-bottom:4px;"
         oninput="eweFilterLib(this.value)">
-      <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.06em;padding:6px 2px 10px;opacity:.6">Tap to configure sets/reps/weight</div>
+      <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.06em;padding:6px 2px 10px;opacity:.6">Tap to configure sets/reps/weight</div></div>
 
-      <div id="ewe-lib-list"></div>
+      <div id="ewe-lib-list" style="padding:0 10px"></div>
 
-      <div id="ewe-custom-row" style="display:none;padding-top:8px">
+      <div id="ewe-custom-row" style="display:none;padding-top:8px;padding:0 24px 8px">
         <button id="ewe-custom-btn" class="replace-ex-btn" style="border-color:var(--gold3);color:var(--gold3)"></button>
       </div>
     </div>
 
     <!-- Step 2: Configure exercise (add or edit) -->
-    <div id="ewe-step-config" style="display:none">
+    <div id="ewe-step-config" style="display:none;padding:0 24px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
         <button onclick="eweBackToList()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 14px;font-family:var(--mono);font-size:11px;color:var(--muted2);cursor:pointer;">←</button>
         <div class="shl" style="margin-bottom:0;font-size:18px;flex:1" id="ewe-config-name">Bench Press</div>
