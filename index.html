@@ -1038,20 +1038,6 @@ body {
   </div>
 </div>
 
-<!-- LEGACY ADD SHEET — disabled, kept for saveEx() compatibility. Not shown in UI. -->
-<div style="display:none" id="ov" aria-hidden="true">
-  <div class="sh">
-    <div class="shh"></div>
-    <div class="shl" id="shl">Add exercise</div>
-    <div class="field"><label>Exercise name</label><input id="fn" type="text" placeholder="e.g. Bench Press" autocomplete="off" spellcheck="false" maxlength="60"></div>
-    <div class="r3">
-      <div class="field"><label>Sets</label><input id="fs" type="number" min="1" max="20" placeholder="3" inputmode="numeric"></div>
-      <div class="field"><label>Reps</label><input id="fr" type="number" min="1" max="100" placeholder="12" inputmode="numeric"></div>
-      <div class="field"><label>Weight</label><div class="kg-wrap"><input id="fw2" type="number" inputmode="decimal" placeholder="0" style="font-family:var(--mono);font-size:14px;background:var(--surf2);border:1px solid var(--line2);border-radius:var(--r);padding:14px 32px 14px 16px;color:var(--text);outline:none;width:100%;-webkit-appearance:none;"><span class="kg-suffix">kg</span></div></div>
-    </div>
-    <button class="bsv" onclick="saveEx()">Save exercise</button>
-  </div>
-</div>
 
 <!-- DAY SHEET (rename/delete workout) -->
 <div class="ov" id="ov-day" onclick="if(event.target===this)closeDaySheet()">
@@ -1534,12 +1520,15 @@ function getAllExercises() {
 const WEEK_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 function getTodayWeekIdx() { return (new Date().getDay()+6)%7; }
 
-let activeDay = 0, sheetCtx = null, editingEx = null, deleteConfirm = null;
+let activeDay = 0, editingEx = null, deleteConfirm = null;
 let selectedWeekIdx = getTodayWeekIdx();
 
 (function() {
   const ti = getTodayWeekIdx(), wi = weekSched[ti];
-  if (wi !== null && wi !== undefined && wi < data.length) activeDay = wi;
+  if (wi !== null && wi !== undefined && wi < data.length) {
+    activeDay = wi;
+    selectedWeekIdx = ti;
+  }
 })();
 
 let expanded = new Set();
@@ -1559,11 +1548,19 @@ function syncSets() {
 }
 syncSets();
 
-function persist() {
+// ── Debounce utility ──────────────────────────────────────────────────────────
+function debounce(fn, ms) {
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+function _persistNow() {
   store.set(KEYS.cfg, CFG); store.set(KEYS.data, data); store.set(KEYS.sets, setsDone);
   store.set(KEYS.hist, history); store.set(KEYS.restEn, restEnabled);
   store.set(KEYS.notes, sessionNotes); store.set(KEYS.wsched, weekSched);
 }
+// Debounced for high-frequency callers (set inputs, rest toggles).
+// Critical paths (history, import, export) call _persistNow() directly.
+const persist = debounce(_persistNow, 300);
 
 function isExDone(di, ei) { return Array.isArray(setsDone[di]?.[ei]) && setsDone[di][ei].length > 0 && setsDone[di][ei].every(Boolean); }
 function isAllDone(di) { return data[di].length > 0 && data[di].every((_,ei) => isExDone(di,ei)); }
@@ -1731,6 +1728,10 @@ function setRestDuration(s) {
 function adjustRest(d) {
   restRemaining = Math.max(5, restRemaining + d);
   if (d > 0 && restRemaining > restTotal) restTotal = restRemaining;
+  // If the tick was cleared (timer expired) and we're adding time, restart it
+  if (d > 0 && !restTick && _restDi !== null) {
+    restTick = setInterval(tickRest, 1000);
+  }
   _updateRing();
 }
 
@@ -1927,12 +1928,11 @@ function dragOver(e,di,ei){e.preventDefault();document.querySelectorAll('.ex-blo
 function dragDrop(e,di,ei){e.preventDefault();if(!dragSrc||dragSrc.di!==di||dragSrc.ei===ei){dragEnd(e);return;}const src=dragSrc.ei,dst=ei;const snap={};data[di].forEach((_,i)=>{snap[i]=restEnabled[`${di}-${i}`];});const[ex]=data[di].splice(src,1);data[di].splice(dst,0,ex);const[sd]=setsDone[di].splice(src,1);setsDone[di].splice(dst,0,sd);const nRE={};Object.keys(restEnabled).forEach(k=>{if(parseInt(k.split('-')[0])!==di)nRE[k]=restEnabled[k];});const rem=Array.from({length:data[di].length},(_,i)=>i);rem.splice(src,1);rem.splice(dst,0,src);rem.forEach((oi,ni)=>{if(snap[oi]!==undefined)nRE[`${di}-${ni}`]=snap[oi];});restEnabled=nRE;dragSrc=null;persist();render();}
 function dragEnd(e){document.querySelectorAll('.ex-block').forEach(b=>{b.classList.remove('dragging');b.classList.remove('drag-over');});dragSrc=null;}
 
-function toggleExpand(di,ei){const k=`${di}-${ei}`;if(expanded.has(k)){expanded.delete(k);}else{expanded.clear();expanded.add(k);}renderTable();updateDelExBtn();}
+function toggleExpand(di,ei){const k=`${di}-${ei}`;if(expanded.has(k)){expanded.delete(k);}else{expanded.clear();expanded.add(k);}renderTable();}
 function toggleRestEnabled(di,ei,v){restEnabled[`${di}-${ei}`]=v;persist();}
 function toggleSet(e,di,ei,si){
   e.stopPropagation();if(editingEx)saveInlineEdit();
   const was=setsDone[di][ei][si];setsDone[di][ei][si]=!was;
-  const wasDoneBefore = !was && isAllDone(di) === false ? false : was ? false : null; // computed after toggle below
   if (!was){expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();const exNowDone=setsDone[di][ei].every(Boolean);if(exNowDone){hapticEx();}else{hapticSet();}const ex=data[di][ei];const isLast=si===ex.sets-1;if(restEnabled[`${di}-${ei}`]!==false&&!isLast)setTimeout(()=>openRestTimer(ex.name,si+1,restDefaultDuration,di,ei,si),200);}else{haptic([5,30,5]);}
   if(!was && isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}
   persist();render();
@@ -1948,7 +1948,8 @@ function getSetReps(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=
 function getSetWeight(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight;}
 function saveSetOvr(di,ei,si,field,val){const ex=data[di][ei];if(!ex.setOvr)ex.setOvr=[];if(!ex.setOvr[si])ex.setOvr[si]={};if(field==='reps'){const v=parseInt(val);ex.setOvr[si].reps=(!isNaN(v)&&v>0&&v<=999)?v:ex.reps;}else{const t=String(val).trim().toUpperCase();ex.setOvr[si].weight=t.length>0?t:ex.weight;}persist();}
 function getNoteKey(di){const label=CFG[di]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));return h?`hist-${h.ts}`:`${di}-${today}`;}
-function saveSessionNote(){const nk=getNoteKey(activeDay),v=document.getElementById('session-note-input')?.value||'';sessionNotes[nk]=v;const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)h.note=v;persist();}
+function _saveSessionNoteNow(){const nk=getNoteKey(activeDay),v=document.getElementById('session-note-input')?.value||'';sessionNotes[nk]=v;const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)h.note=v;persist();}
+const saveSessionNote = debounce(_saveSessionNoteNow, 500);
 function startEdit(di,ei,e){if(e)e.stopPropagation();if(editingEx&&(editingEx.di!==di||editingEx.ei!==ei))saveInlineEdit();expanded.add(`${di}-${ei}`);deleteConfirm=null;editingEx={di,ei};renderTable();setTimeout(()=>{const inp=document.getElementById('ie-name');if(inp){inp.focus();inp.select();}},50);}
 function saveInlineEdit(){if(!editingEx)return;const{di,ei}=editingEx,inp=document.getElementById('ie-name'),n=inp?inp.value.trim():'';if(n&&n.length<=60)data[di][ei].name=n;else if(n.length>60){showToast('Name too long (max 60 chars)','err');return;}persist();editingEx=null;render();}
 function cancelDelete(){deleteConfirm=null;renderTable();}
@@ -1961,7 +1962,7 @@ function saveToHistory(di){
   const entry={day:cfg.label,date:now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),dk,ts:existingIdx>=0?(history[existingIdx].ts||now.getTime()):now.getTime(),vol,exercises:JSON.parse(JSON.stringify(data[di]))};
   if(existingIdx>=0){if(history[existingIdx].note)entry.note=history[existingIdx].note;history[existingIdx]=entry;}
   else{history.unshift(entry);if(history.length>100)history=history.slice(0,100);setTimeout(()=>{document.getElementById('backup-nudge')?.classList.add('show');},600);}
-  persist();
+  _persistNow();
 }
 function resetSession(){data[activeDay].forEach(ex=>{delete ex.setOvr;});setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));const nk=getNoteKey(activeDay);delete sessionNotes[nk];const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)delete h.note;expanded.clear();stopSessionTimer();persist();render();}
 
@@ -2036,6 +2037,7 @@ function renderHistoryPage() {
     const isExp = _histExpanded.has(id);
     const exs = session.exercises || [];
     const exCount = exs.length;
+    const color = 'var(--gold3)';
 
     const bodyRows = exs.map(ex => {
       const sets = [];
@@ -2751,26 +2753,16 @@ function saveDay(){
 function remapSchedAfterDelete(di){return weekSched.map(v=>{if(v===null||v===undefined)return null;if(v===di)return null;if(v>di)return v-1;return v;});}
 function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);weekSched=remapSchedAfterDelete(di);if(activeDay===di||activeDay>=data.length)activeDay=0;const newCfgIdx=weekSched[selectedWeekIdx];if(newCfgIdx===null||newCfgIdx===undefined||newCfgIdx>=CFG.length){const firstWorkoutWi=weekSched.findIndex(v=>v!==null&&v!==undefined&&v<CFG.length);if(firstWorkoutWi!==-1)selectedWeekIdx=firstWorkoutWi;}closeDaySheet();persist();render();});}
 
-function addSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];ex.sets++;const lo=(ex.setOvr&&ex.setOvr[ex.sets-2])||{};if(!ex.setOvr)ex.setOvr=[];ex.setOvr[ex.sets-1]={reps:lo.reps??ex.reps,weight:lo.weight??ex.weight};if(!Array.isArray(setsDone[di][ei]))setsDone[di][ei]=Array(ex.sets).fill(false);else setsDone[di][ei]=[...setsDone[di][ei],false];persist();renderTable();updateDelExBtn();}
-function removeSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];if(ex.sets<=1)return;ex.sets--;if(ex.setOvr)ex.setOvr=ex.setOvr.slice(0,ex.sets);if(Array.isArray(setsDone[di]?.[ei]))setsDone[di][ei]=setsDone[di][ei].slice(0,ex.sets);persist();renderTable();updateDelExBtn();}
+function addSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];ex.sets++;const lo=(ex.setOvr&&ex.setOvr[ex.sets-2])||{};if(!ex.setOvr)ex.setOvr=[];ex.setOvr[ex.sets-1]={reps:lo.reps??ex.reps,weight:lo.weight??ex.weight};if(!Array.isArray(setsDone[di][ei]))setsDone[di][ei]=Array(ex.sets).fill(false);else setsDone[di][ei]=[...setsDone[di][ei],false];persist();renderTable();}
+function removeSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];if(ex.sets<=1)return;ex.sets--;if(ex.setOvr)ex.setOvr=ex.setOvr.slice(0,ex.sets);if(Array.isArray(setsDone[di]?.[ei]))setsDone[di][ei]=setsDone[di][ei].slice(0,ex.sets);persist();renderTable();}
 function startDeleteActive(){const di=activeDay;for(const k of expanded){const p=k.split('-').map(Number);if(p[0]===di){deleteConfirm={di:p[0],ei:p[1]};renderTable();return;}}}
-function updateDelExBtn(){}
 
 let _lastBackupLabelUpdate=0;
 function render(){
-  const cfgIdx=weekSched[selectedWeekIdx];
-  const isRestDay=cfgIdx===null||cfgIdx===undefined||cfgIdx>=CFG.length;
-  renderTabs();renderDayInfoBar();renderTable();updateDelExBtn();
+  renderTabs();renderDayInfoBar();renderTable();
   const now=Date.now();
   if(now-_lastBackupLabelUpdate>30000){updateBackupLabel();_lastBackupLabelUpdate=now;}
-  const activeDayIsValid=activeDay!==null&&activeDay!==undefined&&activeDay>=0&&activeDay<data.length;
-
-  const delBtn = document.querySelector('.del-ex-btn');
-  if(delBtn&&isRestDay)delBtn.classList.remove('visible');
 }
-
-function saveEx(){const name=document.getElementById('fn').value.trim();if(!name){document.getElementById('fn').focus();return;}if(name.length>60){showToast('Name too long (max 60 chars)','err');return;}const sets=parseInt(document.getElementById('fs').value)||3,reps=parseInt(document.getElementById('fr').value)||12,rawW=document.getElementById('fw2').value.trim(),weight=(rawW!==''&&rawW!==null)?(isNaN(parseFloat(rawW))?rawW.toUpperCase():parseFloat(rawW)+'KG'):'BW';const{di}=sheetCtx,id=data[di].length?Math.max(...data[di].map(e=>e.id))+1:1;data[di].push({id,name,sets,reps,weight});expanded.add(`${di}-${data[di].length-1}`);syncSets();document.getElementById('ov').classList.remove('open');persist();render();}
-function maybeClose(e){if(e.target===document.getElementById('ov'))document.getElementById('ov').classList.remove('open');}
 
 function validateImportPayload(p){if(!p||typeof p!=='object')return 'Not a valid backup object';if(!Array.isArray(p.cfg))return 'Missing cfg';if(!Array.isArray(p.data))return 'Missing data';if(p.cfg.length===0)return 'Empty workout list';if(p.data.length!==p.cfg.length)return 'Mismatch cfg/data';for(const c of p.cfg)if(typeof c.label!=='string'||!c.label.trim())return 'Invalid label';for(const day of p.data){if(!Array.isArray(day))return 'Day not array';for(const ex of day){if(typeof ex.name!=='string')return 'Invalid name';if(typeof ex.sets!=='number'||ex.sets<1)return 'Invalid sets';if(typeof ex.reps!=='number'||ex.reps<1)return 'Invalid reps';}}if(p.history!==undefined&&!Array.isArray(p.history))return 'History not array';if(p.weekSched!==undefined&&!Array.isArray(p.weekSched))return 'weekSched not array';if(p.weekSched!==undefined&&p.weekSched.length!==7)return 'weekSched must have 7 entries';return null;}
 
@@ -2783,7 +2775,7 @@ function applyImport(){const p=_pi;if(!p)return;CFG=p.cfg;data=p.data;setsDone=p
   const rawRE=(p.restEnabled&&typeof p.restEnabled==='object')?p.restEnabled:{};
   restEnabled={};
   Object.keys(rawRE).forEach(k=>{const parts=k.split('-');const kdi=parseInt(parts[0]),kei=parseInt(parts[1]);if(!isNaN(kdi)&&!isNaN(kei)&&kdi>=0&&kdi<data.length&&kei>=0&&kei<(data[kdi]||[]).length)restEnabled[k]=rawRE[k];});
-  restDefaultDuration=typeof p.restDefaultDuration==='number'?p.restDefaultDuration:90;sessionNotes=(p.sessionNotes&&typeof p.sessionNotes==='object')?p.sessionNotes:{};if(p.customEx&&typeof p.customEx==='object'){customExLib=p.customEx;saveCustomEx();}const rawSched=Array.isArray(p.weekSched)&&p.weekSched.length===7?p.weekSched:DEF_SCHED;weekSched=rawSched.map(v=>{if(v===null||v===undefined)return null;const n=parseInt(v);return(isNaN(n)||n<0||n>=CFG.length)?null:n;});activeDay=0;expanded.clear();editingEx=null;deleteConfirm=null;_pi=null;syncSets();persist();render();showToast('Data restored','ok');dismissNudge();}
+  restDefaultDuration=typeof p.restDefaultDuration==='number'?p.restDefaultDuration:90;sessionNotes=(p.sessionNotes&&typeof p.sessionNotes==='object')?p.sessionNotes:{};if(p.customEx&&typeof p.customEx==='object'){customExLib=p.customEx;saveCustomEx();}const rawSched=Array.isArray(p.weekSched)&&p.weekSched.length===7?p.weekSched:DEF_SCHED;weekSched=rawSched.map(v=>{if(v===null||v===undefined)return null;const n=parseInt(v);return(isNaN(n)||n<0||n>=CFG.length)?null:n;});activeDay=0;expanded.clear();editingEx=null;deleteConfirm=null;_pi=null;syncSets();_persistNow();render();showToast('Data restored','ok');dismissNudge();}
 function updateBackupLabel(){const el=document.getElementById('backup-last-label');if(!el)return;let ts;try{ts=store.getRaw(KEYS.lastExport);}catch{ts=null;}if(!ts){el.textContent='No backup yet';return;}const d=new Date(ts),diff=Math.floor((Date.now()-d.getTime())/1000/60);let l;if(diff<1)l='Just now';else if(diff<60)l=`${diff}m ago`;else if(diff<1440)l=`${Math.floor(diff/60)}h ago`;else l=`${Math.floor(diff/1440)}d ago · ${d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`;el.textContent=`Last export: ${l}`;}
 function showToast(msg,type){const t=document.getElementById('import-toast');t.textContent=msg;t.className=`import-toast ${type} show`;setTimeout(()=>{t.className=`import-toast ${type}`;},2800);}
 function dismissNudge(){document.getElementById('backup-nudge')?.classList.remove('show');}
@@ -3030,7 +3022,7 @@ function saveNewWorkout() {
   activeDay = firstCi;
   // Auto-assign to today's slot if it is currently a rest day
   const todayWi = getTodayWeekIdx();
-  if (weekSched[todayWi] === null || weekSched[todayWi] === undefined || weekSched[todayWi] >= CFG.length - 1) {
+  if (weekSched[todayWi] === null || weekSched[todayWi] === undefined || weekSched[todayWi] >= CFG.length) {
     weekSched[todayWi] = firstCi;
     selectedWeekIdx = todayWi;
   }
@@ -3198,6 +3190,7 @@ function eweRemoveEx(idx) {
   setsDone[ci].splice(idx, 1);
   syncSets();
   persist();
+  render();
   eweRenderExList();
   renderSchedulePage();
   showToast('Exercise removed', 'ok');
