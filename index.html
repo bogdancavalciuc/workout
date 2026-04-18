@@ -363,16 +363,15 @@ body {
 .ex-block {
   background: var(--surf); border: 1px solid var(--line2);
   border-radius: var(--r2); overflow: hidden;
-  transition: border-color .2s;
-  box-shadow: var(--shadow-sm);
+  transition: border-color .2s, box-shadow .2s, opacity .15s;
 }
 .ex-block:last-of-type { }
 .ex-block.dragging { opacity: .35; }
 .ex-block.drag-over { border-color: var(--gold); box-shadow: 0 0 14px rgba(0,212,170,.15); }
 .tbl-wrap:has(.dragging) .ex-block:not(.dragging) { opacity: .45; transition: opacity .15s; }
 .ex-name-row {
-  display: flex; align-items: center; padding: 10px 16px 10px 12px;
-  gap: 11px; cursor: pointer; user-select: none;
+  display: flex; align-items: center; padding: 15px 16px;
+  gap: 10px; cursor: pointer; user-select: none;
   transition: background .15s; position: relative;
 }
 .ex-name-row:active { background: var(--surf2); }
@@ -976,7 +975,7 @@ html[data-theme="light"] .dt-done-check { background:#1A7A3C; }
 
 
 /* Exercise blocks */
-html[data-theme="light"] .ex-block { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.09), 0 1px 2px rgba(0,0,0,.06); }
+html[data-theme="light"] .ex-block { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:var(--r2); box-shadow:none; }
 html[data-theme="light"] .ex-block.drag-over { border-color:#E8271A; box-shadow:0 0 0 2px rgba(232,39,26,.15); }
 html[data-theme="light"] .ex-name-row:active { background:#F7F5F0; }
 html[data-theme="light"] .ex-name-row.done-all { opacity:.65; }
@@ -2143,15 +2142,12 @@ function renderTabs() {
     el.className='dt'+(isActive?' active':'')+(isToday?' today-tab':'')+(isRest?' rest-tab':'')+(isDone?' day-completed':'');
     el.setAttribute('role','button');
     el.setAttribute('tabindex','0');
-    const timerStr = (isActive && sessionActive && sessionStart)
-      ? (()=>{ const e=Math.floor((Date.now()-sessionStart)/1000); return String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0'); })()
-      : null;
     el.innerHTML=`
-      <span class="dt-day-name" style="${isActive && sessionActive ? 'display:none' : ''}">${escHtml(dayName.slice(0,1))}</span>
+      <span class="dt-day-name">${escHtml(dayName.slice(0,1))}</span>
       <div class="dt-dot">${escHtml(abbr)}</div>
-      <span class="dt-workout-name" id="${isActive ? 'dt-active-label' : ''}" style="${timerStr ? 'font-size:15px!important;font-weight:700;color:var(--gold);letter-spacing:-.01em;line-height:1;overflow:visible;white-space:nowrap' : ''}">${timerStr ? escHtml(timerStr) : escHtml(shortName)}</span>
+      <span class="dt-workout-name">${escHtml(shortName)}</span>
       <div class="dt-done-check"></div>`;
-    const handler=()=>{ if(sessionActive) stopSessionTimer(); selectedWeekIdx=wi; if (!isRest) { saveInlineEdit(); activeDay=cfgIdx; editingEx=null; deleteConfirm=null; expanded.clear(); } render(); };
+    const handler=()=>{ selectedWeekIdx=wi; if (!isRest) { saveInlineEdit(); activeDay=cfgIdx; editingEx=null; deleteConfirm=null; expanded.clear(); } render(); };
     el.onclick=handler;
     el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();handler();} };
 
@@ -2236,6 +2232,7 @@ function renderTable() {
           title="Drag to reorder">
           <span></span><span></span><span></span>
         </div>
+        <div class="drag-num" style="pointer-events:none">${String(ei+1).padStart(2,'0')}</div>
         <div class="ex-main">
           ${isEditingThis
             ? `<input class="ie-input" id="ie-name" type="text" value="${escHtml(ex.name)}" maxlength="60" autocomplete="off" spellcheck="false" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter')saveInlineEdit();if(event.key==='Escape'){editingEx=null;renderTable();}">`
@@ -2555,7 +2552,7 @@ function toggleRestEnabled(di,ei,v){restEnabled[`${di}-${ei}`]=v;persist();}
 function toggleSet(e,di,ei,si){
   e.stopPropagation();if(editingEx)saveInlineEdit();
   const was=setsDone[di][ei][si];setsDone[di][ei][si]=!was;
-  if (!was){expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();const exNowDone=setsDone[di][ei].every(Boolean);if(exNowDone){hapticEx();}else{hapticSet();}const ex=data[di][ei];const isLast=si===ex.sets-1;if(restEnabled[`${di}-${ei}`]!==false&&!isLast)setTimeout(()=>openRestTimer(ex.name,si+1,restDefaultDuration,di,ei,si),200);}else{haptic([5,30,5]);}
+  if (!was){expanded.add(`${di}-${ei}`);const exNowDone=setsDone[di][ei].every(Boolean);if(exNowDone){hapticEx();}else{hapticSet();}const ex=data[di][ei];const isLast=si===ex.sets-1;if(restEnabled[`${di}-${ei}`]!==false&&!isLast)setTimeout(()=>openRestTimer(ex.name,si+1,restDefaultDuration,di,ei,si),200);}else{haptic([5,30,5]);}
   if(!was && isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}
   persist();render();
   requestAnimationFrame(()=>{const b=document.getElementById(`sc-${di}-${ei}-${si}`);if(b&&!was){b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),300);}});
@@ -2563,7 +2560,7 @@ function toggleSet(e,di,ei,si){
 function quickLogAll(e,di,ei,isCurrentlyAllDone){
   e.stopPropagation();
   if(isCurrentlyAllDone){setsDone[di][ei]=setsDone[di][ei].map(()=>false);haptic([5,30,5]);persist();render();}
-  else{confirmAction('Mark all sets done?',`This will complete all ${data[di][ei].sets} sets of "${data[di][ei].name}".`,'Mark done','',()=>{const wasAlreadyAllDone=isAllDone(di);setsDone[di][ei]=setsDone[di][ei].map(()=>true);expanded.add(`${di}-${ei}`);if(!sessionActive)startSessionTimer();hapticEx();if(!wasAlreadyAllDone&&isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}persist();render();});}
+  else{confirmAction('Mark all sets done?',`This will complete all ${data[di][ei].sets} sets of "${data[di][ei].name}".`,'Mark done','',()=>{const wasAlreadyAllDone=isAllDone(di);setsDone[di][ei]=setsDone[di][ei].map(()=>true);expanded.add(`${di}-${ei}`);hapticEx();if(!wasAlreadyAllDone&&isAllDone(di)){saveToHistory(di);fireConfetti();hapticAllDone();}persist();render();});}
 }
 function getPrevSet(di,exName,si){const label=CFG[di]?.label,todayDk=dayKey(new Date());for(const h of history){if(h.day!==label)continue;const hDk=h.dk||(h.ts?dayKey(new Date(h.ts)):null);if(hDk===todayDk)continue;const ex=(h.exercises||[]).find(e=>e.name===exName);if(!ex)continue;return{reps:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps,weight:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight};}return null;}
 function getSetReps(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps;}
@@ -2586,7 +2583,7 @@ function saveToHistory(di){
   else{history.unshift(entry);if(history.length>100)history=history.slice(0,100);setTimeout(()=>{document.getElementById('backup-nudge')?.classList.add('show');},600);}
   _persistNow();
 }
-function resetSession(){data[activeDay].forEach(ex=>{delete ex.setOvr;});setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));const nk=getNoteKey(activeDay);delete sessionNotes[nk];const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)delete h.note;expanded.clear();stopSessionTimer();persist();render();}
+function resetSession(){data[activeDay].forEach(ex=>{delete ex.setOvr;});setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));const nk=getNoteKey(activeDay);delete sessionNotes[nk];const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)delete h.note;expanded.clear();persist();render();}
 
 
 // ══════════════════════════════════════════════════════════════════════════════
