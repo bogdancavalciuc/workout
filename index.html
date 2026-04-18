@@ -109,21 +109,7 @@ body {
   padding: 1px 6px; border: 1px solid rgba(0,212,170,.25); border-radius: 20px;
 }
 
-/* Session timer ring */
-.session-ring-wrap {
-  position: relative; width: 44px; height: 44px; flex-shrink: 0; cursor: pointer;
-}
-.session-ring-wrap svg { width: 100%; height: 100%; overflow: visible; transform: rotate(-90deg); }
-.session-ring-bg  { fill: none; stroke: var(--line2); stroke-width: 2.5; }
-.session-ring-prog { fill: none; stroke: var(--line3); stroke-width: 2.5; stroke-linecap: round;
-  transition: stroke-dashoffset 1s linear, stroke .4s; }
-.session-ring-wrap.running .session-ring-prog { stroke: var(--gold); }
-.session-ring-val {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: -.02em;
-  color: var(--muted); line-height: 1; pointer-events: none;
-}
-.session-ring-wrap.running .session-ring-val { color: var(--gold); }
+
 
 /* ── NAV ─────────────────────────────────────────────────────────────────────── */
 .page-nav {
@@ -149,13 +135,13 @@ body {
   gap: 5px; margin-bottom: 6px;
 }
 .dt {
-  padding: 8px 2px 7px;
-  border-radius: 10px;
+  padding: 6px 2px 5px;
+  border-radius: 8px;
   background: var(--surf2); border: 1px solid var(--line2);
   text-align: center; cursor: pointer;
   transition: border-color .2s, background .2s, box-shadow .2s;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 5px; min-height: 62px; position: relative; overflow: hidden;
+  gap: 3px; min-height: 52px; position: relative; overflow: hidden;
 }
 .dt:active { background: var(--surf3); border-color: var(--line3); }
 .dt:focus-visible { outline: 2px solid var(--gold3); outline-offset: 2px; }
@@ -163,7 +149,7 @@ body {
 .dt.today-tab { border: 2.5px solid var(--gold3); background: rgba(0,212,170,.08); }
 .dt.rest-tab { opacity: .45; }
 .dt-day-name {
-  font-family: var(--mono); font-size: 15px; font-weight: 700;
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
   letter-spacing: -.01em; text-transform: uppercase; color: var(--muted2); line-height: 1;
 }
 .dt.active .dt-day-name { color: var(--gold); }
@@ -179,6 +165,12 @@ body {
 }
 .dt.active .dt-workout-name { color: var(--gold2); }
 .dt.today-tab .dt-workout-name { color: var(--gold2); }
+.timer-running {
+  font-size: 14px !important; font-weight: 700 !important;
+  letter-spacing: -.01em !important; line-height: 1 !important;
+  color: var(--gold) !important; white-space: nowrap !important;
+  overflow: visible !important;
+}
 .dt.rest-tab .dt-workout-name { color: var(--muted); opacity: .5; font-size: 6px; }
 .dt-done-check {
   position: absolute; top: 3px; right: 3px;
@@ -187,28 +179,7 @@ body {
 }
 .dt.day-completed .dt-done-check { display: block; }
 
-.day-info-bar {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 16px; margin-bottom: 14px;
-  background: transparent; border: none;
-  border-bottom: 1px solid var(--line);
-  min-height: 44px; transition: opacity .2s;
-}
-.day-info-bar.rest-bar { opacity: .5; }
-.day-info-name {
-  font-family: var(--serif); font-size: 26px; font-weight: 400;
-  letter-spacing: .06em; color: var(--text); flex: 1; font-style: normal;
-}
-.day-info-name.rest-name {
-  font-family: var(--mono); font-size: 9px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--muted); font-style: normal;
-}
-.day-info-today {
-  font-family: var(--mono); font-size: 7px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--gold3);
-  padding: 3px 8px; border: 1px solid rgba(200,169,110,.2); border-radius: 20px;
-}
-.day-info-vol { font-family: var(--mono); font-size: 8px; letter-spacing: .06em; color: var(--muted); }
+
 /* ── SCHEDULE SHEET ──────────────────────────────────────────────────────────── */
 
 /* Week overview mini-calendar */
@@ -312,38 +283,13 @@ body {
 
 /* Color swatch */
 /* Session stats on workout cards */
-.sched-session-stat {
-  font-family: var(--mono); font-size: 7.5px; color: var(--gold3);
-  letter-spacing: .06em; padding: 2px 6px;
-  background: rgba(200,169,110,.08); border: 1px solid rgba(200,169,110,.15);
-  border-radius: 10px; white-space: nowrap;
-}
+
 
 /* Reset week button */
-.sched-reset-week-btn {
-  width: 100%; margin-top: 18px; padding: 11px;
-  background: none; border: 1px solid var(--line); border-radius: var(--r);
-  font-family: var(--mono); font-size: 7.5px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--muted); cursor: pointer;
-  transition: border-color .2s, color .2s; display: flex;
-  align-items: center; justify-content: center; gap: 7px;
-  opacity: .6;
-}
-.sched-reset-week-btn:hover { border-color: var(--line3); color: var(--text2); opacity: 1; }
+
 
 /* ── BACKUP BAR ──────────────────────────────────────────────────────────────── */
-.backup-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; background: var(--surf);
-  border: 1px solid var(--line); border-radius: var(--r2);
-  margin-bottom: 18px; gap: 10px;
-}
-.backup-bar-left { display: flex; flex-direction: column; gap: 2px; }
-.backup-bar-title {
-  font-family: var(--mono); font-size: 8px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--text2); opacity: .6;
-}
-.backup-bar-sub { font-family: var(--mono); font-size: 8px; color: var(--muted); letter-spacing: .04em; }
+
 .backup-btns { display: flex; gap: 7px; flex-shrink: 0; }
 .backup-btn {
   font-family: var(--mono); font-size: 7.5px; letter-spacing: .14em;
@@ -418,6 +364,7 @@ body {
   background: var(--surf); border: 1px solid var(--line2);
   border-radius: var(--r2); overflow: hidden;
   transition: border-color .2s;
+  box-shadow: var(--shadow-sm);
 }
 .ex-block:last-of-type { }
 .ex-block.dragging { opacity: .35; }
@@ -677,43 +624,7 @@ body {
 .add-lib-selected-wrap { background: rgba(200,169,110,.05); border: 1px solid rgba(200,169,110,.18); border-radius: var(--r2); padding: 14px 16px; margin-bottom: 16px; }
 
 /* ── QUICK EDIT BAR (below day tabs in Workout page) ───────────────────────── */
-.quick-edit-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 4px 10px; gap: 8px;
-  border-bottom: 1px solid var(--line); margin-bottom: 14px;
-  min-height: 40px; animation: fadeIn .18s ease;
-}
-.quick-edit-bar.rest-mode { opacity: 0; pointer-events: none; height: 0; min-height: 0; padding: 0; border: none; margin: 0; overflow: hidden; }
-.qeb-name {
-  font-family: var(--serif); font-size: 20px; font-weight: 400;
-  letter-spacing: .06em; color: var(--text); flex: 1; min-width: 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;
-}
-.qeb-meta {
-  font-family: var(--mono); font-size: 7.5px; color: var(--muted);
-  letter-spacing: .06em; white-space: nowrap;
-}
-.qeb-actions { display: flex; gap: 5px; flex-shrink: 0; }
-.qeb-btn {
-  font-family: var(--mono); font-size: 7px; letter-spacing: .12em;
-  text-transform: uppercase; padding: 6px 10px; border-radius: var(--r);
-  border: 1px solid var(--line2); background: none; color: var(--muted2);
-  cursor: pointer; transition: border-color .15s, color .15s; white-space: nowrap;
-  min-height: 32px; display: flex; align-items: center; gap: 4px;
-}
-.qeb-btn:active { border-color: var(--gold3); color: var(--gold); }
-.qeb-btn.primary { border-color: rgba(0,212,170,.3); color: var(--gold3); background: rgba(0,212,170,.05); }
-.qeb-btn.primary:active { background: rgba(0,212,170,.12); }
-.qeb-btn.danger { border-color: rgba(255,59,92,.25); color: var(--danger); background: rgba(255,59,92,.05); }
-.qeb-btn.danger:active { border-color: var(--danger); background: rgba(255,59,92,.12); }
-.qeb-assign-btn {
-  font-family: var(--mono); font-size: 7px; letter-spacing: .12em;
-  text-transform: uppercase; padding: 6px 12px; border-radius: var(--r);
-  border: 1px dashed var(--line3); background: none; color: var(--muted);
-  cursor: pointer; transition: border-color .15s, color .15s;
-  min-height: 32px; display: flex; align-items: center; gap: 5px;
-}
-.qeb-assign-btn:active { border-color: var(--gold3); color: var(--gold3); }
+
 
 /* ── Schedule page: selected-day highlight (not just today) ─────────────────── */
 .sched-week-cell.swo-selected:not(.swo-today) {
@@ -737,14 +648,7 @@ body {
   animation: syncPulse .7s ease forwards;
 }
 
-/* ── Day tab: edit gear icon ──────────────────────────────────────────────────── */
-.dt-edit-icon {
-  position: absolute; bottom: 3px; left: 3px;
-  width: 10px; height: 10px; opacity: 0;
-  transition: opacity .2s;
-  color: var(--gold3);
-}
-.dt.active .dt-edit-icon { opacity: .7; }
+
 
 /* ── FIXED BOTTOM ──────────────────────────────────────────────────────────── */
 .fw {
@@ -959,8 +863,8 @@ html[data-theme="light"] .pn.active { color:#0A0A0A; border-bottom-color:#E8271A
 /* Top bar */
 html[data-theme="light"] .top-bar-name { color:#0A0A0A; }
 html[data-theme="light"] .top-bar-today-badge { color:#C01F14; border:1.5px solid #C01F14; border-radius:3px; padding:1px 7px; }
-html[data-theme="light"] .session-ring-wrap.running .session-ring-prog { stroke:#E8271A; }
-html[data-theme="light"] .session-ring-wrap.running .session-ring-val  { color:#E8271A; }
+
+
 
 /* Day tabs */
 html[data-theme="light"] .dt { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
@@ -976,14 +880,14 @@ html[data-theme="light"] .dt-day-name { color:#6B6862; }
 html[data-theme="light"] .dt-done-check { background:#1A7A3C; }
 
 /* Quick edit bar */
-html[data-theme="light"] .qeb-name  { color:#0A0A0A; }
-html[data-theme="light"] .qeb-btn   { border:1.5px solid #D4D1CA; color:#6B6862; background:none; }
-html[data-theme="light"] .qeb-btn.primary { border-color:rgba(232,39,26,.3); color:#C01F14; background:rgba(232,39,26,.05); }
-html[data-theme="light"] .qeb-btn.danger { border-color:rgba(232,39,26,.25); color:#E8271A; background:rgba(232,39,26,.04); }
-html[data-theme="light"] .qeb-assign-btn { border:1.5px dashed #C4C1BA; color:#999590; background:none; }
+
+
+
+
+
 
 /* Exercise blocks */
-html[data-theme="light"] .ex-block { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+html[data-theme="light"] .ex-block { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.09), 0 1px 2px rgba(0,0,0,.06); }
 html[data-theme="light"] .ex-block.drag-over { border-color:#E8271A; box-shadow:0 0 0 2px rgba(232,39,26,.15); }
 html[data-theme="light"] .ex-name-row:active { background:#F7F5F0; }
 html[data-theme="light"] .ex-name-row.done-all { opacity:.65; }
@@ -1139,8 +1043,8 @@ html[data-theme="light"] .sched-workout-card.is-active-workout .sched-workout-ca
 html[data-theme="light"] .swc-action-btn { border:1.5px solid #D4D1CA; color:#6B6862; }
 html[data-theme="light"] .swc-action-btn:hover { border-color:#0A0A0A; color:#0A0A0A; }
 html[data-theme="light"] .swc-action-btn.danger:hover { border-color:#E8271A; color:#E8271A; }
-html[data-theme="light"] .sched-reset-week-btn { border-color:#E0DDD7; color:#999590; }
-html[data-theme="light"] .sched-reset-week-btn:hover { border-color:#D4D1CA; color:#0A0A0A; }
+
+
 
 /* Sync dot */
 html[data-theme="light"] .sync-dot { background:#C01F14; }
@@ -1176,9 +1080,9 @@ html[data-theme="light"] #edit-workout-sh .add-lib-selected-wrap { background:#F
 html[data-theme="light"] #ewe-lib-list .replace-group-label { color:#C01F14; }
 
 /* Backup bar */
-html[data-theme="light"] .backup-bar { background:#FFFFFF; border:1px solid #E0DDD7; }
-html[data-theme="light"] .backup-bar-title { color:#6B6862; }
-html[data-theme="light"] .backup-bar-sub { color:#999590; }
+
+
+
 html[data-theme="light"] .backup-btn-export { background:#0A0A0A; color:#FFFFFF; }
 html[data-theme="light"] .backup-btn-import { border-color:#D4D1CA; color:#6B6862; }
 html[data-theme="light"] .footer-backup-sub { color:#999590; }
@@ -1228,17 +1132,7 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
 <!-- REST RING — injected inline by JS around active set-check -->
 
 <!-- THEME TOGGLE BUTTON -->
-<button id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle light/dark theme"
-  style="position:fixed;top:10px;right:14px;z-index:300;
-    width:34px;height:34px;border-radius:50%;
-    border:1.5px solid var(--line2);
-    background:var(--surf2);
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
-    box-shadow:var(--shadow-sm);
-    transition:border-color .2s,background .2s,box-shadow .2s;">
-  <span id="theme-icon" style="font-size:14px;line-height:1;pointer-events:none;">🌙</span>
-</button>
+
 
 <!-- CONFIRM -->
 <div class="confirm-overlay" id="confirm-overlay">
@@ -1254,30 +1148,22 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
 
 <!-- HEADER -->
 <div class="top">
-  <!-- Workout name + timer bar -->
-  <div class="top-bar" id="top-bar">
-    <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
-      <!-- Session timer ring -->
-      <div class="session-ring-wrap" id="session-ring-wrap" onclick="toggleSessionTimer()">
-        <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-          <circle class="session-ring-bg"   cx="22" cy="22" r="18"/>
-          <circle class="session-ring-prog" id="srp" cx="22" cy="22" r="18"
-            stroke-dasharray="113.1" stroke-dashoffset="113.1"/>
-        </svg>
-        <div class="session-ring-val" id="st-val">00</div>
-      </div>
-      <!-- Workout name + meta -->
-      <div class="top-bar-left">
-        <span class="top-bar-name" id="pn-workout-name">Workout</span>
-        <div class="top-bar-meta" id="top-bar-meta"></div>
-      </div>
-    </div>
+  <!-- App title + theme toggle -->
+  <div class="top-bar" id="top-bar" style="justify-content:flex-start;gap:8px">
+    <button id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme"
+      style="width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line2);
+        background:var(--surf2);display:flex;align-items:center;justify-content:center;
+        cursor:pointer;box-shadow:var(--shadow-sm);transition:border-color .2s,background .2s;flex-shrink:0;">
+      <span id="theme-icon" style="font-size:14px;line-height:1;pointer-events:none;">🌙</span>
+    </button>
+    <span class="top-bar-name" id="pn-workout-name" style="letter-spacing:.08em;font-size:22px">Train</span>
+    <div id="top-bar-meta" style="font-family:var(--mono);font-size:8px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;gap:6px"></div>
   </div>
   <!-- Tab nav -->
   <div class="page-nav">
-    <div class="pn active" data-page="workout" onclick="setPage('workout')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setPage('workout');}" role="tab" tabindex="0">Workout</div>
-    <div class="pn" data-page="schedule" onclick="setPage('schedule')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setPage('schedule');}" role="tab" tabindex="0">Schedule</div>
-    <div class="pn" data-page="progress" onclick="setPage('progress')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setPage('progress');}" role="tab" tabindex="0">Progress</div>
+    <div class="pn active" data-page="workout" onclick="setPage('workout')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setPage('workout');}" role="tab" tabindex="0">Train</div>
+    <div class="pn" data-page="schedule" onclick="setPage('schedule')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setPage('schedule');}" role="tab" tabindex="0">Plan</div>
+    <div class="pn" data-page="progress" onclick="setPage('progress')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setPage('progress');}" role="tab" tabindex="0">Stats</div>
   </div>
 </div>
 
@@ -1286,9 +1172,10 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
 
 <!-- WORKOUT PAGE -->
 <div id="page-workout" style="padding:0 10px">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;margin-top:4px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;margin-top:4px">
     <div class="day-tabs" id="day-tabs" style="margin-bottom:0;flex:1"></div>
   </div>
+
 
   <div id="done-banner" class="done-banner">
     <div class="done-banner-shimmer"></div>
@@ -1299,7 +1186,8 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
       <label class="session-note-label">Session note</label>
       <textarea class="session-note-input" id="session-note-input" placeholder="How did it feel? Any PRs?" maxlength="300" oninput="saveSessionNote()"></textarea>
     </div>
-    <button class="done-reset" onclick="confirmAction('Reset session?','All set progress will be cleared.','Reset','danger',resetSession)">Reset session</button>
+    <button onclick="setPage('progress')" style="width:100%;margin-bottom:8px;padding:13px;border:none;border-radius:var(--r2);background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;">View Stats →</button>
+    <button class="done-reset" style="opacity:.45;font-size:7px;padding:8px 16px;margin-top:4px" onclick="confirmAction('Reset session?','All set progress will be cleared.','Reset','danger',resetSession)">Reset session</button>
     <div class="backup-nudge" id="backup-nudge">
       <span class="backup-nudge-txt">Back up your data?<br>Keep it safe outside the browser.</span>
       <button class="backup-nudge-btn" onclick="exportData();dismissNudge()">Export now</button>
@@ -1307,7 +1195,7 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
     </div>
   </div>
   <div class="tbl-wrap" id="tbl"></div>
-  <div class="hint">Swipe row to check · pencil to rename · drag to reorder</div>
+
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
@@ -1324,9 +1212,9 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
   <div id="sched-workout-manage-page"></div>
   <div>
     <button onclick="openNewWorkoutSheet()"
-      style="width:100%;margin-top:8px;padding:14px;background:none;border:1px dashed var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:border-color .2s,color .2s"
-      onmouseover="this.style.borderColor='var(--gold3)';this.style.color='var(--gold3)'"
-      onmouseout="this.style.borderColor='var(--line2)';this.style.color='var(--muted)'">
+      style="width:100%;margin-top:12px;padding:14px;background:var(--gold);border:none;border-radius:var(--r2);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#000;cursor:pointer;transition:opacity .2s"
+      onmouseover="this.style.opacity='.85'"
+      onmouseout="this.style.opacity='1'">
       + New Workout
     </button>
   </div>
@@ -1339,7 +1227,7 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
     <!-- Sub-tabs: Progress / History -->
     <div style="display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:20px">
       <button id="prog-tab-progress" onclick="switchProgTab('progress')"
-        style="flex:1;padding:12px 0;font-family:var(--mono);font-size:8px;letter-spacing:.2em;text-transform:uppercase;background:none;border:none;border-bottom:1.5px solid var(--gold);margin-bottom:-1px;color:var(--gold);cursor:pointer">Progress</button>
+        style="flex:1;padding:12px 0;font-family:var(--mono);font-size:8px;letter-spacing:.2em;text-transform:uppercase;background:none;border:none;border-bottom:1.5px solid var(--gold);margin-bottom:-1px;color:var(--gold);cursor:pointer">Stats</button>
       <button id="prog-tab-history" onclick="switchProgTab('history')"
         style="flex:1;padding:12px 0;font-family:var(--mono);font-size:8px;letter-spacing:.2em;text-transform:uppercase;background:none;border:none;border-bottom:1.5px solid transparent;margin-bottom:-1px;color:var(--muted);cursor:pointer">History</button>
     </div>
@@ -1379,13 +1267,11 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
   </div>
 </div>
 
-<div class="fw">
-  <div class="footer-backup">
-    <span class="footer-backup-sub" id="backup-last-label">No backup yet</span>
-    <div class="backup-btns">
-      <button class="backup-btn backup-btn-import" onclick="triggerImport()">Import</button>
-      <button class="backup-btn backup-btn-export" onclick="exportData()">Export</button>
-    </div>
+<div class="fw" style="padding:10px 20px 32px;flex-direction:row;align-items:center;justify-content:space-between;background:linear-gradient(to top,var(--bg) 60%,transparent)">
+  <span class="footer-backup-sub" id="backup-last-label" style="opacity:.4;font-size:7px"></span>
+  <div style="display:flex;gap:7px">
+    <button class="backup-btn backup-btn-import" onclick="triggerImport()" style="font-size:7px;padding:6px 10px">Import</button>
+    <button class="backup-btn backup-btn-export" onclick="exportData()" style="font-size:7px;padding:6px 10px">Export</button>
   </div>
 </div>
 
@@ -1484,7 +1370,7 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
     <div id="nw-step-exercises" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:0 24px">
         <div>
-          <div class="shl" style="margin-bottom:0;font-size:18px" id="nw-exercises-title">Workout</div>
+          <div class="shl" style="margin-bottom:0;font-size:18px" id="nw-exercises-title">Train</div>
           <div style="font-family:var(--mono);font-size:7.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Add exercises from the list</div>
         </div>
         <button onclick="closeNewWorkoutSheet()" style="background:none;border:1px solid var(--line2);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);cursor:pointer;">Cancel</button>
@@ -1996,9 +1882,8 @@ function startSessionTimer() {
 function stopSessionTimer() {
   sessionActive = false;
   clearInterval(sessionTick); sessionTick = null; sessionStart = null;
-  document.getElementById('st-val').textContent = '00';
-  const srp = document.getElementById('srp');
-  if (srp) srp.style.strokeDashoffset = SESSION_RING_CIRC.toFixed(2);
+  // Restore workout name in active tab
+  renderTabs();
   updatePlayBtn();
 }
 function toggleSessionTimer() { sessionActive ? stopSessionTimer() : startSessionTimer(); }
@@ -2008,17 +1893,18 @@ function updateSessionUI() {
   const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
-  // minutes label — show 00 until first minute completes, then 01, 02 …
-  document.getElementById('st-val').textContent = String(mins).padStart(2, '0');
-  // ring fills over the current minute (0–59 seconds → 0%–100%)
-  const pct = secs / 60;
-  const srp = document.getElementById('srp');
-  if (srp) srp.style.strokeDashoffset = (SESSION_RING_CIRC * (1 - pct)).toFixed(2);
+  const timeStr = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+  const lbl = document.getElementById('dt-active-label');
+  if (lbl) {
+    lbl.textContent = timeStr;
+    lbl.style.cssText = 'font-size:15px!important;font-weight:700;color:var(--gold);letter-spacing:-.01em;line-height:1;overflow:visible;white-space:nowrap';
+    const dayName = lbl.closest('.dt')?.querySelector('.dt-day-name');
+    if (dayName) dayName.style.display = 'none';
+  }
 }
 
 function updatePlayBtn() {
-  const wrap = document.getElementById('session-ring-wrap');
-  if (wrap) wrap.classList.toggle('running', sessionActive);
+  // ring removed — tab timer handles visual feedback
 }
 
 let _audioCtx = null;
@@ -2150,9 +2036,6 @@ function setPage(p) {
   document.getElementById('page-workout').classList.toggle('hidden',p!=='workout');
   document.getElementById('page-schedule').classList.toggle('hidden',p!=='schedule');
   document.getElementById('page-progress').classList.toggle('hidden',p!=='progress');
-  // Show top-bar only on workout page
-  const tb=document.getElementById('top-bar');
-  if (tb) { tb.style.visibility = p==='workout' ? '' : 'hidden'; tb.style.pointerEvents = p==='workout' ? '' : 'none'; }
   if (p==='progress') initProgress();
   if (p==='schedule') { renderSchedulePage(); _syncScheduleSelectedDay(); }
 }
@@ -2171,13 +2054,15 @@ function renderTabs() {
     el.className='dt'+(isActive?' active':'')+(isToday?' today-tab':'')+(isRest?' rest-tab':'')+(isDone?' day-completed':'');
     el.setAttribute('role','button');
     el.setAttribute('tabindex','0');
+    const timerStr = (isActive && sessionActive && sessionStart)
+      ? (()=>{ const e=Math.floor((Date.now()-sessionStart)/1000); return String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0'); })()
+      : null;
     el.innerHTML=`
-      <span class="dt-day-name">${escHtml(dayName.slice(0,1))}</span>
+      <span class="dt-day-name" style="${isActive && sessionActive ? 'display:none' : ''}">${escHtml(dayName.slice(0,1))}</span>
       <div class="dt-dot">${escHtml(abbr)}</div>
-      <span class="dt-workout-name">${escHtml(shortName)}</span>
-      <div class="dt-done-check"></div>
-      <svg class="dt-edit-icon" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM5 6a1 1 0 110-2 1 1 0 010 2z" fill="currentColor" opacity=".6"/></svg>`;
-    const handler=()=>{ selectedWeekIdx=wi; if (!isRest) { saveInlineEdit(); activeDay=cfgIdx; editingEx=null; deleteConfirm=null; expanded.clear(); } render(); };
+      <span class="dt-workout-name" id="${isActive ? 'dt-active-label' : ''}" style="${timerStr ? 'font-size:15px!important;font-weight:700;color:var(--gold);letter-spacing:-.01em;line-height:1;overflow:visible;white-space:nowrap' : ''}">${timerStr ? escHtml(timerStr) : escHtml(shortName)}</span>
+      <div class="dt-done-check"></div>`;
+    const handler=()=>{ if(sessionActive) stopSessionTimer(); selectedWeekIdx=wi; if (!isRest) { saveInlineEdit(); activeDay=cfgIdx; editingEx=null; deleteConfirm=null; expanded.clear(); } render(); };
     el.onclick=handler;
     el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();handler();} };
 
@@ -2196,13 +2081,7 @@ function renderDayInfoBar() {
     tabLabel.textContent = isRest ? 'Rest Day' : (CFG[cfgIdx]?.label || 'Workout');
   }
   if (metaEl) {
-    if (isRest) {
-      metaEl.innerHTML = isToday ? '<span class="top-bar-today-badge">Today</span>' : '';
-    } else {
-      const exCount = (data[cfgIdx]||[]).length;
-      metaEl.innerHTML = (isToday ? '<span class="top-bar-today-badge">Today</span>' : '') +
-        (exCount ? `<span>${exCount} exercise${exCount!==1?'s':''}</span>` : '');
-    }
+    metaEl.innerHTML = isToday ? '<span class="top-bar-today-badge">Today</span>' : '';
   }
 
 }
@@ -2213,10 +2092,10 @@ function renderTable() {
   const hintEl=document.querySelector('#page-workout .hint');
   if (isRestDay) {
     document.getElementById('done-banner').classList.remove('show');
-    document.getElementById('tbl').innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px 36px;gap:14px;opacity:.55">
-      <svg width="38" height="38" viewBox="0 0 38 38" fill="none" style="opacity:.5"><rect x="4" y="17" width="30" height="4" rx="2" fill="var(--muted)"/><rect x="17" y="4" width="4" height="30" rx="2" fill="var(--muted)" opacity=".35"/></svg>
-      <span style="font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">No workout assigned</span>
-      <span style="font-family:var(--serif);font-size:13px;color:var(--muted);opacity:.7;letter-spacing:.04em">Rest day — go recover 🧘</span>
+    document.getElementById('tbl').innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px 48px;gap:10px;text-align:center;">
+      <span style="font-family:var(--serif);font-size:52px;letter-spacing:.1em;color:var(--text);opacity:.15;line-height:1">REST</span>
+      <span style="font-family:var(--serif);font-size:14px;letter-spacing:.18em;color:var(--text);opacity:.25;line-height:1">DAY</span>
+      <span style="font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);opacity:.6;margin-top:12px">Recovery is part of the program.</span>
     </div>`;
     if(hintEl)hintEl.style.display='none';
     return;
@@ -2488,7 +2367,13 @@ function renderProgressOverview() {
   const c = document.getElementById('prog-overview'); if (!c) return;
   const df = document.getElementById('prog-day-select').value;
   const fh = df ? history.filter(h => h.day === df) : history;
-  if (!fh.length) { c.innerHTML = ''; return; }
+  if (!fh.length) {
+    c.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;gap:10px;text-align:center;">
+      <span style="font-family:var(--serif);font-size:48px;letter-spacing:.1em;color:var(--text);opacity:.12;line-height:1">STATS</span>
+      <span style="font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);opacity:.6;margin-top:8px">Complete a workout to see your progress.</span>
+    </div>`;
+    return;
+  }
 
   const now = new Date();
   const weeks = [];
