@@ -676,6 +676,74 @@ body {
 .add-lib-selected-name { font-family: var(--serif); font-size: 17px; font-weight: 400; color: var(--gold); letter-spacing: .02em; padding: 10px 0 4px; border-bottom: 1px solid var(--line2); margin-bottom: 4px; }
 .add-lib-selected-wrap { background: rgba(200,169,110,.05); border: 1px solid rgba(200,169,110,.18); border-radius: var(--r2); padding: 14px 16px; margin-bottom: 16px; }
 
+/* ── QUICK EDIT BAR (below day tabs in Workout page) ───────────────────────── */
+.quick-edit-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 4px 10px; gap: 8px;
+  border-bottom: 1px solid var(--line); margin-bottom: 14px;
+  min-height: 40px; animation: fadeIn .18s ease;
+}
+.quick-edit-bar.rest-mode { opacity: 0; pointer-events: none; height: 0; min-height: 0; padding: 0; border: none; margin: 0; overflow: hidden; }
+.qeb-name {
+  font-family: var(--serif); font-size: 20px; font-weight: 400;
+  letter-spacing: .06em; color: var(--text); flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;
+}
+.qeb-meta {
+  font-family: var(--mono); font-size: 7.5px; color: var(--muted);
+  letter-spacing: .06em; white-space: nowrap;
+}
+.qeb-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.qeb-btn {
+  font-family: var(--mono); font-size: 7px; letter-spacing: .12em;
+  text-transform: uppercase; padding: 6px 10px; border-radius: var(--r);
+  border: 1px solid var(--line2); background: none; color: var(--muted2);
+  cursor: pointer; transition: border-color .15s, color .15s; white-space: nowrap;
+  min-height: 32px; display: flex; align-items: center; gap: 4px;
+}
+.qeb-btn:active { border-color: var(--gold3); color: var(--gold); }
+.qeb-btn.primary { border-color: rgba(0,212,170,.3); color: var(--gold3); background: rgba(0,212,170,.05); }
+.qeb-btn.primary:active { background: rgba(0,212,170,.12); }
+.qeb-assign-btn {
+  font-family: var(--mono); font-size: 7px; letter-spacing: .12em;
+  text-transform: uppercase; padding: 6px 12px; border-radius: var(--r);
+  border: 1px dashed var(--line3); background: none; color: var(--muted);
+  cursor: pointer; transition: border-color .15s, color .15s;
+  min-height: 32px; display: flex; align-items: center; gap: 5px;
+}
+.qeb-assign-btn:active { border-color: var(--gold3); color: var(--gold3); }
+
+/* ── Schedule page: selected-day highlight (not just today) ─────────────────── */
+.sched-week-cell.swo-selected:not(.swo-today) {
+  border-color: var(--line3); background: rgba(255,255,255,.04);
+  box-shadow: 0 0 8px rgba(255,255,255,.04);
+}
+.sched-week-cell.swo-selected .sched-week-cell-day { color: var(--text2); }
+.sched-week-cell.swo-selected .sched-week-cell-name { color: var(--text2); }
+
+/* ── Workout card: active highlight in Schedule when workout is active ────────── */
+.sched-workout-card.is-active-workout {
+  border-color: rgba(0,212,170,.35); background: rgba(0,212,170,.03);
+}
+.sched-workout-card.is-active-workout .sched-workout-card-name { color: var(--gold); }
+
+/* ── Sync pulse: tiny dot that flashes when schedule saves ──────────────────── */
+@keyframes syncPulse { 0%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.6)} 100%{opacity:0;transform:scale(1)} }
+.sync-dot {
+  display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--gold3); margin-left: 6px; vertical-align: middle;
+  animation: syncPulse .7s ease forwards;
+}
+
+/* ── Day tab: edit gear icon ──────────────────────────────────────────────────── */
+.dt-edit-icon {
+  position: absolute; bottom: 3px; left: 3px;
+  width: 10px; height: 10px; opacity: 0;
+  transition: opacity .2s;
+  color: var(--gold3);
+}
+.dt.active .dt-edit-icon { opacity: .7; }
+
 /* ── FIXED BOTTOM ──────────────────────────────────────────────────────────── */
 .fw {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
@@ -896,6 +964,15 @@ body {
 <div id="page-workout" style="padding:0 10px">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;margin-top:4px">
     <div class="day-tabs" id="day-tabs" style="margin-bottom:0;flex:1"></div>
+  </div>
+
+  <!-- Quick Edit Bar — syncs with Schedule -->
+  <div class="quick-edit-bar" id="quick-edit-bar">
+    <div style="flex:1;min-width:0">
+      <div class="qeb-name" id="qeb-name">Workout</div>
+      <div class="qeb-meta" id="qeb-meta"></div>
+    </div>
+    <div class="qeb-actions" id="qeb-actions"></div>
   </div>
   <div id="done-banner" class="done-banner">
     <div class="done-banner-shimmer"></div>
@@ -1232,11 +1309,15 @@ function confirmAction(title, msg, okLabel, okStyle, cb) {
 function confirmYes() { document.getElementById('confirm-overlay').classList.remove('open'); if (_cb) { _cb(); _cb = null; } }
 function confirmNo()  { document.getElementById('confirm-overlay').classList.remove('open'); _cb = null; }
 
+// In-memory fallback when localStorage is unavailable (e.g. sandboxed iframes)
+const _memStore = {};
+function _lsAvailable() { try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; } catch { return false; } }
+const _useLS = _lsAvailable();
 const store = {
-  get(key, fallback = null) { try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback; } catch { return fallback; } },
-  set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch(e) { if (e.name==='QuotaExceededError') showToast('Storage full — export your data!','err'); else showToast('Could not save data','err'); return false; } },
-  getRaw(key, fallback=null) { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } },
-  setRaw(key, value) { try { localStorage.setItem(key, value); return true; } catch { return false; } },
+  get(key, fallback = null) { try { const v = _useLS ? localStorage.getItem(key) : (_memStore[key] ?? null); return v !== null && v !== undefined ? JSON.parse(v) : fallback; } catch { return fallback; } },
+  set(key, value) { try { const s = JSON.stringify(value); if (_useLS) localStorage.setItem(key, s); else _memStore[key] = s; return true; } catch(e) { if (e.name==='QuotaExceededError') showToast('Storage full — export your data!','err'); return false; } },
+  getRaw(key, fallback=null) { try { return (_useLS ? localStorage.getItem(key) : (_memStore[key] ?? null)) ?? fallback; } catch { return fallback; } },
+  setRaw(key, value) { try { if (_useLS) localStorage.setItem(key, value); else _memStore[key] = value; return true; } catch { return false; } },
 };
 
 const DEF_CFG = [{label:'Push'},{label:'Pull'},{label:'Legs'}];
@@ -1757,7 +1838,7 @@ function setPage(p) {
   const tb=document.getElementById('top-bar');
   if (tb) { tb.style.visibility = p==='workout' ? '' : 'hidden'; tb.style.pointerEvents = p==='workout' ? '' : 'none'; }
   if (p==='progress') initProgress();
-  if (p==='schedule') renderSchedulePage();
+  if (p==='schedule') { renderSchedulePage(); _syncScheduleSelectedDay(); }
 }
 
 function renderTabs() {
@@ -1778,10 +1859,16 @@ function renderTabs() {
       <span class="dt-day-name">${escHtml(dayName.slice(0,1))}</span>
       <div class="dt-dot">${escHtml(abbr)}</div>
       <span class="dt-workout-name">${escHtml(shortName)}</span>
-      <div class="dt-done-check"></div>`;
+      <div class="dt-done-check"></div>
+      <svg class="dt-edit-icon" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM5 6a1 1 0 110-2 1 1 0 010 2z" fill="currentColor" opacity=".6"/></svg>`;
     const handler=()=>{ selectedWeekIdx=wi; if (!isRest) { saveInlineEdit(); activeDay=cfgIdx; editingEx=null; deleteConfirm=null; expanded.clear(); } render(); };
     el.onclick=handler;
     el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();handler();} };
+    // Long-press on any tab opens the assign sheet for that day
+    let _lpTimer=null;
+    el.addEventListener('touchstart',()=>{ _lpTimer=setTimeout(()=>{ _lpTimer=null; openDayAssignPop(wi,el,{stopPropagation:()=>{}}); },480); },{passive:true});
+    el.addEventListener('touchend',()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} },{passive:true});
+    el.addEventListener('touchmove',()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} },{passive:true});
     c.appendChild(el);
   });
   renderDayInfoBar();
@@ -1804,6 +1891,42 @@ function renderDayInfoBar() {
       metaEl.innerHTML = (isToday ? '<span class="top-bar-today-badge">Today</span>' : '') +
         (exCount ? `<span>${exCount} exercise${exCount!==1?'s':''}</span>` : '');
     }
+  }
+
+  // ── Quick Edit Bar ────────────────────────────────────────────────────────
+  const qeb = document.getElementById('quick-edit-bar');
+  const qebName = document.getElementById('qeb-name');
+  const qebMeta = document.getElementById('qeb-meta');
+  const qebActions = document.getElementById('qeb-actions');
+  if (!qeb) return;
+
+  if (isRest) {
+    qeb.classList.add('rest-mode');
+    // Show assign button for rest days
+    qeb.classList.remove('rest-mode');
+    qeb.style.justifyContent = 'center';
+    if (qebName) qebName.style.display = 'none';
+    if (qebMeta) qebMeta.style.display = 'none';
+    if (qebActions) qebActions.innerHTML = `
+      <button class="qeb-assign-btn" onclick="openDayAssignPop(${wi},this,event)">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Assign workout to ${WEEK_DAYS[wi]}
+      </button>`;
+  } else {
+    qeb.style.justifyContent = '';
+    if (qebName) { qebName.style.display = ''; qebName.textContent = CFG[cfgIdx]?.label || 'Workout'; }
+    const exCount = (data[cfgIdx]||[]).length;
+    const vol = calcVol(cfgIdx);
+    if (qebMeta) qebMeta.textContent = `${exCount} exercise${exCount!==1?'s':''}`+(vol>0?' · '+fmtVol(vol):'');
+    if (qebActions) qebActions.innerHTML = `
+      <button class="qeb-btn primary" onclick="openEditWorkoutExercises(${cfgIdx})" title="Edit exercises">
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 10.5V12h1.5l5.25-5.25-1.5-1.5L2 10.5zm7.5-6.75a.4.4 0 000-.57l-.93-.93a.4.4 0 00-.57 0l-.72.72 1.5 1.5.72-.72z" fill="currentColor"/></svg>
+        Edit
+      </button>
+      <button class="qeb-btn" onclick="schedRenameWorkout(${cfgIdx})" title="Rename workout">Rename</button>
+      <button class="qeb-btn" onclick="openDayAssignPop(${wi},this,event)" title="Change day assignment">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 3h8M1 7h8M3 1v8M7 1v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"/></svg>
+      </button>`;
   }
 }
 
@@ -1925,7 +2048,10 @@ function attachSwipe(di,ei,si) {
 let dragSrc=null;
 function dragStart(e,di,ei){dragSrc={di,ei};e.dataTransfer.effectAllowed='move';setTimeout(()=>e.target.closest('.ex-block').classList.add('dragging'),0);}
 function dragOver(e,di,ei){e.preventDefault();document.querySelectorAll('.ex-block').forEach(b=>b.classList.remove('drag-over'));if(!dragSrc||(dragSrc.di===di&&dragSrc.ei===ei))return;e.target.closest('.ex-block')?.classList.add('drag-over');}
-function dragDrop(e,di,ei){e.preventDefault();if(!dragSrc||dragSrc.di!==di||dragSrc.ei===ei){dragEnd(e);return;}const src=dragSrc.ei,dst=ei;const snap={};data[di].forEach((_,i)=>{snap[i]=restEnabled[`${di}-${i}`];});const[ex]=data[di].splice(src,1);data[di].splice(dst,0,ex);const[sd]=setsDone[di].splice(src,1);setsDone[di].splice(dst,0,sd);const nRE={};Object.keys(restEnabled).forEach(k=>{if(parseInt(k.split('-')[0])!==di)nRE[k]=restEnabled[k];});const rem=Array.from({length:data[di].length},(_,i)=>i);rem.splice(src,1);rem.splice(dst,0,src);rem.forEach((oi,ni)=>{if(snap[oi]!==undefined)nRE[`${di}-${ni}`]=snap[oi];});restEnabled=nRE;dragSrc=null;persist();render();}
+function dragDrop(e,di,ei){e.preventDefault();if(!dragSrc||dragSrc.di!==di||dragSrc.ei===ei){dragEnd(e);return;}const src=dragSrc.ei,dst=ei;const[ex]=data[di].splice(src,1);data[di].splice(dst,0,ex);const[sd]=setsDone[di].splice(src,1);setsDone[di].splice(dst,0,sd);
+  // Remap restEnabled keys after drag reorder
+  const nRE={};Object.keys(restEnabled).forEach(k=>{if(parseInt(k.split('-')[0])!==di){nRE[k]=restEnabled[k];return;}const kei=parseInt(k.split('-')[1]);let newEi=kei;if(kei===src)newEi=dst;else if(src<dst&&kei>src&&kei<=dst)newEi=kei-1;else if(src>dst&&kei<src&&kei>=dst)newEi=kei+1;nRE[`${di}-${newEi}`]=restEnabled[k];});restEnabled=nRE;
+  dragSrc=null;persist();render();}
 function dragEnd(e){document.querySelectorAll('.ex-block').forEach(b=>{b.classList.remove('dragging');b.classList.remove('drag-over');});dragSrc=null;}
 
 function toggleExpand(di,ei){const k=`${di}-${ei}`;if(expanded.has(k)){expanded.delete(k);}else{expanded.clear();expanded.add(k);}renderTable();}
@@ -2105,12 +2231,14 @@ function renderProgressOverview() {
   const allDks = [...new Set(fh.map(h => h.dk||(h.ts?dayKey(new Date(h.ts)):null)).filter(Boolean))].sort().reverse();
   let streak = 0;
   const todayDk = dayKey(new Date());
-  // Only start streak from today if today has a session; otherwise start from most recent session day
-  let streakRef = allDks[0] === todayDk ? new Date() : (allDks[0] ? (() => { const p=allDks[0].split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); })() : new Date());
-  for (const dk of allDks) {
+  // Deduplicate dks so the same day doesn't count twice
+  const uniqueDks = [...new Set(allDks)];
+  let streakRef = uniqueDks[0] === todayDk ? new Date() : (uniqueDks[0] ? (() => { const p=uniqueDks[0].split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); })() : new Date());
+  for (const dk of uniqueDks) {
     const parts = dk.split('-').map(Number);
     const d = new Date(parts[0], parts[1]-1, parts[2]);
-    if (Math.abs(streakRef - d) <= 1.5 * 86400000) { streak++; streakRef = d; } else break;
+    const diffDays = Math.round(Math.abs(streakRef - d) / 86400000);
+    if (diffDays <= 1) { streak++; streakRef = d; } else break;
   }
 
   const scheduledDaysPerWeek = weekSched.filter(v => v!==null&&v!==undefined).length;
@@ -2563,17 +2691,21 @@ function renderSchedulePage() {
     wo.innerHTML = WEEK_DAYS.map((dayName, wi) => {
       const cfgIdx = weekSched[wi];
       const isToday = wi === todayIdx;
+      const isSelected = wi === selectedWeekIdx;
       const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
       const cfg = isRest ? null : CFG[cfgIdx];
       const abbr = isRest ? '·' : (cfg?.label || '?').slice(0, 2).toUpperCase();
       const shortName = isRest ? 'Rest' : (cfg?.label || '?');
-      return `<div class="sched-week-cell${isToday ? ' swo-today' : ''}${isRest ? ' swo-rest' : ''}" onclick="openDayAssignPop(${wi}, this, event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDayAssignPop(${wi},this,event);}" role="button" tabindex="0" style="cursor:pointer">
+      return `<div class="sched-week-cell${isToday ? ' swo-today' : ''}${isRest ? ' swo-rest' : ''}${isSelected && !isToday ? ' swo-selected' : ''}" onclick="openDayAssignPop(${wi}, this, event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDayAssignPop(${wi},this,event);}" role="button" tabindex="0" style="cursor:pointer">
         <span class="sched-week-cell-day">${escHtml(dayName.slice(0,1))}</span>
         <div class="sched-week-cell-dot" style="background:${isRest ? 'var(--surf3)' : 'var(--surf3)'};color:${isRest ? 'var(--muted)' : 'var(--muted2)'}">${escHtml(abbr)}</div>
         <span class="sched-week-cell-name">${escHtml(shortName)}</span>
       </div>`;
     }).join('');
   }
+
+  // ── 2. Active workout index from current selected day ────────────────────
+  const activeCfgIdx = weekSched[selectedWeekIdx];
 
   // ── 3. Manage workouts with drag-reorder, color, duplicate, stats ────────
   const cm = document.getElementById('sched-workout-manage-page');
@@ -2583,7 +2715,8 @@ function renderSchedulePage() {
       cm.innerHTML = CFG.map((cfg, ci) => {
         const usedDays = weekSched.filter(v => v === ci).length;
         const exCount = (data[ci] || []).length;
-        return `<div class="sched-workout-card" id="swc-${ci}"
+        const isActiveCi = ci === activeCfgIdx;
+        return `<div class="sched-workout-card${isActiveCi ? ' is-active-workout' : ''}" id="swc-${ci}"
           ondragover="schedCardDragOver(event,${ci})"
           ondrop="schedCardDrop(event,${ci})"
           ondragend="schedCardDragEnd()">
@@ -2591,7 +2724,8 @@ function renderSchedulePage() {
             ondragstart="schedCardDragStart(event,${ci})"
             onclick="event.stopPropagation()"><span></span><span></span><span></span></div>
           <div class="sched-workout-card-body">
-            <div class="sched-workout-card-name">${escHtml(cfg.label)}</div>
+            <div class="sched-workout-card-name">${escHtml(cfg.label)}${isActiveCi ? `<span class="sync-dot" title="Currently selected in Workout tab"></span>` : ''}</div>
+            <div class="sched-workout-card-meta">${exCount} exercise${exCount!==1?'s':''} · ${usedDays} day${usedDays!==1?'s':''}/week</div>
           </div>
           <div class="sched-workout-card-actions">
             <button class="swc-action-btn" onclick="event.stopPropagation();openEditWorkoutExercises(${ci})">Edit</button>
@@ -2740,6 +2874,32 @@ function setDayWorkout(wi,val){weekSched[wi]=val==='rest'?null:parseInt(val);per
 let dayCtx=null;
 function openDayEdit(e,di){if(e)e.stopPropagation();dayCtx={mode:'edit',di};document.getElementById('day-sheet-title').textContent='Rename Workout';document.getElementById('day-name-input').value=CFG[di].label;document.getElementById('day-del-btn').style.display=data.length>1?'':'none';document.getElementById('ov-day').classList.add('open');setTimeout(()=>document.getElementById('day-name-input').focus(),300);}
 function closeDaySheet(){document.getElementById('ov-day').classList.remove('open');dayCtx=null;}
+// ── Cross-tab sync helpers ─────────────────────────────────────────────────────
+// Highlight selected workout day in Schedule mini-calendar
+function _syncScheduleSelectedDay() {
+  const cells = document.querySelectorAll('#sched-week-overview .sched-week-cell');
+  cells.forEach((cell, wi) => {
+    const isSelected = wi === selectedWeekIdx;
+    const isToday = wi === getTodayWeekIdx();
+    cell.classList.toggle('swo-selected', isSelected && !isToday);
+  });
+  // Also highlight active workout card
+  document.querySelectorAll('.sched-workout-card').forEach((card, ci) => {
+    const activeCfgIdx = weekSched[selectedWeekIdx];
+    card.classList.toggle('is-active-workout', ci === activeCfgIdx);
+  });
+}
+
+// Flash a tiny sync indicator on the Schedule tab after a save
+function _flashScheduleTab() {
+  const schedTab = document.querySelector('.pn[data-page="schedule"]');
+  if (!schedTab) return;
+  const dot = document.createElement('span');
+  dot.className = 'sync-dot';
+  schedTab.appendChild(dot);
+  setTimeout(() => dot.remove(), 800);
+}
+
 function saveDay(){
   const name=document.getElementById('day-name-input').value.trim();
   if(!name){document.getElementById('day-name-input').focus();return;}
@@ -2749,11 +2909,38 @@ function saveDay(){
   }
   closeDaySheet();persist();render();
   const pg=document.getElementById('page-schedule');if(pg&&!pg.classList.contains('hidden'))renderSchedulePage();
+  _flashScheduleTab();
 }
-function remapSchedAfterDelete(di){return weekSched.map(v=>{if(v===null||v===undefined)return null;if(v===di)return null;if(v>di)return v-1;return v;});}
-function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);weekSched=remapSchedAfterDelete(di);if(activeDay===di||activeDay>=data.length)activeDay=0;const newCfgIdx=weekSched[selectedWeekIdx];if(newCfgIdx===null||newCfgIdx===undefined||newCfgIdx>=CFG.length){const firstWorkoutWi=weekSched.findIndex(v=>v!==null&&v!==undefined&&v<CFG.length);if(firstWorkoutWi!==-1)selectedWeekIdx=firstWorkoutWi;}closeDaySheet();persist();render();});}
 
-function addSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];ex.sets++;const lo=(ex.setOvr&&ex.setOvr[ex.sets-2])||{};if(!ex.setOvr)ex.setOvr=[];ex.setOvr[ex.sets-1]={reps:lo.reps??ex.reps,weight:lo.weight??ex.weight};if(!Array.isArray(setsDone[di][ei]))setsDone[di][ei]=Array(ex.sets).fill(false);else setsDone[di][ei]=[...setsDone[di][ei],false];persist();renderTable();}
+function dayAssignSelectSheet(val) {
+  if (_dayAssignWi === null) return;
+  if (val === 'rest') {
+    setDayWorkout(_dayAssignWi, 'rest');
+  } else {
+    const idx = parseInt(val);
+    if (!isNaN(idx) && idx >= 0 && idx < CFG.length) {
+      setDayWorkout(_dayAssignWi, idx);
+      // If assigning to currently selected day, update activeDay too
+      if (_dayAssignWi === selectedWeekIdx) {
+        activeDay = idx;
+        editingEx = null;
+        deleteConfirm = null;
+        expanded.clear();
+      }
+    }
+  }
+  closeDayAssignSheet();
+  render();
+  renderSchedulePage();
+  _flashScheduleTab();
+}
+
+function remapSchedAfterDelete(di){return weekSched.map(v=>{if(v===null||v===undefined)return null;if(v===di)return null;if(v>di)return v-1;return v;});}
+function confirmDeleteDay(){if(!dayCtx||dayCtx.mode!=='edit')return;const di=dayCtx.di;if(data.length<=1)return;confirmAction(`Delete "${CFG[di].label}"?`,'All exercises and progress will be permanently removed.','Delete','danger',()=>{data.splice(di,1);setsDone.splice(di,1);CFG.splice(di,1);weekSched=remapSchedAfterDelete(di);if(activeDay===di||activeDay>=data.length)activeDay=0;const newCfgIdx=weekSched[selectedWeekIdx];if(newCfgIdx===null||newCfgIdx===undefined||newCfgIdx>=CFG.length){const firstWorkoutWi=weekSched.findIndex(v=>v!==null&&v!==undefined&&v<CFG.length);if(firstWorkoutWi!==-1)selectedWeekIdx=firstWorkoutWi;}
+    const nRE={};Object.keys(restEnabled).forEach(k=>{const parts=k.split('-');const kdi=parseInt(parts[0]),kei=parseInt(parts[1]);if(kdi===di)return;const newDi=kdi>di?kdi-1:kdi;nRE[`${newDi}-${kei}`]=restEnabled[k];});restEnabled=nRE;
+    closeDaySheet();persist();render();});}
+
+function addSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];if(!ex.setOvr)ex.setOvr=[];const lo=ex.setOvr[ex.sets-1]||{};ex.sets++;ex.setOvr[ex.sets-1]={reps:lo.reps??ex.reps,weight:lo.weight??ex.weight};if(!Array.isArray(setsDone[di][ei]))setsDone[di][ei]=Array(ex.sets).fill(false);else setsDone[di][ei]=[...setsDone[di][ei],false];persist();renderTable();}
 function removeSet(e,di,ei){e.stopPropagation();const ex=data[di][ei];if(ex.sets<=1)return;ex.sets--;if(ex.setOvr)ex.setOvr=ex.setOvr.slice(0,ex.sets);if(Array.isArray(setsDone[di]?.[ei]))setsDone[di][ei]=setsDone[di][ei].slice(0,ex.sets);persist();renderTable();}
 function startDeleteActive(){const di=activeDay;for(const k of expanded){const p=k.split('-').map(Number);if(p[0]===di){deleteConfirm={di:p[0],ei:p[1]};renderTable();return;}}}
 
@@ -2825,7 +3012,7 @@ function renderReplaceList(query) {
     filtered.forEach(ex => {
       const isCurrent = ex === currentName;
       const isCustom = customExLib[group]?.includes(ex);
-      html += `<button class="replace-ex-btn${isCurrent?' current-ex':''}" onclick='selectReplaceEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isCurrent?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${isCurrent?' current-ex':''}" onclick='selectReplaceEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isCustom?'<span class="custom-ex-tag">custom</span>':''}${isCurrent?' ✓':''}</button>`;
     });
   }
 
@@ -3035,8 +3222,8 @@ function saveNewWorkout() {
 }
 
 function makeIcon(sz){const c=document.createElement('canvas');c.width=c.height=sz;const x=c.getContext('2d');x.fillStyle='#080A08';x.fillRect(0,0,sz,sz);x.fillStyle='#C8A96E';x.font=`${sz*.42}px 'Cormorant Garamond', Georgia, serif`;x.textAlign='center';x.textBaseline='middle';x.fillText('C',sz/2,sz/2);return c.toDataURL('image/png');}
-function registerPWA(){try{const mf={name:'Consistency',short_name:'Consistency',description:'Premium workout tracker',start_url:'.',display:'standalone',background_color:'#080A08',theme_color:'#080A08',orientation:'portrait',icons:[{src:makeIcon(192),sizes:'192x192',type:'image/png'},{src:makeIcon(512),sizes:'512x512',type:'image/png'}]};document.getElementById('manifest-placeholder').href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/json'}));}catch(e){console.warn('PWA manifest registration failed:',e);}}
-if(document.fonts&&document.fonts.ready){document.fonts.ready.then(registerPWA);}else{registerPWA();}
+function registerPWA(){try{const mf={name:'Consistency',short_name:'Consistency',description:'Premium workout tracker',start_url:'.',display:'standalone',background_color:'#080A08',theme_color:'#080A08',orientation:'portrait',icons:[{src:makeIcon(192),sizes:'192x192',type:'image/png'},{src:makeIcon(512),sizes:'512x512',type:'image/png'}]};const blob=new Blob([JSON.stringify(mf)],{type:'application/json'});const url=URL.createObjectURL(blob);document.getElementById('manifest-placeholder').href=url;}catch(e){console.warn('PWA manifest registration failed:',e);}}
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(registerPWA).catch(registerPWA);}else{registerPWA();}
 
 render();updateBackupLabel();_lastBackupLabelUpdate=Date.now();
 
@@ -3188,6 +3375,16 @@ function eweRemoveEx(idx) {
   const ci = _eweTargetCi;
   data[ci].splice(idx, 1);
   setsDone[ci].splice(idx, 1);
+  // Remap restEnabled keys after removal so indices stay correct
+  const nRE = {};
+  Object.keys(restEnabled).forEach(k => {
+    const parts = k.split('-'), kdi = parseInt(parts[0]), kei = parseInt(parts[1]);
+    if (kdi !== ci) { nRE[k] = restEnabled[k]; return; }
+    if (kei < idx) nRE[k] = restEnabled[k];
+    else if (kei > idx) nRE[`${ci}-${kei - 1}`] = restEnabled[k];
+    // kei === idx is the removed exercise — drop it
+  });
+  restEnabled = nRE;
   syncSets();
   persist();
   render();
