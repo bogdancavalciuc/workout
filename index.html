@@ -704,6 +704,8 @@ body {
 .qeb-btn:active { border-color: var(--gold3); color: var(--gold); }
 .qeb-btn.primary { border-color: rgba(0,212,170,.3); color: var(--gold3); background: rgba(0,212,170,.05); }
 .qeb-btn.primary:active { background: rgba(0,212,170,.12); }
+.qeb-btn.danger { border-color: rgba(255,59,92,.25); color: var(--danger); background: rgba(255,59,92,.05); }
+.qeb-btn.danger:active { border-color: var(--danger); background: rgba(255,59,92,.12); }
 .qeb-assign-btn {
   font-family: var(--mono); font-size: 7px; letter-spacing: .12em;
   text-transform: uppercase; padding: 6px 12px; border-radius: var(--r);
@@ -910,11 +912,333 @@ body {
 }
 .day-assign-rest-btn.is-selected { color:var(--text2); border-color:var(--line3); }
 .day-assign-rest-btn:active { color:var(--danger); border-color:var(--danger); }
+
+/* ══════════════════════════════════════════════════════════════════
+   LIGHT THEME — overrides all dark defaults
+══════════════════════════════════════════════════════════════════ */
+
+
+html[data-theme="light"] {
+  --bg:      #F2F0EB;
+  --bg2:     #E8E5DF;
+  --surf:    #FFFFFF;
+  --surf2:   #F7F5F0;
+  --surf3:   #EEECE7;
+  --line:    #E0DDD7;
+  --line2:   #D4D1CA;
+  --line3:   #C4C1BA;
+  --text:    #0A0A0A;
+  --text2:   #2A2A2A;
+  --muted:   #999590;
+  --muted2:  #6B6862;
+  --gold:    #E8271A;
+  --gold2:   #FF3827;
+  --gold3:   #C01F14;
+  --success: #1A7A3C;
+  --danger:  #E8271A;
+  --r:  5px;
+  --r2: 12px;
+  --r3: 18px;
+
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.1);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.14);
+}
+
+/* Body */
+html[data-theme="light"] body { background-image: none; }
+html[data-theme="light"] .top { background: linear-gradient(to bottom, #F2F0EB 88%, transparent); }
+html[data-theme="light"] .fw  { background: linear-gradient(to top,   #F2F0EB 70%, transparent); }
+
+/* Nav */
+html[data-theme="light"] .page-nav { border-bottom: 2px solid #E0DDD7; }
+html[data-theme="light"] .pn { color:#999590; }
+html[data-theme="light"] .pn.active { color:#0A0A0A; border-bottom-color:#E8271A; }
+
+/* Top bar */
+html[data-theme="light"] .top-bar-name { color:#0A0A0A; }
+html[data-theme="light"] .top-bar-today-badge { color:#C01F14; border:1.5px solid #C01F14; border-radius:3px; padding:1px 7px; }
+html[data-theme="light"] .session-ring-wrap.running .session-ring-prog { stroke:#E8271A; }
+html[data-theme="light"] .session-ring-wrap.running .session-ring-val  { color:#E8271A; }
+
+/* Day tabs */
+html[data-theme="light"] .dt { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+html[data-theme="light"] .dt:active { background:#F7F5F0; border-color:#D4D1CA; }
+html[data-theme="light"] .dt.active { border:2.5px solid #0A0A0A; background:#0A0A0A; box-shadow:0 2px 12px rgba(0,0,0,.18); }
+html[data-theme="light"] .dt.active .dt-day-name { color:#FFFFFF; }
+html[data-theme="light"] .dt.active .dt-workout-name { color:rgba(255,255,255,.65); }
+html[data-theme="light"] .dt.today-tab { border:2.5px solid #E8271A; background:#FFFFFF; box-shadow:none; }
+html[data-theme="light"] .dt.today-tab .dt-day-name { color:#E8271A; }
+html[data-theme="light"] .dt.today-tab .dt-workout-name { color:#6B6862; }
+html[data-theme="light"] .dt.rest-tab { opacity:.4; }
+html[data-theme="light"] .dt-day-name { color:#6B6862; }
+html[data-theme="light"] .dt-done-check { background:#1A7A3C; }
+
+/* Quick edit bar */
+html[data-theme="light"] .qeb-name  { color:#0A0A0A; }
+html[data-theme="light"] .qeb-btn   { border:1.5px solid #D4D1CA; color:#6B6862; background:none; }
+html[data-theme="light"] .qeb-btn.primary { border-color:rgba(232,39,26,.3); color:#C01F14; background:rgba(232,39,26,.05); }
+html[data-theme="light"] .qeb-btn.danger { border-color:rgba(232,39,26,.25); color:#E8271A; background:rgba(232,39,26,.04); }
+html[data-theme="light"] .qeb-assign-btn { border:1.5px dashed #C4C1BA; color:#999590; background:none; }
+
+/* Exercise blocks */
+html[data-theme="light"] .ex-block { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+html[data-theme="light"] .ex-block.drag-over { border-color:#E8271A; box-shadow:0 0 0 2px rgba(232,39,26,.15); }
+html[data-theme="light"] .ex-name-row:active { background:#F7F5F0; }
+html[data-theme="light"] .ex-name-row.done-all { opacity:.65; }
+html[data-theme="light"] .ex-name-row.done-all::after { display:none; }
+html[data-theme="light"] .drag-num { border:none; color:#999590; background:none; border-radius:0; }
+html[data-theme="light"] .chevron { color:#999590; }
+
+/* Sets header */
+html[data-theme="light"] .sets-header { background:#F7F5F0; border-bottom:none; border-top:1.5px solid #E0DDD7; grid-template-columns:28px 1fr 58px 58px 44px; padding:6px 12px 7px; }
+html[data-theme="light"] .sets-header span { color:#999590; }
+
+/* Set rows */
+html[data-theme="light"] .set-row { background:#FFFFFF; border-top:1px solid #E0DDD7; grid-template-columns:28px 1fr 58px 58px 44px; min-height:52px; }
+html[data-theme="light"] .set-row.set-done { background:rgba(26,122,60,.04); }
+html[data-theme="light"] .set-num { color:#999590; text-align:center; }
+html[data-theme="light"] .set-num.done-num { color:#1A7A3C; }
+html[data-theme="light"] .set-input { background:none; border:none; border-bottom:1.5px solid #D4D1CA; color:#0A0A0A; width:100%; text-align:center; padding:4px 2px; border-radius:0; }
+html[data-theme="light"] .set-input:focus { border-bottom-color:#E8271A; background:none; }
+html[data-theme="light"] .set-input.done { color:#999590; border-bottom-color:transparent; opacity:1; pointer-events:none; }
+html[data-theme="light"] .set-check { border:2.5px solid #D4D1CA; background:none; width:34px; height:34px; }
+html[data-theme="light"] .set-check.checked { background:#0A0A0A; border-color:#0A0A0A; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+html[data-theme="light"] .set-check-wrap.resting .set-check { background:#E8271A; border-color:#E8271A; box-shadow:0 0 12px rgba(232,39,26,.35); }
+
+/* Rest ring */
+html[data-theme="light"] .rest-ring-prog { stroke:#E8271A; }
+html[data-theme="light"] .rest-ring-prog.urgent { stroke:#E8271A; }
+html[data-theme="light"] .rest-ring-val { color:#FFFFFF; }
+html[data-theme="light"] .swipe-bg { background:#1A7A3C; }
+html[data-theme="light"] .swipe-bg.undo { background:#6B6862; }
+
+/* Set controls */
+html[data-theme="light"] .set-controls { background:#F7F5F0; border-top:1.5px solid #E0DDD7; gap:7px; padding:11px 14px; }
+html[data-theme="light"] .set-ctrl-add  { background:#0A0A0A; color:#FFFFFF; border:none; }
+html[data-theme="light"] .set-ctrl-rem  { background:none; border:1.5px solid #D4D1CA; color:#6B6862; }
+html[data-theme="light"] .set-ctrl-all  { background:none; border:1.5px solid #D4D1CA; color:#6B6862; }
+html[data-theme="light"] .set-ctrl-all.all-done { border-color:#C4C1BA; color:#999590; }
+html[data-theme="light"] .rest-toggle-row { background:#F7F5F0; border-top:1px solid #E0DDD7; }
+html[data-theme="light"] .rest-toggle-label { color:#999590; }
+html[data-theme="light"] .rest-toggle-switch input:checked + .rest-toggle-track { background:#0A0A0A; }
+html[data-theme="light"] .rest-toggle-knob { background:#FFFFFF; }
+html[data-theme="light"] .ie-input { border-bottom:2px solid #E8271A; color:#0A0A0A; background:none; }
+
+/* Done banner */
+html[data-theme="light"] .done-banner { background:#0A0A0A; border:none; border-radius:12px; display:none; flex-direction:column; align-items:center; }
+html[data-theme="light"] .done-banner.show { display:flex; }
+html[data-theme="light"] .done-banner-shimmer { background:repeating-linear-gradient(90deg,transparent 0px,transparent 60px,rgba(255,255,255,.03) 60px,rgba(255,255,255,.03) 62px); animation:none; }
+html[data-theme="light"] .done-title { color:#FFFFFF; }
+html[data-theme="light"] .done-sub { color:rgba(255,255,255,.5); }
+html[data-theme="light"] .session-note-label { color:rgba(255,255,255,.45); }
+html[data-theme="light"] .session-note-input { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:#FFFFFF; }
+html[data-theme="light"] .session-note-input::placeholder { color:rgba(255,255,255,.25); opacity:1; }
+html[data-theme="light"] .session-note-input:focus { border-color:rgba(255,255,255,.3); }
+html[data-theme="light"] .done-reset { border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.4); }
+html[data-theme="light"] .backup-nudge { background:rgba(255,255,255,.07); border:none; }
+html[data-theme="light"] .backup-nudge-txt { color:rgba(255,255,255,.5); }
+html[data-theme="light"] .backup-nudge-btn { background:#E8271A; color:#FFFFFF; }
+html[data-theme="light"] .backup-nudge-dismiss { color:rgba(255,255,255,.3); }
+
+/* FAB / main buttons */
+html[data-theme="light"] .fab  { background:#0A0A0A; color:#FFFFFF; box-shadow:0 4px 20px rgba(0,0,0,.2); }
+html[data-theme="light"] .fab:hover { box-shadow:0 6px 28px rgba(0,0,0,.3); }
+html[data-theme="light"] .bsv  { background:#0A0A0A; color:#FFFFFF; }
+html[data-theme="light"] .del-ex-btn { border:1.5px solid #D4D1CA; color:#999590; }
+html[data-theme="light"] .del-ex-btn:active { border-color:#E8271A; color:#E8271A; }
+
+/* Sheets */
+html[data-theme="light"] .ov  { background:rgba(10,10,10,.55); backdrop-filter:blur(8px); }
+html[data-theme="light"] .sh  { background:#FFFFFF; border:1.5px solid #D4D1CA; border-top:2px solid #C4C1BA; border-radius:16px 16px 0 0; }
+html[data-theme="light"] .shh { background:#D4D1CA; }
+html[data-theme="light"] .shl { color:#0A0A0A; }
+html[data-theme="light"] .field label { color:#999590; }
+html[data-theme="light"] .field input, html[data-theme="light"] .field textarea { background:#F7F5F0; border:1.5px solid #D4D1CA; color:#0A0A0A; }
+html[data-theme="light"] .field input:focus, html[data-theme="light"] .field textarea:focus { border-color:#E8271A; }
+
+/* Confirm overlay */
+html[data-theme="light"] .confirm-overlay { background:rgba(10,10,10,.6); }
+html[data-theme="light"] .confirm-box { background:#FFFFFF; border:1.5px solid #D4D1CA; }
+html[data-theme="light"] .confirm-title { color:#0A0A0A; }
+html[data-theme="light"] .confirm-msg { color:#999590; }
+html[data-theme="light"] .confirm-cancel { background:#F7F5F0; color:#999590; border:1.5px solid #E0DDD7; }
+html[data-theme="light"] .confirm-ok { background:#0A0A0A; color:#FFFFFF; }
+html[data-theme="light"] .confirm-ok.danger { background:#E8271A; color:#FFFFFF; }
+
+/* Toast */
+html[data-theme="light"] .import-toast { background:#FFFFFF; border:1.5px solid #D4D1CA; color:#0A0A0A; box-shadow:0 4px 16px rgba(0,0,0,.1); }
+html[data-theme="light"] .import-toast.ok  { border-color:#1A7A3C; color:#1A7A3C; }
+html[data-theme="light"] .import-toast.err { border-color:#E8271A; color:#E8271A; }
+
+/* Replace / Library */
+html[data-theme="light"] .replace-group-label { color:#C01F14; }
+html[data-theme="light"] .replace-ex-btn { background:#F7F5F0; border:1.5px solid #E0DDD7; color:#0A0A0A; }
+html[data-theme="light"] .replace-ex-btn:active { background:#EEECE7; border-color:#D4D1CA; }
+html[data-theme="light"] .replace-ex-btn.current-ex { border-color:#E8271A; color:#C01F14; background:rgba(232,39,26,.04); }
+html[data-theme="light"] .custom-ex-tag { color:#C01F14; background:rgba(232,39,26,.06); border:1px solid rgba(232,39,26,.2); }
+
+/* Delete confirm */
+html[data-theme="light"] .del-confirm { background:rgba(232,39,26,.04); border-bottom:1px solid rgba(232,39,26,.12); }
+html[data-theme="light"] .del-txt { color:#6B6862; }
+html[data-theme="light"] .del-no  { background:#F7F5F0; color:#999590; border:1.5px solid #E0DDD7; }
+html[data-theme="light"] .del-yes { background:#E8271A; color:#FFFFFF; }
+
+/* Progress page */
+html[data-theme="light"] .prog-select-sm { background:#FFFFFF; border:1.5px solid #D4D1CA; }
+html[data-theme="light"] .prog-select-sm:focus { border-color:#E8271A; }
+html[data-theme="light"] .prog-stat { background:#FFFFFF; border:1.5px solid #E0DDD7; }
+html[data-theme="light"] .prog-stat-val { color:#0A0A0A; }
+html[data-theme="light"] .prog-stat-val.stat-good { color:#1A7A3C; }
+html[data-theme="light"] .prog-stat-val.stat-mid  { color:#E8271A; }
+html[data-theme="light"] .prog-stat-val.stat-low  { color:#E8271A; opacity:.6; }
+html[data-theme="light"] .prog-kpi { background:#FFFFFF; }
+html[data-theme="light"] .prog-kpi-val { color:#0A0A0A; }
+html[data-theme="light"] .prog-kpi.kpi-up .prog-kpi-val   { color:#1A7A3C; }
+html[data-theme="light"] .prog-kpi.kpi-down .prog-kpi-val { color:#E8271A; }
+html[data-theme="light"] .prog-card { background:#FFFFFF; border:1.5px solid #E0DDD7; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+html[data-theme="light"] .prog-card-title { border-bottom:1px solid #E0DDD7; color:#999590; }
+html[data-theme="light"] .heat-cell.heat-0 { background:#EEECE7; }
+html[data-theme="light"] .heat-cell.heat-1 { background:rgba(232,39,26,.2); }
+html[data-theme="light"] .heat-cell.heat-2 { background:rgba(232,39,26,.5); }
+html[data-theme="light"] .heat-cell.heat-3 { background:#E8271A; }
+html[data-theme="light"] .heat-cell.heat-today { outline-color:#E8271A; }
+
+/* Progress sub-tabs */
+html[data-theme="light"] #prog-tab-progress, html[data-theme="light"] #prog-tab-history {
+}
+
+/* History */
+html[data-theme="light"] .hist-session-card { background:#FFFFFF; border:1.5px solid #E0DDD7; }
+html[data-theme="light"] .hist-session-card.expanded { border-color:#D4D1CA; }
+html[data-theme="light"] .hist-session-date { color:#0A0A0A; }
+html[data-theme="light"] .hist-session-sub { color:#999590; }
+html[data-theme="light"] .hist-session-vol { color:#0A0A0A; }
+html[data-theme="light"] .hist-session-chevron { color:#999590; }
+html[data-theme="light"] .hist-ex-row { border-top:1px solid #E0DDD7; }
+html[data-theme="light"] .hist-ex-name { color:#0A0A0A; }
+html[data-theme="light"] .hist-set-chip { background:#F7F5F0; border:1px solid #D4D1CA; color:#6B6862; }
+html[data-theme="light"] .hist-session-note { border-top:1px solid #E0DDD7; color:#6B6862; }
+
+/* Schedule page */
+html[data-theme="light"] .sched-week-cell { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:6px; }
+html[data-theme="light"] .sched-week-cell:active { background:#F7F5F0; border-color:#D4D1CA; }
+html[data-theme="light"] .sched-week-cell.swo-today { border-color:#E8271A; background:#FFFFFF; box-shadow:none; }
+html[data-theme="light"] .sched-week-cell.swo-today .sched-week-cell-day { color:#E8271A; }
+html[data-theme="light"] .sched-week-cell.swo-rest { opacity:.4; }
+html[data-theme="light"] .sched-week-cell-day { color:#6B6862; }
+html[data-theme="light"] .sched-week-cell.swo-selected:not(.swo-today) { border-color:#0A0A0A; background:#F7F5F0; box-shadow:none; }
+html[data-theme="light"] .sched-week-cell.swo-selected .sched-week-cell-day { color:#0A0A0A; }
+html[data-theme="light"] .sched-workout-card { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:12px; }
+html[data-theme="light"] .sched-workout-card.drag-over { border-color:#E8271A; box-shadow:0 0 12px rgba(232,39,26,.12); }
+html[data-theme="light"] .sched-workout-card-name { color:#0A0A0A; }
+html[data-theme="light"] .sched-workout-card-meta { color:#999590; }
+html[data-theme="light"] .sched-workout-card.is-active-workout { border-color:rgba(232,39,26,.35); background:rgba(232,39,26,.03); }
+html[data-theme="light"] .sched-workout-card.is-active-workout .sched-workout-card-name { color:#E8271A; }
+html[data-theme="light"] .swc-action-btn { border:1.5px solid #D4D1CA; color:#6B6862; }
+html[data-theme="light"] .swc-action-btn:hover { border-color:#0A0A0A; color:#0A0A0A; }
+html[data-theme="light"] .swc-action-btn.danger:hover { border-color:#E8271A; color:#E8271A; }
+html[data-theme="light"] .sched-reset-week-btn { border-color:#E0DDD7; color:#999590; }
+html[data-theme="light"] .sched-reset-week-btn:hover { border-color:#D4D1CA; color:#0A0A0A; }
+
+/* Sync dot */
+html[data-theme="light"] .sync-dot { background:#C01F14; }
+
+/* Add lib */
+html[data-theme="light"] .add-lib-input { background:#FFFFFF; border:1.5px solid #D4D1CA; color:#0A0A0A; }
+html[data-theme="light"] .add-lib-input:focus { border-color:#E8271A; }
+html[data-theme="light"] .add-lib-selected-wrap { background:#F7F5F0; border:1.5px solid #E0DDD7; }
+html[data-theme="light"] .add-lib-selected-name { color:#0A0A0A; border-bottom-color:#D4D1CA; }
+
+/* Day assign bottom sheet */
+html[data-theme="light"] #ov-day-assign { background:rgba(10,10,10,.5); }
+html[data-theme="light"] .day-assign-sh { background:#FFFFFF; border-top:1.5px solid #D4D1CA; }
+html[data-theme="light"] .day-assign-sh-handle { background:#D4D1CA; }
+html[data-theme="light"] .day-assign-sh-title { color:#0A0A0A; }
+html[data-theme="light"] .day-assign-sh-sub { color:#999590; }
+html[data-theme="light"] .day-assign-close { border:1.5px solid #D4D1CA; color:#6B6862; }
+html[data-theme="light"] .day-assign-card { background:#F7F5F0; border:1.5px solid #E0DDD7; }
+html[data-theme="light"] .day-assign-card:active { background:#EEECE7; }
+html[data-theme="light"] .day-assign-card.is-selected { border-color:#0A0A0A; background:#0A0A0A; }
+html[data-theme="light"] .day-assign-card.is-selected .day-assign-card-name { color:#FFFFFF; }
+html[data-theme="light"] .day-assign-card.is-selected .day-assign-card-meta { color:rgba(255,255,255,.5); }
+html[data-theme="light"] .day-assign-card-check { color:#FFFFFF; }
+html[data-theme="light"] .day-assign-card-name { color:#0A0A0A; }
+html[data-theme="light"] .day-assign-card-meta { color:#999590; }
+html[data-theme="light"] .day-assign-rest-btn { border:1.5px solid #D4D1CA; color:#999590; }
+html[data-theme="light"] .day-assign-rest-btn.is-selected { color:#2A2A2A; border-color:#C4C1BA; }
+html[data-theme="light"] .day-assign-rest-btn:active { color:#E8271A; border-color:#E8271A; }
+
+/* Edit workout exercises sheet */
+html[data-theme="light"] #edit-workout-sh { background:#FFFFFF; }
+html[data-theme="light"] #edit-workout-sh .add-lib-selected-wrap { background:#F7F5F0; border-color:#E0DDD7; }
+html[data-theme="light"] #ewe-lib-list .replace-group-label { color:#C01F14; }
+
+/* Backup bar */
+html[data-theme="light"] .backup-bar { background:#FFFFFF; border:1px solid #E0DDD7; }
+html[data-theme="light"] .backup-bar-title { color:#6B6862; }
+html[data-theme="light"] .backup-bar-sub { color:#999590; }
+html[data-theme="light"] .backup-btn-export { background:#0A0A0A; color:#FFFFFF; }
+html[data-theme="light"] .backup-btn-import { border-color:#D4D1CA; color:#6B6862; }
+html[data-theme="light"] .footer-backup-sub { color:#999590; }
+
+/* Text inputs inside sheets (search boxes) */
+html[data-theme="light"] #add-lib-search,
+html[data-theme="light"] #replace-search,
+html[data-theme="light"] #nw-search,
+html[data-theme="light"] #ewe-search,
+html[data-theme="light"] #lib-search-filter,
+html[data-theme="light"] #lib-new-name,
+html[data-theme="light"] #nw-name-input,
+html[data-theme="light"] #day-name-input {
+  background:#F7F5F0; border:1.5px solid #D4D1CA; color:#0A0A0A;
+}
+html[data-theme="light"] #add-lib-search:focus,
+html[data-theme="light"] #replace-search:focus,
+html[data-theme="light"] #nw-search:focus,
+html[data-theme="light"] #ewe-search:focus,
+html[data-theme="light"] #lib-search-filter:focus,
+html[data-theme="light"] #lib-new-name:focus,
+html[data-theme="light"] #nw-name-input:focus,
+html[data-theme="light"] #day-name-input:focus { border-color:#E8271A; }
+
+/* Library manage sheet */
+html[data-theme="light"] #lib-new-group {
+  background:#F7F5F0; border:1.5px solid #D4D1CA; color:#0A0A0A;
+}
+html[data-theme="light"] #lib-add-btn { background:#E8271A; color:#FFFFFF; }
+
+/* Lib list items */
+html[data-theme="light"] #lib-custom-list > div { background:#F7F5F0; border:1px solid #E0DDD7; }
+
+/* New workout sheet */
+html[data-theme="light"] #new-workout-sh { background:#FFFFFF; }
+html[data-theme="light"] #nw-name-btn { background:#0A0A0A; color:#FFFFFF; }
+html[data-theme="light"] #nw-save-btn  { background:#0A0A0A; color:#FFFFFF; }
+
+/* Settings */
+html[data-theme="light"] .settings-btn-gold { background:#0A0A0A; color:#FFFFFF; }
+html[data-theme="light"] .settings-btn-line { border-color:#D4D1CA; color:#6B6862; }
+html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:#0A0A0A; }
 </style>
 </head>
 <body>
 
 <!-- REST RING — injected inline by JS around active set-check -->
+
+<!-- THEME TOGGLE BUTTON -->
+<button id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle light/dark theme"
+  style="position:fixed;top:10px;right:14px;z-index:300;
+    width:34px;height:34px;border-radius:50%;
+    border:1.5px solid var(--line2);
+    background:var(--surf2);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    box-shadow:var(--shadow-sm);
+    transition:border-color .2s,background .2s,box-shadow .2s;">
+  <span id="theme-icon" style="font-size:14px;line-height:1;pointer-events:none;">🌙</span>
+</button>
 
 <!-- CONFIRM -->
 <div class="confirm-overlay" id="confirm-overlay">
@@ -966,14 +1290,6 @@ body {
     <div class="day-tabs" id="day-tabs" style="margin-bottom:0;flex:1"></div>
   </div>
 
-  <!-- Quick Edit Bar — syncs with Schedule -->
-  <div class="quick-edit-bar" id="quick-edit-bar">
-    <div style="flex:1;min-width:0">
-      <div class="qeb-name" id="qeb-name">Workout</div>
-      <div class="qeb-meta" id="qeb-meta"></div>
-    </div>
-    <div class="qeb-actions" id="qeb-actions"></div>
-  </div>
   <div id="done-banner" class="done-banner">
     <div class="done-banner-shimmer"></div>
     <div class="done-icon">🏆</div>
@@ -1864,11 +2180,7 @@ function renderTabs() {
     const handler=()=>{ selectedWeekIdx=wi; if (!isRest) { saveInlineEdit(); activeDay=cfgIdx; editingEx=null; deleteConfirm=null; expanded.clear(); } render(); };
     el.onclick=handler;
     el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();handler();} };
-    // Long-press on any tab opens the assign sheet for that day
-    let _lpTimer=null;
-    el.addEventListener('touchstart',()=>{ _lpTimer=setTimeout(()=>{ _lpTimer=null; openDayAssignPop(wi,el,{stopPropagation:()=>{}}); },480); },{passive:true});
-    el.addEventListener('touchend',()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} },{passive:true});
-    el.addEventListener('touchmove',()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} },{passive:true});
+
     c.appendChild(el);
   });
   renderDayInfoBar();
@@ -1893,41 +2205,6 @@ function renderDayInfoBar() {
     }
   }
 
-  // ── Quick Edit Bar ────────────────────────────────────────────────────────
-  const qeb = document.getElementById('quick-edit-bar');
-  const qebName = document.getElementById('qeb-name');
-  const qebMeta = document.getElementById('qeb-meta');
-  const qebActions = document.getElementById('qeb-actions');
-  if (!qeb) return;
-
-  if (isRest) {
-    qeb.classList.add('rest-mode');
-    // Show assign button for rest days
-    qeb.classList.remove('rest-mode');
-    qeb.style.justifyContent = 'center';
-    if (qebName) qebName.style.display = 'none';
-    if (qebMeta) qebMeta.style.display = 'none';
-    if (qebActions) qebActions.innerHTML = `
-      <button class="qeb-assign-btn" onclick="openDayAssignPop(${wi},this,event)">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Assign workout to ${WEEK_DAYS[wi]}
-      </button>`;
-  } else {
-    qeb.style.justifyContent = '';
-    if (qebName) { qebName.style.display = ''; qebName.textContent = CFG[cfgIdx]?.label || 'Workout'; }
-    const exCount = (data[cfgIdx]||[]).length;
-    const vol = calcVol(cfgIdx);
-    if (qebMeta) qebMeta.textContent = `${exCount} exercise${exCount!==1?'s':''}`+(vol>0?' · '+fmtVol(vol):'');
-    if (qebActions) qebActions.innerHTML = `
-      <button class="qeb-btn primary" onclick="openEditWorkoutExercises(${cfgIdx})" title="Edit exercises">
-        <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 10.5V12h1.5l5.25-5.25-1.5-1.5L2 10.5zm7.5-6.75a.4.4 0 000-.57l-.93-.93a.4.4 0 00-.57 0l-.72.72 1.5 1.5.72-.72z" fill="currentColor"/></svg>
-        Edit
-      </button>
-      <button class="qeb-btn" onclick="schedRenameWorkout(${cfgIdx})" title="Rename workout">Rename</button>
-      <button class="qeb-btn" onclick="openDayAssignPop(${wi},this,event)" title="Change day assignment">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 3h8M1 7h8M3 1v8M7 1v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"/></svg>
-      </button>`;
-  }
 }
 
 function renderTable() {
@@ -1985,7 +2262,7 @@ function renderTable() {
             ? `<button class="ex-edit-btn" onclick="event.stopPropagation();saveInlineEdit()" style="opacity:1;color:var(--gold)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10.5V12h1.5l5.25-5.25-1.5-1.5L2 10.5zm7.5-6.75a.4.4 0 000-.57l-.93-.93a.4.4 0 00-.57 0l-.72.72 1.5 1.5.72-.72z" fill="currentColor"/></svg></button>`
             : exDone
               ? `<span style="font-size:13px">✓</span><span style="font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:.04em">Done</span>`
-              : `<button class="ex-edit-btn" onclick="startEdit(${di},${ei},event)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10.5V12h1.5l5.25-5.25-1.5-1.5L2 10.5zm7.5-6.75a.4.4 0 000-.57l-.93-.93a.4.4 0 00-.57 0l-.72.72 1.5 1.5.72-.72z" fill="currentColor"/></svg></button>`}
+              : ``}
 
         </div></div>
       <div class="sets-wrap${isExp?' open':''}"><div class="sets-inner"><div>
@@ -2005,7 +2282,7 @@ function renderTable() {
         } else {
           prevLabel = '<span style="font-family:var(--mono);font-size:8px;color:var(--muted);opacity:.3">—</span>';
         }
-        const reps=getSetReps(ex,si), wt=getSetWeight(ex,si);
+        const reps=getSetReps(ex,si), wtRaw=getSetWeight(ex,si), wt=(typeof wtRaw==='string'&&wtRaw.toUpperCase().endsWith('KG'))?wtRaw.slice(0,-2):wtRaw;
         html+=`<div class="set-row-outer" id="sro-${di}-${ei}-${si}">
           <div class="swipe-bg${done?' undo':''}" id="swbg-${di}-${ei}-${si}"><span class="swipe-check-icon">${done?'↩':'✓'}</span></div>
           <div class="set-row${done?' set-done':''}" id="sr-${di}-${ei}-${si}">
@@ -2072,7 +2349,7 @@ function quickLogAll(e,di,ei,isCurrentlyAllDone){
 function getPrevSet(di,exName,si){const label=CFG[di]?.label,todayDk=dayKey(new Date());for(const h of history){if(h.day!==label)continue;const hDk=h.dk||(h.ts?dayKey(new Date(h.ts)):null);if(hDk===todayDk)continue;const ex=(h.exercises||[]).find(e=>e.name===exName);if(!ex)continue;return{reps:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps,weight:(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight};}return null;}
 function getSetReps(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].reps!=null)?ex.setOvr[si].reps:ex.reps;}
 function getSetWeight(ex,si){return(ex.setOvr&&ex.setOvr[si]&&ex.setOvr[si].weight!=null)?ex.setOvr[si].weight:ex.weight;}
-function saveSetOvr(di,ei,si,field,val){const ex=data[di][ei];if(!ex.setOvr)ex.setOvr=[];if(!ex.setOvr[si])ex.setOvr[si]={};if(field==='reps'){const v=parseInt(val);ex.setOvr[si].reps=(!isNaN(v)&&v>0&&v<=999)?v:ex.reps;}else{const t=String(val).trim().toUpperCase();ex.setOvr[si].weight=t.length>0?t:ex.weight;}persist();}
+function saveSetOvr(di,ei,si,field,val){const ex=data[di][ei];if(!ex.setOvr)ex.setOvr=[];if(!ex.setOvr[si])ex.setOvr[si]={};if(field==='reps'){const v=parseInt(val);ex.setOvr[si].reps=(!isNaN(v)&&v>0&&v<=999)?v:ex.reps;}else{const t=String(val).trim().toUpperCase();const stored=t.length>0?((!isNaN(parseFloat(t))&&isFinite(t))?parseFloat(t)+'KG':t):ex.weight;ex.setOvr[si].weight=stored;}persist();}
 function getNoteKey(di){const label=CFG[di]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));return h?`hist-${h.ts}`:`${di}-${today}`;}
 function _saveSessionNoteNow(){const nk=getNoteKey(activeDay),v=document.getElementById('session-note-input')?.value||'';sessionNotes[nk]=v;const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)h.note=v;persist();}
 const saveSessionNote = debounce(_saveSessionNoteNow, 500);
@@ -3168,7 +3445,7 @@ function nwOpenConfig(name) {
   const prev = _nwExercises.find(e => e.name === name);
   document.getElementById('nw-sets').value = prev ? prev.sets : 3;
   document.getElementById('nw-reps').value = prev ? prev.reps : 12;
-  document.getElementById('nw-weight').value = prev ? prev.weight : 'BW';
+  const _nwW=prev?prev.weight:'BW'; document.getElementById('nw-weight').value = (typeof _nwW==='string'&&_nwW.toUpperCase().endsWith('KG'))?_nwW.slice(0,-2):_nwW;
   document.getElementById('nw-step-exercises').style.display = 'none';
   document.getElementById('nw-step-config').style.display = '';
   document.getElementById('new-workout-sh').scrollTop = 0;
@@ -3460,7 +3737,7 @@ function eweOpenConfig(name, editIdx) {
   }
   document.getElementById('ewe-sets').value = defaults.sets;
   document.getElementById('ewe-reps').value = defaults.reps;
-  document.getElementById('ewe-weight').value = defaults.weight;
+  const _ewW=defaults.weight; document.getElementById('ewe-weight').value = (typeof _ewW==='string'&&_ewW.toUpperCase().endsWith('KG'))?_ewW.slice(0,-2):_ewW;
   document.getElementById('ewe-confirm-btn').textContent = (editIdx !== null && editIdx !== undefined) ? 'Save Changes' : '+ Add to Workout';
   document.getElementById('ewe-step-list').style.display = 'none';
   document.getElementById('ewe-step-config').style.display = '';
@@ -3577,6 +3854,36 @@ function closeDayAssignPop() {
 }
 
 document.addEventListener('click', closeDayAssignPop);
+</script>
+
+<script>
+// ── THEME TOGGLE ──────────────────────────────────────────────────────────────
+(function initTheme() {
+  const saved = (function(){ try{ return localStorage.getItem('kis8_theme'); }catch(e){ return null; } })() || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('kis8_theme', next); } catch(e) {}
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀️';
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.content = next === 'dark' ? '#0A0A0A' : '#F2F0EB';
+}
+
+// Sync icon after DOM ready
+(function() {
+  const saved = (function(){ try{ return localStorage.getItem('kis8_theme'); }catch(e){ return null; } })() || 'dark';
+  const setIcon = function() {
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.textContent = saved === 'dark' ? '🌙' : '☀️';
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setIcon);
+  else setIcon();
+})();
 </script>
 
 <!-- ════════════════════════════════════════════════════════════════
