@@ -3151,7 +3151,7 @@ function renderAddLibList(query) {
     filtered.forEach(ex => {
       const isSel = ex === addLibSelected;
       const isCustom = customExLib[group]?.includes(ex);
-      html += `<button class="replace-ex-btn${isSel?' current-ex':''}" onclick='selectAddLibEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isSel?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${isSel?' current-ex':''}" onclick="selectAddLibEx(this.dataset.ex)" data-ex="${escHtml(ex)}">${escHtml(ex)}${isSel?' ✓':''}</button>`;
     });
   }
 
@@ -3553,7 +3553,7 @@ function renderReplaceList(query) {
     filtered.forEach(ex => {
       const isCurrent = ex === currentName;
       const isCustom = customExLib[group]?.includes(ex);
-      html += `<button class="replace-ex-btn${isCurrent?' current-ex':''}" onclick='selectReplaceEx(${JSON.stringify(ex)})'>${escHtml(ex)}${isCustom?'<span class="custom-ex-tag">custom</span>':''}${isCurrent?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${isCurrent?' current-ex':''}" onclick="selectReplaceEx(this.dataset.ex)" data-ex="${escHtml(ex)}">${escHtml(ex)}${isCustom?'<span class="custom-ex-tag">custom</span>':''}${isCurrent?' ✓':''}</button>`;
     });
   }
 
@@ -3672,7 +3672,7 @@ function nwRenderLib(query) {
     filtered.forEach(ex => {
       const already = _nwExercises.some(e => e.name === ex);
       const isCustom = customExLib[group]?.includes(ex);
-      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick='nwOpenConfig(${JSON.stringify(ex)})'>${escHtml(ex)}${isCustom?'<span class="custom-ex-tag">custom</span>':''}${already?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick="nwOpenConfig(this.dataset.ex)" data-ex="${escHtml(ex)}">${escHtml(ex)}${isCustom?'<span class="custom-ex-tag">custom</span>':''}${already?' ✓':''}</button>`;
     });
   }
   if (!anyResults && q) html = `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No exercises found</div>`;
@@ -3954,7 +3954,7 @@ function eweRenderLib(query) {
     html += `<div class="replace-group-label">${escHtml(group)}</div>`;
     filtered.forEach(ex => {
       const already = (data[_eweTargetCi] || []).some(e => e.name === ex);
-      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick='eweOpenConfig(${JSON.stringify(ex)},null)'>${escHtml(ex)}${already?' ✓':''}</button>`;
+      html += `<button class="replace-ex-btn${already?' current-ex':''}" onclick="eweOpenConfig(this.dataset.ex,null)" data-ex="${escHtml(ex)}">${escHtml(ex)}${already?' ✓':''}</button>`;
     });
   }
   if (!anyResults && q) html = `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;padding:24px 0;letter-spacing:.08em;">No exercises found</div>`;
