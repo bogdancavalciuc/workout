@@ -132,24 +132,24 @@ body {
 .day-tabs {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px; margin-bottom: 6px;
+  gap: 4px; margin-bottom: 6px;
 }
 .dt {
-  padding: 6px 2px 5px;
-  border-radius: 8px;
+  padding: 8px 2px 7px;
+  border-radius: var(--r2);
   background: var(--surf2); border: 1px solid var(--line2);
   text-align: center; cursor: pointer;
   transition: border-color .2s, background .2s, box-shadow .2s;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; min-height: 52px; position: relative; overflow: hidden;
+  gap: 4px; min-height: 58px; position: relative; overflow: hidden;
 }
 .dt:active { background: var(--surf3); border-color: var(--line3); }
 .dt:focus-visible { outline: 2px solid var(--gold3); outline-offset: 2px; }
-.dt.active { border: 2.5px solid var(--gold3); background: rgba(0,212,170,.08); box-shadow: 0 0 14px rgba(0,212,170,.15); }
-.dt.today-tab { border: 2.5px solid var(--gold3); background: rgba(0,212,170,.08); }
+.dt.active { border: 2px solid var(--gold3); background: rgba(0,212,170,.08); box-shadow: 0 0 14px rgba(0,212,170,.12); }
+.dt.today-tab { border: 2px solid var(--gold3); background: rgba(0,212,170,.08); }
 .dt.rest-tab { opacity: .45; }
 .dt-day-name {
-  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  font-family: var(--mono); font-size: 14px; font-weight: 700;
   letter-spacing: -.01em; text-transform: uppercase; color: var(--muted2); line-height: 1;
 }
 .dt.active .dt-day-name { color: var(--gold); }
@@ -157,24 +157,24 @@ body {
 .dt-dot { display: none; }
 .dt.rest-tab .dt-dot { background: var(--surf3); color: var(--muted); font-size: 9px; }
 .dt-workout-name {
-  font-family: var(--mono); font-size: 6.5px; letter-spacing: .04em;
-  text-transform: uppercase; color: var(--muted2);
+  font-family: var(--mono); font-size: 7px; font-weight: 500; letter-spacing: .03em;
+  text-transform: uppercase; color: var(--muted);
   text-align: center; line-height: 1.2; max-width: 100%;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  padding: 0 2px; width: 100%;
+  padding: 0 3px; width: 100%;
 }
-.dt.active .dt-workout-name { color: var(--gold2); }
-.dt.today-tab .dt-workout-name { color: var(--gold2); }
-.timer-running {
-  font-size: 14px !important; font-weight: 700 !important;
-  letter-spacing: -.01em !important; line-height: 1 !important;
-  color: var(--gold) !important; white-space: nowrap !important;
-  overflow: visible !important;
+.dt.active .dt-workout-name { color: var(--gold2); opacity: .8; }
+.dt.today-tab .dt-workout-name { color: var(--gold2); opacity: .8; }
+.dt.rest-tab .dt-workout-name { color: var(--muted); opacity: .4; font-size: 6px; }
+/* Workout color accent strip at bottom of tab */
+.dt-color-strip {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 3px; border-radius: 0 0 var(--r2) var(--r2);
+  opacity: .7;
 }
-.dt.rest-tab .dt-workout-name { color: var(--muted); opacity: .5; font-size: 6px; }
 .dt-done-check {
-  position: absolute; top: 3px; right: 3px;
-  width: 7px; height: 7px; border-radius: 50%;
+  position: absolute; top: 4px; right: 4px;
+  width: 6px; height: 6px; border-radius: 50%;
   background: var(--success); opacity: .9; display: none;
 }
 .dt.day-completed .dt-done-check { display: block; }
@@ -403,13 +403,13 @@ body {
 }
 .ex-edit-btn:active { background: var(--line); opacity: 1; }
 .drag-num {
-  cursor: grab; flex-shrink: 0; width: 20px; height: 20px;
-  border: 1px solid var(--line2); border-radius: 3px;
+  flex-shrink: 0; width: 22px; height: 22px;
+  border-radius: 6px;
+  background: var(--surf3); border: 1px solid var(--line2);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--mono); font-size: 8px; color: var(--muted);
-  letter-spacing: .04em; position: relative;
+  font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--muted2);
+  letter-spacing: .02em; pointer-events: none;
 }
-.drag-num::before { content: ''; position: absolute; inset: -12px -10px; cursor: grab; }
 .ex-badges { display: flex; gap: 5px; align-items: center; margin-top: 5px; }
 .ex-badge {
   font-family: var(--mono); font-size: 8px; color: var(--muted);
@@ -425,8 +425,8 @@ body {
 .sets-wrap.open { grid-template-rows: 1fr; }
 .sets-inner { overflow: hidden; }
 .sets-header {
-  display: grid; grid-template-columns: 28px 1fr 58px 58px 44px;
-  align-items: center; padding: 6px 12px 7px;
+  display: grid; grid-template-columns: 28px 1fr 62px 62px 48px;
+  align-items: center; padding: 7px 14px 8px;
   border-bottom: 1px solid var(--line); background: var(--surf2); gap: 4px;
 }
 .sets-header span { font-family: var(--mono); font-size: 7px; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; text-align: center; }
@@ -441,34 +441,34 @@ body {
 .swipe-bg.undo { background: var(--surf3); }
 .swipe-check-icon { font-size: 15px; color: var(--bg); }
 .set-row {
-  display: grid; grid-template-columns: 28px 1fr 58px 58px 44px;
-  align-items: center; padding: 5px 12px; min-height: 44px;
+  display: grid; grid-template-columns: 28px 1fr 62px 62px 48px;
+  align-items: center; padding: 6px 14px; min-height: 52px;
   background: var(--surf); position: relative; z-index: 1; border-radius: 0;
   touch-action: pan-y; gap: 4px; transition: background .15s;
 }
 .set-row.set-done { background: rgba(200,169,110,.03); }
 .set-row.swiping { transition: none; }
-.set-num { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--gold); text-align: center; letter-spacing: .02em; }
+.set-num { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--gold); text-align: center; letter-spacing: .02em; }
 .set-num.done-num { color: var(--muted); }
 .set-prev { font-family: var(--mono); font-size: 9px; color: var(--muted); text-align: center; display: block; width: 100%; letter-spacing: .03em; }
 .set-input-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
 .set-input {
-  font-family: var(--mono); font-size: 12px; color: var(--text);
+  font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--text);
   background: var(--surf2); border: 1px solid var(--line2);
-  border-radius: var(--r); outline: none; padding: 6px 4px;
-  width: 50px; text-align: center; -webkit-appearance: none;
+  border-radius: var(--r); outline: none; padding: 8px 4px;
+  width: 54px; text-align: center; -webkit-appearance: none;
   transition: border-color .15s, background .15s; letter-spacing: .02em;
 }
 .set-input:focus { border-color: var(--gold3); background: var(--surf3); }
 .set-input.done { opacity: .25; pointer-events: none; }
-.set-check-wrap { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; position: relative; }
+.set-check-wrap { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; position: relative; }
 .set-check {
-  width: 34px; height: 34px; border-radius: 50%;
-  border: 1.5px solid var(--line3); background: var(--surf2); cursor: pointer;
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 2px solid var(--line3); background: var(--surf2); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: border-color .2s, background .2s, box-shadow .2s;
 }
-.set-check.checked { border-color: var(--gold); background: var(--gold); box-shadow: 0 0 12px rgba(0,212,170,.35); }
+.set-check.checked { border-color: var(--gold); background: var(--gold); box-shadow: 0 2px 14px rgba(0,212,170,.4); }
 .set-check svg { opacity: 0; transition: opacity .15s; }
 .set-check.checked svg { opacity: 1; }
 .set-controls {
@@ -955,14 +955,15 @@ html[data-theme="light"] .top-bar-today-badge { color:#C01F14; border:1.5px soli
 
 
 /* Day tabs */
-html[data-theme="light"] .dt { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+html[data-theme="light"] .dt { background:#FFFFFF; border:1.5px solid #E0DDD7; border-radius:var(--r2); box-shadow:0 1px 3px rgba(0,0,0,.05); }
 html[data-theme="light"] .dt:active { background:#F7F5F0; border-color:#D4D1CA; }
-html[data-theme="light"] .dt.active { border:2.5px solid #0A0A0A; background:#0A0A0A; box-shadow:0 2px 12px rgba(0,0,0,.18); }
+html[data-theme="light"] .dt.active { border:2px solid #0A0A0A; background:#0A0A0A; box-shadow:0 2px 10px rgba(0,0,0,.15); }
 html[data-theme="light"] .dt.active .dt-day-name { color:#FFFFFF; }
-html[data-theme="light"] .dt.active .dt-workout-name { color:rgba(255,255,255,.65); }
-html[data-theme="light"] .dt.today-tab { border:2.5px solid #E8271A; background:#FFFFFF; box-shadow:none; }
+html[data-theme="light"] .dt.active .dt-workout-name { color:rgba(255,255,255,.6); }
+html[data-theme="light"] .dt.active .dt-color-strip { opacity:.9; }
+html[data-theme="light"] .dt.today-tab { border:2px solid #E8271A; background:#FFFFFF; box-shadow:none; }
 html[data-theme="light"] .dt.today-tab .dt-day-name { color:#E8271A; }
-html[data-theme="light"] .dt.today-tab .dt-workout-name { color:#6B6862; }
+html[data-theme="light"] .dt.today-tab .dt-workout-name { color:#999590; }
 html[data-theme="light"] .dt.rest-tab { opacity:.4; }
 html[data-theme="light"] .dt-day-name { color:#6B6862; }
 html[data-theme="light"] .dt-done-check { background:#1A7A3C; }
@@ -980,23 +981,23 @@ html[data-theme="light"] .ex-block.drag-over { border-color:#E8271A; box-shadow:
 html[data-theme="light"] .ex-name-row:active { background:#F7F5F0; }
 html[data-theme="light"] .ex-name-row.done-all { opacity:.65; }
 html[data-theme="light"] .ex-name-row.done-all::after { display:none; }
-html[data-theme="light"] .drag-num { border:none; color:#999590; background:none; border-radius:0; }
+html[data-theme="light"] .drag-num { background:#F7F5F0; border:1px solid #D4D1CA; color:#999590; border-radius:5px; }
 html[data-theme="light"] .chevron { color:#999590; }
 
 /* Sets header */
-html[data-theme="light"] .sets-header { background:#F7F5F0; border-bottom:none; border-top:1.5px solid #E0DDD7; grid-template-columns:28px 1fr 58px 58px 44px; padding:6px 12px 7px; }
+html[data-theme="light"] .sets-header { background:#F7F5F0; border-bottom:none; border-top:1.5px solid #E0DDD7; grid-template-columns:28px 1fr 62px 62px 48px; padding:7px 14px 8px; }
 html[data-theme="light"] .sets-header span { color:#999590; }
 
 /* Set rows */
-html[data-theme="light"] .set-row { background:#FFFFFF; border-top:1px solid #E0DDD7; grid-template-columns:28px 1fr 58px 58px 44px; min-height:52px; }
+html[data-theme="light"] .set-row { background:#FFFFFF; border-top:1px solid #E0DDD7; grid-template-columns:28px 1fr 62px 62px 48px; min-height:52px; }
 html[data-theme="light"] .set-row.set-done { background:rgba(26,122,60,.04); }
 html[data-theme="light"] .set-num { color:#999590; text-align:center; }
 html[data-theme="light"] .set-num.done-num { color:#1A7A3C; }
-html[data-theme="light"] .set-input { background:none; border:none; border-bottom:1.5px solid #D4D1CA; color:#0A0A0A; width:100%; text-align:center; padding:4px 2px; border-radius:0; }
+html[data-theme="light"] .set-input { background:none; border:none; border-bottom:1.5px solid #D4D1CA; color:#0A0A0A; width:100%; text-align:center; padding:4px 2px; border-radius:0; font-size:14px; font-weight:600; }
 html[data-theme="light"] .set-input:focus { border-bottom-color:#E8271A; background:none; }
 html[data-theme="light"] .set-input.done { color:#999590; border-bottom-color:transparent; opacity:1; pointer-events:none; }
-html[data-theme="light"] .set-check { border:2.5px solid #D4D1CA; background:none; width:34px; height:34px; }
-html[data-theme="light"] .set-check.checked { background:#0A0A0A; border-color:#0A0A0A; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+html[data-theme="light"] .set-check { border:2px solid #D4D1CA; background:none; width:38px; height:38px; }
+html[data-theme="light"] .set-check.checked { background:#0A0A0A; border-color:#0A0A0A; box-shadow:0 2px 10px rgba(0,0,0,.25); }
 html[data-theme="light"] .set-check-wrap.resting .set-check { background:#E8271A; border-color:#E8271A; box-shadow:0 0 12px rgba(232,39,26,.35); }
 
 /* Rest ring */
@@ -1237,15 +1238,20 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
 <!-- HEADER -->
 <div class="top">
   <!-- App title + theme toggle -->
-  <div class="top-bar" id="top-bar" style="justify-content:flex-start;gap:8px">
-    <button id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme"
-      style="width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line2);
-        background:var(--surf2);display:flex;align-items:center;justify-content:center;
-        cursor:pointer;box-shadow:var(--shadow-sm);transition:border-color .2s,background .2s;flex-shrink:0;">
-      <span id="theme-icon" style="font-size:14px;line-height:1;pointer-events:none;">🌙</span>
-    </button>
-    <span class="top-bar-name" id="pn-workout-name" style="letter-spacing:.08em;font-size:22px">Train</span>
-    <div id="top-bar-meta" style="font-family:var(--mono);font-size:8px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;gap:6px"></div>
+  <div class="top-bar" id="top-bar" style="justify-content:space-between;gap:8px">
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="top-bar-name" id="pn-workout-name" style="letter-spacing:.08em;font-size:22px">Train</span>
+      <div id="top-bar-meta" style="font-family:var(--mono);font-size:8px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;gap:6px"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <div id="header-date" style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:right;line-height:1.5"></div>
+      <button id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme"
+        style="width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line2);
+          background:var(--surf2);display:flex;align-items:center;justify-content:center;
+          cursor:pointer;transition:border-color .2s,background .2s;flex-shrink:0;">
+        <span id="theme-icon" style="font-size:14px;line-height:1;pointer-events:none;">🌙</span>
+      </button>
+    </div>
   </div>
   <!-- Tab nav -->
   <div class="page-nav">
@@ -1270,6 +1276,10 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
     <div class="done-icon">🏆</div>
     <div class="done-title">Session Complete</div>
     <div class="done-sub" id="done-sub"></div>
+    <div id="done-vol-display" style="display:none;margin:16px 0 4px;position:relative">
+      <div style="font-family:var(--serif);font-size:52px;font-weight:400;letter-spacing:.04em;color:var(--gold);line-height:1" id="done-vol-num"></div>
+      <div style="font-family:var(--mono);font-size:7.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted2);margin-top:4px;opacity:.7">Total volume lifted</div>
+    </div>
     <div class="session-note-wrap">
       <label class="session-note-label">Session note</label>
       <textarea class="session-note-input" id="session-note-input" placeholder="How did it feel? Any PRs?" maxlength="300" oninput="saveSessionNote()"></textarea>
@@ -2128,6 +2138,21 @@ function setPage(p) {
   if (p==='schedule') { renderSchedulePage(); _syncScheduleSelectedDay(); }
 }
 
+// ── Workout color palette (cycles by CFG index) ──────────────────────────────
+const WO_COLORS = [
+  '#E8271A', // red   — Push
+  '#2563EB', // blue  — Pull
+  '#16A34A', // green — Legs
+  '#D97706', // amber
+  '#7C3AED', // purple
+  '#0891B2', // cyan
+  '#DB2777', // pink
+];
+function getWoColor(cfgIdx) {
+  if (cfgIdx === null || cfgIdx === undefined || cfgIdx < 0) return null;
+  return WO_COLORS[cfgIdx % WO_COLORS.length];
+}
+
 function renderTabs() {
   const c=document.getElementById('day-tabs'); c.innerHTML='';
   const todayIdx=getTodayWeekIdx();
@@ -2138,6 +2163,7 @@ function renderTabs() {
     const cfg = isRest ? null : CFG[cfgIdx];
     const abbr = isRest ? '·' : (cfg?.label||'?').slice(0,2).toUpperCase();
     const shortName = isRest ? 'Rest' : (cfg?.label||'?');
+    const color = isRest ? null : getWoColor(cfgIdx);
     const el=document.createElement('div');
     el.className='dt'+(isActive?' active':'')+(isToday?' today-tab':'')+(isRest?' rest-tab':'')+(isDone?' day-completed':'');
     el.setAttribute('role','button');
@@ -2146,6 +2172,7 @@ function renderTabs() {
       <span class="dt-day-name">${escHtml(dayName.slice(0,1))}</span>
       <div class="dt-dot">${escHtml(abbr)}</div>
       <span class="dt-workout-name">${escHtml(shortName)}</span>
+      ${color ? `` : ''}
       <div class="dt-done-check"></div>`;
     const handler=()=>{ selectedWeekIdx=wi; if (!isRest) { saveInlineEdit(); activeDay=cfgIdx; editingEx=null; deleteConfirm=null; expanded.clear(); } render(); };
     el.onclick=handler;
@@ -2168,7 +2195,14 @@ function renderDayInfoBar() {
   if (metaEl) {
     metaEl.innerHTML = isToday ? '<span class="top-bar-today-badge">Today</span>' : '';
   }
-
+  // Date in header
+  const dateEl = document.getElementById('header-date');
+  if (dateEl) {
+    const now = new Date();
+    const day = now.toLocaleDateString('en-GB', { weekday: 'short' });
+    const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    dateEl.innerHTML = `${day}<br>${date}`;
+  }
 }
 
 function renderTable() {
@@ -2194,6 +2228,14 @@ function renderTable() {
     document.getElementById('done-sub').textContent=exs.length+' exercises · '+(CFG[di]?.label||'');
     const nk=getNoteKey(di), ne=document.getElementById('session-note-input');
     if (ne) ne.value=sessionNotes[nk]||'';
+    // Show volume
+    const vol = calcVol(di);
+    const volEl = document.getElementById('done-vol-display');
+    const volNum = document.getElementById('done-vol-num');
+    if (volEl && volNum && vol > 0) {
+      volEl.style.display = '';
+      volNum.textContent = fmtVol(vol);
+    } else if (volEl) { volEl.style.display = 'none'; }
   }
   const anyExpanded = exs.some((_,ei) => expanded.has(`${di}-${ei}`));
   let html='';
