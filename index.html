@@ -1245,6 +1245,16 @@ html[data-theme="light"] .settings-btn-line:hover { border-color:#0A0A0A; color:
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
       <div id="header-date" style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:right;line-height:1.5"></div>
+      <button id="wo-timer-btn" onclick="toggleWorkoutTimer()" title="Tap to start/stop workout timer"
+        style="display:none;flex-direction:column;align-items:center;justify-content:center;
+          height:34px;padding:0 10px;border-radius:10px;border:1.5px solid var(--line2);
+          background:var(--surf2);cursor:pointer;transition:border-color .2s,background .2s,opacity .2s;
+          flex-shrink:0;gap:1px;">
+        <span id="wo-timer-val" style="font-family:var(--mono);font-size:13px;font-weight:700;
+          letter-spacing:-.02em;color:var(--muted);line-height:1;pointer-events:none">00:00</span>
+        <span id="wo-timer-label" style="font-family:var(--mono);font-size:6px;letter-spacing:.12em;
+          text-transform:uppercase;color:var(--muted);opacity:.5;pointer-events:none">workout</span>
+      </button>
       <button id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme"
         style="width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line2);
           background:var(--surf2);display:flex;align-items:center;justify-content:center;
@@ -1966,25 +1976,96 @@ function hapticSet()     { haptic([12]); }
 function hapticEx()      { haptic([0,60,40,80,40,120]); }
 function hapticAllDone() { haptic([0,100,50,100,50,150]); }
 
-const SESSION_RING_CIRC = 2 * Math.PI * 18; // r=18 → ~113.1
+const SESSION_RING_CIRC = 2 * Math.PI * 18;
 let sessionStart=null, sessionTick=null, sessionActive=false;
 
-function startSessionTimer() {
-  if (sessionActive) return;
-  sessionActive = true;
-  sessionStart = Date.now();
-  sessionTick = setInterval(updateSessionUI, 1000);
-  updateSessionUI();
-  updatePlayBtn();
+// ── Workout global timer ──────────────────────────────────────────────────────
+let _woTimerStart = null;   // timestamp ms when timer started
+let _woTimerPaused = false; // is it paused?
+let _woTimerOffset = 0;     // accumulated seconds before last pause
+let _woTimerTick = null;
+
+function _woTimerElapsed() {
+  if (_woTimerStart === null) return _woTimerOffset;
+  return _woTimerOffset + Math.floor((Date.now() - _woTimerStart) / 1000);
 }
-function stopSessionTimer() {
-  sessionActive = false;
-  clearInterval(sessionTick); sessionTick = null; sessionStart = null;
-  // Restore workout name in active tab
-  renderTabs();
-  updatePlayBtn();
+
+function _woTimerUpdate() {
+  const btn = document.getElementById('wo-timer-btn');
+  const val = document.getElementById('wo-timer-val');
+  const lbl = document.getElementById('wo-timer-label');
+  if (!btn || !val) return;
+  const s = _woTimerElapsed();
+  const mins = Math.floor(s / 60), secs = s % 60;
+  const str = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+  val.textContent = str;
+  // Color: muted → gold after 10min, danger pulse after 90min
+  const warm = s >= 600;   // 10 min
+  const long = s >= 5400;  // 90 min
+  val.style.color = long ? 'var(--danger)' : warm ? 'var(--gold)' : 'var(--muted2)';
+  btn.style.borderColor = long ? 'rgba(255,59,92,.35)' : warm ? 'rgba(0,212,170,.3)' : 'var(--line2)';
+  lbl.textContent = _woTimerPaused ? 'paused' : 'workout';
+  lbl.style.color = _woTimerPaused ? 'var(--muted)' : warm ? 'var(--gold3)' : 'var(--muted)';
 }
-function toggleSessionTimer() { sessionActive ? stopSessionTimer() : startSessionTimer(); }
+
+function _woTimerShowHide() {
+  const btn = document.getElementById('wo-timer-btn');
+  if (!btn) return;
+  // Show on Train page only, and only when a real workout day is selected
+  const onTrain = document.getElementById('page-workout')?.classList.contains('hidden') === false;
+  const cfgIdx = weekSched[selectedWeekIdx];
+  const isRest = cfgIdx === null || cfgIdx === undefined || cfgIdx >= CFG.length;
+  const visible = onTrain && !isRest;
+  btn.style.display = visible ? 'flex' : 'none';
+}
+
+function toggleWorkoutTimer() {
+  if (_woTimerStart === null && _woTimerOffset === 0) {
+    // First tap — start
+    _woTimerStart = Date.now();
+    _woTimerPaused = false;
+    _woTimerTick = setInterval(_woTimerUpdate, 1000);
+  } else if (!_woTimerPaused) {
+    // Running → pause
+    _woTimerOffset = _woTimerElapsed();
+    _woTimerStart = null;
+    _woTimerPaused = true;
+    clearInterval(_woTimerTick); _woTimerTick = null;
+  } else {
+    // Paused → resume
+    _woTimerStart = Date.now();
+    _woTimerPaused = false;
+    _woTimerTick = setInterval(_woTimerUpdate, 1000);
+  }
+  _woTimerUpdate();
+}
+
+function resetWorkoutTimer() {
+  clearInterval(_woTimerTick); _woTimerTick = null;
+  _woTimerStart = null; _woTimerOffset = 0; _woTimerPaused = false;
+  _woTimerUpdate();
+}
+
+// Long-press on timer resets it
+(function() {
+  let _lpTimer = null;
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('wo-timer-btn');
+    if (!btn) return;
+    const start = () => { _lpTimer = setTimeout(() => { resetWorkoutTimer(); haptic([30,60,30]); }, 600); };
+    const cancel = () => { clearTimeout(_lpTimer); _lpTimer = null; };
+    btn.addEventListener('mousedown', start);
+    btn.addEventListener('touchstart', start, {passive:true});
+    btn.addEventListener('mouseup', cancel);
+    btn.addEventListener('mouseleave', cancel);
+    btn.addEventListener('touchend', cancel, {passive:true});
+  });
+})();
+
+// Legacy stubs (keep existing calls working)
+function startSessionTimer() {}
+function stopSessionTimer() { renderTabs(); }
+function toggleSessionTimer() {}
 
 function updateSessionUI() {
   if (!sessionStart) return;
@@ -2001,9 +2082,7 @@ function updateSessionUI() {
   }
 }
 
-function updatePlayBtn() {
-  // ring removed — tab timer handles visual feedback
-}
+function updatePlayBtn() {}
 
 let _audioCtx = null;
 function getAudioCtx() { if (!_audioCtx||_audioCtx.state==='closed') _audioCtx=new(window.AudioContext||window.webkitAudioContext)(); if (_audioCtx.state==='suspended') _audioCtx.resume(); return _audioCtx; }
@@ -2134,6 +2213,7 @@ function setPage(p) {
   document.getElementById('page-workout').classList.toggle('hidden',p!=='workout');
   document.getElementById('page-schedule').classList.toggle('hidden',p!=='schedule');
   document.getElementById('page-progress').classList.toggle('hidden',p!=='progress');
+  setTimeout(_woTimerShowHide, 0);
   if (p==='progress') initProgress();
   if (p==='schedule') { renderSchedulePage(); _syncScheduleSelectedDay(); }
 }
@@ -2542,35 +2622,20 @@ function toggleSuperset(di, ei) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DRAG — improved with touch support
+// DRAG — mouse + touch support
 // ══════════════════════════════════════════════════════════════════════════════
 let dragSrc=null;
-function dragStart(e,di,ei){
-  // allow drag from handle or block
-  dragSrc={di,ei};
-  e.dataTransfer.effectAllowed='move';
-  e.dataTransfer.setData('text/plain','');
-  setTimeout(()=>{
-    const blk=document.getElementById(`exb-${di}-${ei}`);
-    if(blk)blk.classList.add('dragging');
-  },0);
+
+function _dragCleanup(){
+  document.querySelectorAll('.ex-block').forEach(b=>{b.classList.remove('dragging');b.classList.remove('drag-over');});
 }
-function dragOver(e,di,ei){
-  e.preventDefault();
-  e.dataTransfer.dropEffect='move';
-  document.querySelectorAll('.ex-block').forEach(b=>b.classList.remove('drag-over'));
-  if(!dragSrc||(dragSrc.di===di&&dragSrc.ei===ei))return;
-  document.getElementById(`exb-${di}-${ei}`)?.classList.add('drag-over');
-}
-function dragDrop(e,di,ei){
-  e.preventDefault();
-  if(!dragSrc||dragSrc.di!==di||dragSrc.ei===ei){dragEnd(e);return;}
-  const src=dragSrc.ei,dst=ei;
+
+function _applyReorder(di,src,dst){
+  if(src===dst)return;
   const[ex]=data[di].splice(src,1);
   data[di].splice(dst,0,ex);
   const[sd]=setsDone[di].splice(src,1);
   setsDone[di].splice(dst,0,sd);
-  // Remap restEnabled keys
   const nRE={};
   Object.keys(restEnabled).forEach(k=>{
     if(parseInt(k.split('-')[0])!==di){nRE[k]=restEnabled[k];return;}
@@ -2582,12 +2647,117 @@ function dragDrop(e,di,ei){
     nRE[`${di}-${newEi}`]=restEnabled[k];
   });
   restEnabled=nRE;
-  dragSrc=null;persist();render();
+  persist();render();
+}
+
+// ── Mouse / pointer drag ─────────────────────────────────────────────────────
+function dragStart(e,di,ei){
+  dragSrc={di,ei};
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain','');
+  setTimeout(()=>{ document.getElementById(`exb-${di}-${ei}`)?.classList.add('dragging'); },0);
+}
+function dragOver(e,di,ei){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.ex-block').forEach(b=>b.classList.remove('drag-over'));
+  if(!dragSrc||(dragSrc.di===di&&dragSrc.ei===ei))return;
+  if(dragSrc.di===di) document.getElementById(`exb-${di}-${ei}`)?.classList.add('drag-over');
+}
+function dragDrop(e,di,ei){
+  e.preventDefault();
+  _dragCleanup();
+  if(!dragSrc||dragSrc.di!==di||dragSrc.ei===ei){dragSrc=null;return;}
+  const src=dragSrc.ei;
+  dragSrc=null;
+  _applyReorder(di,src,ei);
 }
 function dragEnd(e){
-  document.querySelectorAll('.ex-block').forEach(b=>{b.classList.remove('dragging');b.classList.remove('drag-over');});
+  _dragCleanup();
   dragSrc=null;
 }
+
+// ── Touch drag ───────────────────────────────────────────────────────────────
+let _touch={active:false,di:null,src:null,clone:null,lastDst:null};
+
+function _touchHandleStart(e,di,ei){
+  // only start drag from the handle element
+  e.stopPropagation();
+  const t=e.touches[0];
+  _touch.active=true; _touch.di=di; _touch.src=ei; _touch.lastDst=ei;
+
+  const blk=document.getElementById(`exb-${di}-${ei}`);
+  if(blk) blk.classList.add('dragging');
+
+  // Ghost clone
+  const clone=blk.cloneNode(true);
+  clone.style.cssText=`position:fixed;top:${t.clientY-30}px;left:${t.clientX-40}px;width:${blk.offsetWidth}px;opacity:.75;pointer-events:none;z-index:9999;border-radius:var(--r2);`;
+  document.body.appendChild(clone);
+  _touch.clone=clone;
+}
+
+function _touchHandleMove(e){
+  if(!_touch.active)return;
+  e.preventDefault();
+  const t=e.touches[0];
+
+  // Move clone
+  if(_touch.clone){
+    _touch.clone.style.top=(t.clientY-30)+'px';
+    _touch.clone.style.left=(t.clientX-40)+'px';
+  }
+
+  // Find element under finger (hide clone temporarily)
+  _touch.clone && (_touch.clone.style.display='none');
+  const under=document.elementFromPoint(t.clientX,t.clientY);
+  _touch.clone && (_touch.clone.style.display='');
+
+  const blk=under?.closest('.ex-block');
+  document.querySelectorAll('.ex-block').forEach(b=>b.classList.remove('drag-over'));
+  if(blk){
+    const m=blk.id.match(/^exb-(\d+)-(\d+)$/);
+    if(m){
+      const tdi=parseInt(m[1]),tei=parseInt(m[2]);
+      if(tdi===_touch.di&&tei!==_touch.src){
+        blk.classList.add('drag-over');
+        _touch.lastDst=tei;
+      }
+    }
+  }
+}
+
+function _touchHandleEnd(e){
+  if(!_touch.active)return;
+  _touch.clone?.remove();
+  _touch.clone=null;
+  _dragCleanup();
+  const src=_touch.src, dst=_touch.lastDst, di=_touch.di;
+  _touch={active:false,di:null,src:null,clone:null,lastDst:null};
+  if(src!==dst && src!==null && dst!==null) _applyReorder(di,src,dst);
+}
+
+// Attach touch listeners after render — delegated on tbl
+document.addEventListener('DOMContentLoaded',()=>{
+  const tbl=document.getElementById('tbl');
+  if(!tbl)return;
+  tbl.addEventListener('touchmove',_touchHandleMove,{passive:false});
+  tbl.addEventListener('touchend',_touchHandleEnd,{passive:true});
+  tbl.addEventListener('touchcancel',_touchHandleEnd,{passive:true});
+  // Init workout timer display
+  _woTimerUpdate();
+  _woTimerShowHide();
+});
+
+// Also attach on drag handles via event delegation at document level
+document.addEventListener('touchstart',function(e){
+  const handle=e.target.closest('.ex-drag-handle');
+  if(!handle)return;
+  const blk=handle.closest('.ex-block');
+  if(!blk)return;
+  const m=blk.id.match(/^exb-(\d+)-(\d+)$/);
+  if(!m)return;
+  _touchHandleStart(e,parseInt(m[1]),parseInt(m[2]));
+},{passive:true});
 
 function toggleExpand(di,ei){const k=`${di}-${ei}`;if(expanded.has(k)){expanded.delete(k);}else{expanded.clear();expanded.add(k);}renderTable();}
 function toggleRestEnabled(di,ei,v){restEnabled[`${di}-${ei}`]=v;persist();}
@@ -2625,7 +2795,7 @@ function saveToHistory(di){
   else{history.unshift(entry);if(history.length>100)history=history.slice(0,100);setTimeout(()=>{document.getElementById('backup-nudge')?.classList.add('show');},600);}
   _persistNow();
 }
-function resetSession(){data[activeDay].forEach(ex=>{delete ex.setOvr;});setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));const nk=getNoteKey(activeDay);delete sessionNotes[nk];const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)delete h.note;expanded.clear();persist();render();}
+function resetSession(){data[activeDay].forEach(ex=>{delete ex.setOvr;});setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));const nk=getNoteKey(activeDay);delete sessionNotes[nk];const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)delete h.note;expanded.clear();resetWorkoutTimer();persist();render();}
 
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -3487,7 +3657,7 @@ function startDeleteActive(){const di=activeDay;for(const k of expanded){const p
 
 let _lastBackupLabelUpdate=0;
 function render(){
-  renderTabs();renderDayInfoBar();renderTable();
+  renderTabs();renderDayInfoBar();renderTable();_woTimerShowHide();
   const now=Date.now();
   if(now-_lastBackupLabelUpdate>30000){updateBackupLabel();_lastBackupLabelUpdate=now;}
 }
