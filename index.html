@@ -2795,7 +2795,31 @@ function saveToHistory(di){
   else{history.unshift(entry);if(history.length>100)history=history.slice(0,100);setTimeout(()=>{document.getElementById('backup-nudge')?.classList.add('show');},600);}
   _persistNow();
 }
-function resetSession(){data[activeDay].forEach(ex=>{delete ex.setOvr;});setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));const nk=getNoteKey(activeDay);delete sessionNotes[nk];const label=CFG[activeDay]?.label,today=dayKey(new Date());const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));if(h)delete h.note;expanded.clear();resetWorkoutTimer();persist();render();}
+function resetSession(){
+  // Before clearing, persist last-used reps & weights as new defaults per exercise
+  data[activeDay].forEach(ex=>{
+    if(ex.setOvr&&ex.setOvr.length>0){
+      for(let si=0;si<ex.sets;si++){
+        const o=ex.setOvr[si];
+        if(!o)continue;
+        // Update the base defaults with whatever the user last typed
+        if(o.reps!=null&&!isNaN(parseInt(o.reps)))ex.reps=parseInt(o.reps);
+        if(o.weight!=null&&String(o.weight).trim()!=='')ex.weight=o.weight;
+      }
+      // Use the last set's values as the canonical default
+      const last=ex.setOvr[ex.sets-1]||ex.setOvr[ex.setOvr.length-1]||{};
+      if(last.reps!=null&&!isNaN(parseInt(last.reps)))ex.reps=parseInt(last.reps);
+      if(last.weight!=null&&String(last.weight).trim()!=='')ex.weight=last.weight;
+      delete ex.setOvr;
+    }
+  });
+  setsDone[activeDay]=data[activeDay].map(e=>Array(e.sets).fill(false));
+  const nk=getNoteKey(activeDay);delete sessionNotes[nk];
+  const label=CFG[activeDay]?.label,today=dayKey(new Date());
+  const h=history.find(h=>h.day===label&&(h.dk===today||(h.ts&&dayKey(new Date(h.ts))===today)));
+  if(h)delete h.note;
+  expanded.clear();resetWorkoutTimer();persist();render();
+}
 
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -3932,8 +3956,17 @@ function saveNewWorkout() {
   renderSchedulePage();
 }
 
-function makeIcon(sz){const c=document.createElement('canvas');c.width=c.height=sz;const x=c.getContext('2d');x.fillStyle='#080A08';x.fillRect(0,0,sz,sz);x.fillStyle='#C8A96E';x.font=`${sz*.42}px 'Cormorant Garamond', Georgia, serif`;x.textAlign='center';x.textBaseline='middle';x.fillText('C',sz/2,sz/2);return c.toDataURL('image/png');}
-function registerPWA(){try{const mf={name:'Consistency',short_name:'Consistency',description:'Premium workout tracker',start_url:'.',display:'standalone',background_color:'#080A08',theme_color:'#080A08',orientation:'portrait',icons:[{src:makeIcon(192),sizes:'192x192',type:'image/png'},{src:makeIcon(512),sizes:'512x512',type:'image/png'}]};const blob=new Blob([JSON.stringify(mf)],{type:'application/json'});const url=URL.createObjectURL(blob);document.getElementById('manifest-placeholder').href=url;}catch(e){console.warn('PWA manifest registration failed:',e);}}
+function makeIcon(sz){const c=document.createElement('canvas');c.width=c.height=sz;const x=c.getContext('2d');const r=sz*.13;// Rounded rect background - light theme
+x.beginPath();x.moveTo(r,0);x.lineTo(sz-r,0);x.quadraticCurveTo(sz,0,sz,r);x.lineTo(sz,sz-r);x.quadraticCurveTo(sz,sz,sz-r,sz);x.lineTo(r,sz);x.quadraticCurveTo(0,sz,0,sz-r);x.lineTo(0,r);x.quadraticCurveTo(0,0,r,0);x.closePath();x.fillStyle='#E8F5EF';x.fill();// Inner subtle gradient bg
+x.beginPath();x.moveTo(r,0);x.lineTo(sz-r,0);x.quadraticCurveTo(sz,0,sz,r);x.lineTo(sz,sz-r);x.quadraticCurveTo(sz,sz,sz-r,sz);x.lineTo(r,sz);x.quadraticCurveTo(0,sz,0,sz-r);x.lineTo(0,r);x.quadraticCurveTo(0,0,r,0);x.closePath();const g=x.createLinearGradient(0,0,0,sz);g.addColorStop(0,'rgba(0,212,170,0.07)');g.addColorStop(1,'rgba(0,168,138,0.04)');x.fillStyle=g;x.fill();// Dumbbell dimensions
+const cx=sz/2,cy=sz/2,bH=sz*.08,bW=sz*.34,pw=sz*.13,ph=sz*.42,pr=sz*.04,cpr=sz*.05;// Bar (center rod)
+x.beginPath();x.roundRect(cx-bW/2,cy-bH/2,bW,bH,bH/2);x.fillStyle='#5DCAA5';x.fill();// Left plate outer
+x.beginPath();x.roundRect(cx-bW/2-pw,cy-ph/2,pw,ph,pr);x.fillStyle='#1D9E75';x.fill();// Left plate inner cap
+x.beginPath();x.roundRect(cx-bW/2-pw-cpr,cy-ph*.35,cpr,ph*.7,pr/2);x.fillStyle='#0F6E56';x.fill();// Right plate outer
+x.beginPath();x.roundRect(cx+bW/2,cy-ph/2,pw,ph,pr);x.fillStyle='#1D9E75';x.fill();// Right plate inner cap
+x.beginPath();x.roundRect(cx+bW/2+pw,cy-ph*.35,cpr,ph*.7,pr/2);x.fillStyle='#0F6E56';x.fill();// Accent dot top-right
+const dr=sz*.07,dx=sz*.72,dy=sz*.22;x.beginPath();x.arc(dx,dy,dr,0,Math.PI*2);x.fillStyle='#00D4AA';x.fill();x.beginPath();x.arc(dx,dy,dr*.45,0,Math.PI*2);x.fillStyle='rgba(255,255,255,0.75)';x.fill();return c.toDataURL('image/png');}
+function registerPWA(){try{const mf={name:'Consistency',short_name:'Consistency',description:'Premium workout tracker',start_url:'.',display:'standalone',background_color:'#E8F5EF',theme_color:'#1D9E75',orientation:'portrait',icons:[{src:makeIcon(192),sizes:'192x192',type:'image/png'},{src:makeIcon(512),sizes:'512x512',type:'image/png'}]};const blob=new Blob([JSON.stringify(mf)],{type:'application/json'});const url=URL.createObjectURL(blob);document.getElementById('manifest-placeholder').href=url;}catch(e){console.warn('PWA manifest registration failed:',e);}}
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(registerPWA).catch(registerPWA);}else{registerPWA();}
 
 render();updateBackupLabel();_lastBackupLabelUpdate=Date.now();
